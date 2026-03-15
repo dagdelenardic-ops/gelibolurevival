@@ -6,6 +6,7 @@
 import { getNarrationIcon } from '../data/icon-registry.js';
 import { getRandomRomanticEntry } from '../data/romantic-layer.js';
 import { getWeeklyGuide, getActiveWeekIndex } from '../engine/phase-engine.js';
+import { getEventImage } from '../data/event-images.js';
 
 /** Tarih metni → gün/ay/yıl parçaları */
 export function splitDisplayDateParts(dateText) {
@@ -99,6 +100,9 @@ export function updateNarrationPanel(phase, currentPhaseIndex) {
     // Haftalık bağlam barını güncelle
     updateWeeklyBar(phase.isoStart, currentPhaseIndex, weeklyContext);
 
+    // Tarihsel olay görseli
+    updateEventImage(phase.isoStart || '');
+
     // Romantik katman
     updateRomanticQuote(phase.isoStart || '');
 }
@@ -128,6 +132,22 @@ function updateRomanticQuote(isoDate) {
     el.style.display = 'block';
     el.className = `romantic-quote ${typeClass} ${factionClass}`;
     el.innerHTML = `<div class="romantic-header"><span class="romantic-emoji">${entry.emoji || '📜'}</span><span class="romantic-label">${typeLabels[entry.type] || 'Kayıt'}</span></div><div class="romantic-text">${entry.text}</div><div class="romantic-source">— ${entry.source}</div>`;
+}
+
+/** Tarihsel olay görselini güncelle */
+function updateEventImage(isoDate) {
+    let el = document.getElementById('eventImage');
+    if (!el) return;
+
+    const img = getEventImage(isoDate);
+    if (!img) {
+        el.style.display = 'none';
+        el.innerHTML = '';
+        return;
+    }
+
+    el.style.display = 'block';
+    el.innerHTML = `<img src="${img.url}" alt="${img.caption}" class="event-image-photo" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"><div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
 }
 
 /** Haftalık bağlam progress barını güncelle */
@@ -222,7 +242,7 @@ export function attachNarrationElements(container, phase) {
     const icon = getNarrationIcon(phase.title || '');
     const { clean } = parseNarration(phase.narration);
     let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-    nb.innerHTML = `<div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div>`;
+    nb.innerHTML = `<div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div>`;
     container.appendChild(nb);
 
     // İlk romantik alıntıyı göster
