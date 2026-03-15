@@ -56,8 +56,8 @@ export const BATTLE_DATA = {
             id: "mustahkem-mevki", name: "Çanakkale Müstahkem Mevki Komutanlığı", faction: "ottoman", type: "kolordu",
             entityType: "artillery_battery", unitClass: "battery", side: "ottoman", anchorRegion: "kilitbahir",
             commander: "Tümg. Cevat Paşa (Çobanlı)", strength: 20000,
-            description: "Çanakkale Boğazı'nın kıyı savunmasından sorumlu komutanlık. Cevat Paşa, 18 Mart deniz savaşında kıyı bataryalarını yöneterek İtilaf donanmasını püskürten asıl komutandır.",
-            phases: { "naval-assault": { x: 430, y: 310, status: "savunma", objective: "Boğaz kıyı savunmasını yönet", outcome: "Kıyı bataryaları donanmayı durdurdu" } }
+            description: "Çanakkale Boğazı'nın kıyı savunmasından sorumlu komutanlık. Cevat Paşa, 18 Mart deniz savaşında kıyı bataryalarını yöneterek İtilaf donanmasını püskürten asıl komutandır. 17 Aralık 1914'te Usedom ve Merten Paşalarla birlikte Nusret'in ilk mayın döşeme operasyonuna bizzat katıldı. Emrindeki topçu bataryaları: Hamidiye, Mecidiye, Namazgâh, Rumeli ve Anadolu tabyaları.",
+            phases: { "naval-assault": { x: 430, y: 310, status: "savunma", objective: "Boğaz kıyı savunmasını yönet", outcome: "230+ topla donanmayı durdurdu" } }
         },
         {
             id: "7-tumen", name: "7. Tümen", faction: "ottoman", type: "tümen",
@@ -83,9 +83,9 @@ export const BATTLE_DATA = {
         {
             id: "nusret", name: "Nusret Mayın Gemisi", faction: "ottoman", type: "deniz",
             entityType: "ship", unitClass: "mine_layer", side: "ottoman", anchorRegion: "bogaz",
-            commander: "Kolağası Nazmi Bey", strength: 74,
-            description: "7/8 Mart 1915 gecesi Erenköy Koyu'na 26 mayın döşeyerek İtilaf donanmasını durduran efsanevi mayın gemisi. Birden fazla mayın döşeme seferi gerçekleştirdi.",
-            phases: { "naval-assault": { x: 455, y: 370, status: "savunma", objective: "Boğaz'a mayın döşe", outcome: "Döşediği mayınlar 3 gemiyi batırdı" } }
+            commander: "Kolağası Nazmi Bey (Korvet Kaptanı Yeniköylü İbrahim oğlu Hafız Nazmi Efendi)", strength: 76,
+            description: "Nusret, Kasım 1914'ten itibaren Boğaz'da çok sayıda mayın döşeme seferi gerçekleştirdi. Kritik operasyonu 7/8 Mart 1915 gecesi saat 05:30'da Erenköy Koyu'na paralel 26 karbonik mayın döşemesiydi — 100-150 m aralıklarla, 4,5 m derinliğe. İtilaf keşif uçuşlarının göremediği bu hat, 18 Mart'ta Bouvet, Irresistible ve Ocean'ı batırdı. 6 Nisan 1915 itibariyle Boğaz'da toplam 422 mayın bulunuyordu (53 Alman, 362 karbonik, 7 Rus). İtilaf'ın 45 mayın tarama girişimi başarısızlıkla sonuçlandı. Komutanı Nazmi Bey, 19 Temmuz 1915'te Binbaşılığa terfi etti.",
+            phases: { "naval-assault": { x: 455, y: 370, status: "savunma", objective: "Boğaz'a mayın döşe — düşmanı geçirmemek", outcome: "Döşediği mayınlar 3 gemiyi batırdı, 3'ünü savaş dışı bıraktı" } }
         },
         // ── İNGİLİZ ──
         {
@@ -99,14 +99,14 @@ export const BATTLE_DATA = {
             id: "hms-irresistible", name: "HMS Irresistible", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Albay Douglas Dent", strength: 780,
-            description: "Mayına çarparak batan İngiliz savaş gemisi.",
+            description: "18 Mart 1915'te saat 16:14 civarında Nusret'in Erenköy mayın hattına çarparak ağır hasar alan İngiliz zırhlısı. Kıyı bataryalarının yoğun ateşi altında yardım da gönderilemedi. Mürettebatın büyük kısmı kurtarıldı, gemi akşam saatlerinde battı.",
             phases: { "naval-assault": { x: 500, y: 390, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Nusret'in döşediği mayına çarparak battı" } }
         },
         {
             id: "hms-ocean", name: "HMS Ocean", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Albay Hayes-Sadler", strength: 750,
-            description: "18 Mart'ta mayına çarparak batan ikinci İngiliz zırhlısı.",
+            description: "18 Mart 1915'te Irresistible'ı kurtarmaya giderken kendisi de Erenköy mayın hattına çarpan İngiliz zırhlısı. Saat 18:05'te terk edildi ve gece boyunca battı. Nazmi Bey: 'Akşam karanlığında Ocean da yan yattı.'",
             phases: { "naval-assault": { x: 520, y: 415, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Mayına çarparak battı" } }
         },
         {
@@ -135,9 +135,9 @@ export const BATTLE_DATA = {
         {
             id: "bouvet", name: "Bouvet", faction: "french", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
-            commander: "Kaptan Rageot de la Touche", strength: 710,
-            description: "Mayına çarparak yaklaşık 2 dakikada batan Fransız zırhlısı. ~710 mürettebattan sadece 66'sı kurtuldu.",
-            phases: { "naval-assault": { x: 490, y: 435, status: "taarruz", objective: "Osmanlı tabyalarını sustur", outcome: "Mayına çarparak battı – ~644 kayıp" } }
+            commander: "Kaptan Rageot de la Touche", strength: 721,
+            description: "18 Mart 1915 saat 13:58'de Nusret'in Erenköy hattındaki mayına çarparak yaklaşık 2 dakikada batan Fransız zırhlısı. 721 mürettebattan sadece 66'sı kurtuldu (Nazmi Bey günlüğü). Bouvet'in batışı, o günkü İtilaf kayıplarının en ağırıydı.",
+            phases: { "naval-assault": { x: 490, y: 435, status: "taarruz", objective: "Osmanlı tabyalarını sustur", outcome: "Mayına çarparak battı – 655 kayıp" } }
         },
         {
             id: "suffren", name: "Suffren", faction: "french", type: "deniz",
@@ -158,7 +158,7 @@ export const BATTLE_DATA = {
     phases: [
         {
             id: "naval-assault", date: "18 Mart 1915", title: "Deniz Harekâtı",
-            narration: "18 savaş gemisinden oluşan İtilaf donanması Çanakkale Boğazı'nı geçmeye çalıştı. Osmanlı mayınları ve kıyı bataryaları 3 gemiyi batırdı, 3'ünü savaş dışı bıraktı. Boğaz geçilemezdi.",
+            narration: "18 savaş gemisinden oluşan İtilaf donanması Çanakkale Boğazı'nı geçmeye çalıştı. Saat 11:10'da başlayan taarruz, Osmanlı kıyı bataryaları ve Nusret'in 7/8 Mart gecesi Erenköy Koyu'na döşediği 26 mayınlık gizli hat sayesinde felaketle sonuçlandı. Bouvet, Irresistible ve Ocean batırıldı; Inflexible, Suffren ve Gaulois ağır hasar aldı. İtilaf'ın 45 mayın tarama girişimi de boşa gitmişti. Boğaz geçilemezdi.",
             locationByFaction: { ottoman: ["kilitbahir", "canakkale", "seddulbahir", "kumkale"], british: "bogaz", french: "kumkale" }
         },
         {

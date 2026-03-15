@@ -37,8 +37,8 @@ export const COMMANDER_PORTRAITS = {
     },
     'nusret': {
         url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Nusret_mine_layer.jpg/200px-Nusret_mine_layer.jpg',
-        caption: 'Nusret Mayın Gemisi — Kolağası Nazmi Bey',
-        credit: 'Wikimedia Commons'
+        caption: 'Nusret Mayın Gemisi — Kolağası Nazmi Bey (Yeniköylü İbrahim oğlu Hafız Nazmi Efendi)',
+        credit: 'Wikimedia Commons / Nazmi Bey Günlüğü'
     },
 
     // ── İNGİLİZ ──

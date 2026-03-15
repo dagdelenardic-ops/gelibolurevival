@@ -175,9 +175,9 @@ export const BOOK_WEEKLY_GUIDE = [
     "startIso": "1915-03-02",
     "endIso": "1915-03-08",
     "label": "02-08 Mart 1915",
-    "title": "Mayın Tarama Dönemi",
-    "narration": "İtilaf donanması mayın tarama ve boğaz geçiş hazırlıklarını sürdürdü.",
-    "importance": "minor"
+    "title": "Nusret'in Kritik Seferi",
+    "narration": "7/8 Mart gecesi Nusret mayın gemisi, Kolağası Nazmi Bey komutasında Erenköy Koyu'na 26 karbonik mayın döşedi. İtilaf'ın 45 mayın tarama girişimi başarısız kalmıştı.",
+    "importance": "major"
   },
   {
     "id": "hafta-019",
@@ -186,7 +186,7 @@ export const BOOK_WEEKLY_GUIDE = [
     "endIso": "1915-03-15",
     "label": "09-15 Mart 1915",
     "title": "18 Mart Deniz Muharebesi",
-    "narration": "18 Mart'ta büyük deniz saldırısı Nusret mayınları ve sahil topçusuyla durduruldu.",
+    "narration": "18 Mart'ta 18 savaş gemisiyle gelen İtilaf donanması, Nusret'in Erenköy mayın hattına ve Cevat Paşa'nın kıyı bataryalarına çarptı. Bouvet (655 kayıp), Irresistible ve Ocean batırıldı. Boğaz geçilemezdi.",
     "importance": "major"
   },
   {

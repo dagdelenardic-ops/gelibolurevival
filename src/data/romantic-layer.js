@@ -3,6 +3,7 @@
 // Asker mektupları, kişisel tanıklıklar, duygusal anekdotlar
 // Kaynak: Enis Şahin (Atatürk Araştırma Merkezi Dergisi, 2009)
 //         Nevin Yazıcı (Erdem Dergisi, 2011)
+//         Nazmi Bey Çanakkale Deniz Savaşları Günlüğü (1914-1922)
 // ══════════════════════════════════════════════════════════════
 
 /**
@@ -386,6 +387,176 @@ export const ROMANTIC_ENTRIES = [
         source: 'Nevin Yazıcı, siper tanıklıkları',
         text: '"Silindir ateşi" denilen bombardımanlar sekiz saat sürerdi. Bombalar üstlerinden ıslıklar çalarak geçer, patladığında siperleri sarsar, her tarafa toprak yağardı. Bomba siper içine düşerse, dumandan nefes alınamaz hale gelir, erlerin çoğu bayılırdı.',
         emoji: '💣',
+    },
+
+    // ══════════════════════════════════════════════════════════════
+    // NAZMİ BEY GÜNLÜĞÜ — BİRİNCİ ELDEN TANILIKLAR
+    // Kaynak: Kolağası Nazmi Bey, Çanakkale Deniz Savaşları Günlüğü
+    // ══════════════════════════════════════════════════════════════
+
+    // ─── NUSRET İLK MAYIN OPERASYONU ───
+    {
+        startDate: '1914-12-15',
+        endDate: '1914-12-22',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, 17 Aralık 1914',
+        text: '17 Aralık 1914: Nusret mayın gemisi ilk operasyonuna çıktı. Usedom Paşa, Merten Paşa ve Cevat Paşa bizzat hazır bulundu. Boğaz\'ın derinliklerine ilk mayın hatları döşenmeye başladı.',
+        emoji: '⚓',
+    },
+
+    // ─── İTİLAF MAYIN TARAMA GİRİŞİMLERİ ───
+    {
+        startDate: '1915-01-15',
+        endDate: '1915-03-07',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü',
+        text: 'İtilaf donanması Boğaz\'daki mayınları temizlemek için 45 ayrı tarama girişiminde bulundu. Her seferinde Osmanlı kıyı bataryaları ve projektörleri tarama gemilerini geri püskürttü. Bir gecede bile tam temizleme yapılamadı.',
+        emoji: '🔦',
+    },
+
+    // ─── 7/8 MART KRİTİK OPERASYON ───
+    {
+        startDate: '1915-03-07',
+        endDate: '1915-03-10',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, 8 Mart 1915',
+        text: '"Saat 05.30\'da Nusret vapuru ile Erenköy Koyu\'na gidilerek 26 karbonik mayın ile bir hat oluşturulmuştur. Mayınlar arasındaki mesafe 100-150 metre, derinlik 4,5 metredir. Düşman görememiştir." Bu hat, 10 gün sonra 3 zırhlıyı batıracaktı.',
+        emoji: '💣',
+    },
+
+    // ─── 18 MART SABAHI ───
+    {
+        startDate: '1915-03-18',
+        endDate: '1915-03-18',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, 18 Mart 1915',
+        text: '18 Mart sabahı saat 11:10: İtilaf donanmasının 18 savaş gemisi Boğaz\'a girdi. Nazmi Bey: "Düşman donanması bütün azametiyle ilerliyordu. Fakat Erenköy önünde onları bekleyen sürprizi bilmiyorlardı."',
+        emoji: '🚢',
+    },
+
+    // ─── BOUVET'İN BATIŞI ───
+    {
+        startDate: '1915-03-18',
+        endDate: '1915-03-20',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, 18 Mart 1915',
+        text: 'Saat 13:58 — Bouvet, Erenköy hattındaki mayına çarptı. Nazmi Bey: "Müthiş bir infilak oldu. Bouvet sancak tarafına yattı. İki dakika içinde 721 kişilik mürettebatıyla denizin dibini boyladı. Sadece 66 kişi kurtulabildi."',
+        emoji: '💥',
+    },
+
+    // ─── IRRESISTIBLE VE OCEAN ───
+    {
+        startDate: '1915-03-18',
+        endDate: '1915-03-20',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, 18 Mart 1915',
+        text: 'Saat 16:14: HMS Irresistible mayına çarptı. Saat 18:05: Onu kurtarmaya gelen HMS Ocean da aynı mayın hattına girdi. Nazmi Bey: "Akşam karanlığında Ocean da yan yattı. İki büyük İngiliz zırhlısı daha Erenköy\'ün sularına gömüldü."',
+        emoji: '⚓',
+    },
+
+    // ─── NAZMİ BEY MEDENİYET ELEŞTİRİSİ ───
+    {
+        startDate: '1915-03-20',
+        endDate: '1915-04-15',
+        type: 'quote',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü',
+        text: '"Lanet olsun böyle medeniyete! Bunlar medeni olsalardı, Osmanlı\'nın topraklarına bu kadar hırsla saldırmazlardı. Biz barbarız diyorlar — barbarlık mı bu, vatanını savunmak mı?"',
+        emoji: '✊',
+    },
+
+    // ─── SAKİN GÜNLER ───
+    {
+        startDate: '1915-03-25',
+        endDate: '1915-04-10',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü',
+        text: '"Bugün sakin geçmiştir." Nazmi Bey\'in günlüğündeki en kısa cümlelerden biri. 18 Mart felaketinden sonra İtilaf donanması haftalarca Boğaz\'a yaklaşamadı. Osmanlı, bu sessizlikte savunmayı güçlendirdi.',
+        emoji: '🕊️',
+    },
+
+    // ─── DENİZALTI TEHDİDİ — SAPHIR ───
+    {
+        startDate: '1915-01-13',
+        endDate: '1915-01-20',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, Ocak 1915',
+        text: 'Fransız denizaltısı Saphir, Boğaz\'ı geçmeye çalışırken karaya oturdu ve teslim olmak zorunda kaldı. Mürettebat esir alındı. Nazmi Bey: "Denizaltıları da durdurduk. Bu Boğaz geçit vermez."',
+        emoji: '🔱',
+    },
+
+    // ─── DENİZALTI — E-15 ───
+    {
+        startDate: '1915-04-15',
+        endDate: '1915-04-20',
+        type: 'anecdote',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, Nisan 1915',
+        text: 'İngiliz denizaltısı E-15, Kepez Burnu açıklarında akıntıya kapılarak karaya oturdu. Mürettebatı esir alındı. İngilizler denizaltının sırlarını kurtarmak için torpido botlarıyla imha girişiminde bulundu ama Osmanlı bataryaları buna da izin vermedi.',
+        emoji: '🎯',
+    },
+
+    // ─── TOPLAM MAYIN SAYISI ───
+    {
+        startDate: '1915-04-01',
+        endDate: '1915-04-15',
+        type: 'anecdote',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, 6 Nisan 1915',
+        text: '6 Nisan 1915 itibariyle Boğaz\'daki toplam mayın sayısı 422\'ye ulaştı: 53 Alman yapımı, 362 karbonik mayın ve 7 Rus yapımı mayın. Bu görünmez ordu, dünyanın en güçlü donanmasını dize getirmişti.',
+        emoji: '💣',
+    },
+
+    // ─── NAZMİ BEY TERFİ ───
+    {
+        startDate: '1915-07-15',
+        endDate: '1915-07-25',
+        type: 'anecdote',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, 19 Temmuz 1915',
+        text: '19 Temmuz 1915: Kolağası Nazmi Bey, Nusret mayın gemisindeki üstün hizmetleri nedeniyle Binbaşılığa terfi etti. Tam adı: Korvet Kaptanı Yeniköylü İbrahim oğlu Hafız Nazmi Efendi. Boğaz\'ın görünmez kahramanıydı.',
+        emoji: '🎖️',
+    },
+
+    // ─── DENİZALTI — MARIOTTE ───
+    {
+        startDate: '1915-07-25',
+        endDate: '1915-08-05',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü',
+        text: 'Fransız denizaltısı Mariotte, Boğaz\'ı geçmeye çalışırken mayın ağlarına takılarak ele geçirildi. Mürettebat esir alındı. Nazmi Bey, Boğaz\'ın denizaltılara karşı da geçilmez olduğunu bir kez daha ispatlamıştı.',
+        emoji: '⚓',
+    },
+
+    // ─── DENİZALTI — TURQUOISE ───
+    {
+        startDate: '1915-10-25',
+        endDate: '1915-11-05',
+        type: 'anecdote',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü, Ekim 1915',
+        text: 'Fransız denizaltısı Turquoise, Çanakkale Boğazı\'nda karaya oturdu ve sağlam olarak ele geçirildi. İçinden çıkan gizli belgeler, İngiliz denizaltısı E-11 ile buluşma planını ortaya koydu. Bu istihbarat sayesinde E-11 de tuzağa düşürüldü.',
+        emoji: '📋',
+    },
+
+    // ─── NUSRET'İN SON SEFERLERİ ───
+    {
+        startDate: '1915-11-01',
+        endDate: '1915-12-15',
+        type: 'spirit',
+        faction: 'ottoman',
+        source: 'Nazmi Bey Günlüğü',
+        text: 'Nusret, kampanya boyunca 15\'ten fazla mayın döşeme seferi gerçekleştirdi. Her seferinde düşman keşif uçuşlarından ve denizaltılardan kaçınarak, gece karanlığında operasyon yaptı. Küçük bir mayın gemisi, dünya tarihinin seyrini değiştirmişti.',
+        emoji: '🌙',
     },
 ];
 

@@ -7161,7 +7161,7 @@
     "date": "1915-03-07",
     "eventType": "BOMBARDMENT",
     "intensity": 8,
-    "unitActivity": "[~] 7 Mart 1915 günü Osmanlı bataryaları Deniz hattında karşı ateş düzeni alırken İtilaf deniz unsurları bombardıman temposunu 8/10 seviyesine taşıdı.",
+    "unitActivity": "[✓] 7 Mart 1915 gecesi Nusret mayın gemisi Kolağası Nazmi Bey komutasında Erenköy Koyu'na kritik mayın döşeme seferine çıktı. Saat 05:30'da 26 karbonik mayın, 100-150 m aralıklarla, 4,5 m derinliğe döşendi. İtilaf keşif uçuşları bu hattı fark edemedi.",
     "nextEventCountdown": {
       "days": 1,
       "event": "Müttefik deniz taarruzu yoğunlaştı; mayın hatları ve kıyı bataryaları geçişi durdurdu"
@@ -7218,7 +7218,7 @@
     "date": "1915-03-08",
     "eventType": "BOMBARDMENT",
     "intensity": 8,
-    "unitActivity": "[~] 8 Mart 1915 günü Osmanlı bataryaları Deniz hattında karşı ateş düzeni alırken İtilaf deniz unsurları bombardıman temposunu 8/10 seviyesine taşıdı.",
+    "unitActivity": "[✓] 8 Mart 1915 — Nusret'in gece döşediği 26 mayınlık Erenköy hattı yerinde. İtilaf donanması bombardımana devam ederken Osmanlı bataryaları karşılık verdi. Mayın hattının varlığından İtilaf'ın haberi yoktu.",
     "nextEventCountdown": {
       "days": 1,
       "event": "Müttefik deniz taarruzu yoğunlaştı; mayın hatları ve kıyı bataryaları geçişi durdurdu"
