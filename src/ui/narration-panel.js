@@ -50,9 +50,11 @@ function parseNarration(rawNarration) {
         if (trimmed.startsWith('Haftalık Bağlam:')) {
             weeklyContext = trimmed.replace('Haftalık Bağlam:', '').trim();
         } else if (trimmed.startsWith('Açık Olay:')) {
-            // Kaldır — gösterme
+            // Sadece "Açık Olay:" etiketini kaldır, içeriği koru
+            cleanParts.push(trimmed.replace('Açık Olay:', '').trim());
         } else if (trimmed.startsWith('Operasyon Durumu:')) {
-            // Kaldır — gösterme
+            // Sadece "Operasyon Durumu:" etiketini kaldır, içeriği koru
+            cleanParts.push(trimmed.replace('Operasyon Durumu:', '').trim());
         } else {
             // "Açık Olay" vs. prefix olmayan normal narration
             cleanParts.push(trimmed);
