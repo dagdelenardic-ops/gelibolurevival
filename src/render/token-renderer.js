@@ -31,7 +31,7 @@ function navalTokenShape(unit, f, cx, cy, phaseData) {
     const cl = f.colorLight;
     const isFlagship = unit.id === 'hms-queen-elizabeth' || unit.id === 'nusret';
     const isSunk = isDestroyedPhaseData(phaseData);
-    return `<path d="M${cx - 13} ${cy + 5} L${cx - 8} ${cy - 3} L${cx + 8} ${cy - 3} L${cx + 13} ${cy + 5} Z" fill="${c}" stroke="${cl}" stroke-width=".8" opacity="${isSunk ? '.5' : '.92'}" filter="url(#glow)"/>` +
+    return `<path d="M${cx - 13} ${cy + 5} L${cx - 8} ${cy - 3} L${cx + 8} ${cy - 3} L${cx + 13} ${cy + 5} Z" fill="${c}" stroke="${cl}" stroke-width=".8" opacity="${isSunk ? '.5' : '.92'}" filter="url(#subtleGlow)"/>` +
         `<rect x="${cx - 6}" y="${cy - 8}" width="12" height="5" rx="1.4" fill="${cl}" opacity="${isSunk ? '.35' : '.82'}"/>` +
         `<rect x="${cx - 1.2}" y="${cy - 13}" width="2.4" height="7" fill="${cl}" opacity="${isSunk ? '.35' : '.9'}"/>` +
         `<line x1="${cx}" y1="${cy - 13}" x2="${cx + 6}" y2="${cy - 9}" stroke="${cl}" stroke-width=".7" opacity=".8"/>` +
@@ -81,13 +81,13 @@ function tokenShape(unit, phaseData, f, cx, cy) {
     switch (f.shape) {
         case 'star': {
             const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#glow)"/>` +
+            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
                 `<path d="M${cx + 5} ${cy - 1} A6 6 0 1 0 ${cx + 5} ${cy + 1} A4.5 4.5 0 1 1 ${cx + 5} ${cy - 1}Z" fill="${cl}" opacity=".85" transform="rotate(-30,${cx},${cy})"/>` +
                 `<polygon points="${cx - 4},${cy - 2} ${cx - 3.2},${cy - 0.2} ${cx - 5.2},${cy + 0.8} ${cx - 3.4},${cy + 0.8} ${cx - 3},${cy + 2.8} ${cx - 2},${cy + 1} ${cx - 0.5},${cy + 2.6} ${cx - 0.8},${cy + 0.5} ${cx + 1},${cy + 1.2} ${cx - 0.2},${cy - 0.6}" fill="${cl}" opacity=".85" transform="rotate(-30,${cx},${cy})"/>` + iconOverlay + marker;
         }
         case 'diamond': {
             const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#glow)"/>` +
+            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
                 `<line x1="${cx}" y1="${cy - 6}" x2="${cx}" y2="${cy + 5}" stroke="${cl}" stroke-width="1.2" opacity=".85"/>` +
                 `<line x1="${cx - 3}" y1="${cy - 6}" x2="${cx + 3}" y2="${cy - 6}" stroke="${cl}" stroke-width="1" opacity=".85"/>` +
                 `<path d="M${cx - 5} ${cy + 2} Q${cx - 4} ${cy + 6} ${cx} ${cy + 5} Q${cx + 4} ${cy + 6} ${cx + 5} ${cy + 2}" fill="none" stroke="${cl}" stroke-width="1.1" opacity=".85"/>` +
@@ -95,7 +95,7 @@ function tokenShape(unit, phaseData, f, cx, cy) {
         }
         case 'circle': {
             const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#glow)"/>` +
+            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
                 `<path d="M${cx - 7} ${cy + 2} Q${cx} ${cy + 5} ${cx + 7} ${cy + 2}" fill="none" stroke="${cl}" stroke-width=".8" opacity=".7"/>` +
                 Array.from({ length: 9 }, (_, i) => {
                     const a = -Math.PI + ((i + 1) * Math.PI / 10);
@@ -109,7 +109,7 @@ function tokenShape(unit, phaseData, f, cx, cy) {
         }
         case 'triangle': {
             const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#glow)"/>` +
+            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
                 `<path d="M${cx} ${cy - 7} C${cx + 1.5} ${cy - 4} ${cx + 4} ${cy - 2} ${cx + 4} ${cy + 1} C${cx + 4} ${cy + 3} ${cx + 2} ${cy + 3} ${cx + 1} ${cy + 1} L${cx + 1} ${cy + 5} L${cx - 1} ${cy + 5} L${cx - 1} ${cy + 1} C${cx - 2} ${cy + 3} ${cx - 4} ${cy + 3} ${cx - 4} ${cy + 1} C${cx - 4} ${cy - 2} ${cx - 1.5} ${cy - 4} ${cx} ${cy - 7}Z" fill="${cl}" opacity=".8"/>` +
                 `<line x1="${cx - 3}" y1="${cy + 5}" x2="${cx + 3}" y2="${cy + 5}" stroke="${cl}" stroke-width=".8" opacity=".7"/>` + iconOverlay + marker;
         }

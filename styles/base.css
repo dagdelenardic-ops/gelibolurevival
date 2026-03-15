@@ -4,30 +4,30 @@
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Ana tema: Siyah zemin, beyaz metin, kırmızı vurgu */
-  --bg:#0a0a0c;--bg-panel:#111114;--bg-card:#161619;
-  --parchment:#f0ece4;--parchment-d:#c8c0b0;
+  /* Ana tema: Koyu zemin, sıcak nötr tonlar, askeri kartografi */
+  --bg:#0e1014;--bg-panel:#141612;--bg-card:#1a1c18;
+  --parchment:#d8d0c0;--parchment-d:#a09880;
   --ink:#1a1a1e;
-  --sea:#0d2a3a;--sea-light:#1a4a62;
-  --land:#2a3520;--land-light:#3d5228;
+  --sea:#2a3540;--sea-light:#3a4a58;
+  --land:#4a4838;--land-light:#5a5848;
 
-  /* Faksiyonlar */
-  --ottoman:#dc3545;--ottoman-l:#ff4757;
-  --british:#2196F3;--british-l:#64B5F6;
-  --anzac:#4CAF50;--anzac-l:#66BB6A;
-  --french:#9C27B0;--french-l:#BA68C8;
+  /* Faksiyonlar — desatüre, askeri */
+  --ottoman:#8b3a3a;--ottoman-l:#c4645a;
+  --british:#4a6a82;--british-l:#7a9ab0;
+  --anzac:#5a7a52;--anzac-l:#8aaa78;
+  --french:#6a5a7a;--french-l:#9a8aaa;
 
-  /* Turkuaz aksan renk */
-  --accent:#26c6da;--accent-dim:#0e7c8a;--accent-light:#4dd0e1;
+  /* Aksan renk — sıcak bej/altın */
+  --accent:#a09880;--accent-dim:#6a6040;--accent-light:#c0b898;
 
-  /* Kırmızı aksan */
-  --red:#dc3545;--red-dim:#8b1a25;--red-light:#ff6b7a;
+  /* Kırmızı aksan — toprak kırmızısı */
+  --red:#8b3a3a;--red-dim:#5a2828;--red-light:#c4645a;
 
-  /* Nötr tonlar */
-  --gold:#e8d5a8;--gold-dim:#8a7d60;
-  --text:#f5f5f5;--text-muted:#a0a0a8;--text-dim:#6a6a72;
-  --border:#2a2a30;--border-light:#3a3a42;
-  --timeline-bg:#0d0d10;
+  /* Nötr tonlar — sıcak */
+  --gold:#c0b898;--gold-dim:#7a7060;
+  --text:#e0dcd0;--text-muted:#9a9488;--text-dim:#6a6458;
+  --border:#2a2822;--border-light:#3a3830;
+  --timeline-bg:#0e1012;
 
   --mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
   --sans:"Segoe UI",system-ui,-apple-system,sans-serif;
@@ -54,7 +54,7 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   padding:7px 18px;
   background:linear-gradient(180deg,rgba(16,16,20,.95),rgba(12,12,16,.92));
-  border-bottom:1px solid rgba(220,53,69,.25);
+  border-bottom:1px solid rgba(120,100,70,.2);
   flex-shrink:0;
   backdrop-filter:blur(8px);
   box-shadow:0 2px 12px rgba(0,0,0,.3)

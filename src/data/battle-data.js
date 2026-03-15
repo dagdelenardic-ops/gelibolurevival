@@ -5,10 +5,10 @@
 
 export const BATTLE_DATA = {
     factions: {
-        ottoman: { id: "ottoman", name: "Osmanlı", color: "#dc3545", colorLight: "#ff4757", shape: "star" },
-        british: { id: "british", name: "İngiliz", color: "#2196F3", colorLight: "#64B5F6", shape: "diamond" },
-        anzac: { id: "anzac", name: "ANZAC", color: "#4CAF50", colorLight: "#66BB6A", shape: "circle" },
-        french: { id: "french", name: "Fransız", color: "#9C27B0", colorLight: "#BA68C8", shape: "triangle" }
+        ottoman: { id: "ottoman", name: "Osmanlı", color: "#8b3a3a", colorLight: "#c4645a", shape: "star" },
+        british: { id: "british", name: "İngiliz", color: "#4a6a82", colorLight: "#7a9ab0", shape: "diamond" },
+        anzac: { id: "anzac", name: "ANZAC", color: "#5a7a52", colorLight: "#8aaa78", shape: "circle" },
+        french: { id: "french", name: "Fransız", color: "#6a5a7a", colorLight: "#9a8aaa", shape: "triangle" }
     },
 
     // Komuta zinciri: 5. Ordu (von Sanders) > 3. Kolordu (Esat Paşa)

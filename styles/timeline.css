@@ -29,9 +29,9 @@
 }
 
 .timeline-btn {
-    border: 1px solid var(--red-dim);
-    background: rgba(220, 53, 69, .1);
-    color: #fff;
+    border: 1px solid var(--border-light);
+    background: rgba(80, 75, 60, .12);
+    color: var(--text);
     padding: 4px 12px;
     border-radius: 999px;
     font-size: .75rem;
@@ -41,7 +41,7 @@
 }
 
 .timeline-btn:hover {
-    background: rgba(220, 53, 69, .25)
+    background: rgba(80, 75, 60, .25)
 }
 
 .timeline-track {
@@ -121,8 +121,8 @@
 .phase-marker.active .phase-dot {
     background: var(--red);
     border-color: var(--red);
-    box-shadow: 0 0 12px rgba(220, 53, 69, .6);
-    transform: scale(1.25)
+    box-shadow: 0 0 6px rgba(140, 58, 58, .4);
+    transform: scale(1.2)
 }
 
 /* ── Phase Tooltip ── */
