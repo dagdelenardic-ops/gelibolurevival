@@ -5,6 +5,7 @@
 
 import { getNarrationIcon } from '../data/icon-registry.js';
 import { getRandomRomanticEntry } from '../data/romantic-layer.js';
+import { getWeeklyGuide, getActiveWeekIndex } from '../engine/phase-engine.js';
 
 /** Tarih metni → gün/ay/yıl parçaları */
 export function splitDisplayDateParts(dateText) {
@@ -32,15 +33,69 @@ export function updateMapDateIndicator(dateText) {
     year.textContent = parts.year;
 }
 
+/**
+ * Narration metninden "Açık Olay:", "Operasyon Durumu:", "Haftalık Bağlam:" bölümlerini ayır.
+ * Sadece Haftalık Bağlam kısmını ayrı döndürür, diğerlerini temizler.
+ */
+function parseNarration(rawNarration) {
+    if (!rawNarration) return { clean: '', weeklyContext: '' };
+
+    // "Açık Olay: ... | Operasyon Durumu: ... | Haftalık Bağlam: ..." formatını parse et
+    const parts = rawNarration.split(/\s*\|\s*/);
+    let weeklyContext = '';
+    const cleanParts = [];
+
+    for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed.startsWith('Haftalık Bağlam:')) {
+            weeklyContext = trimmed.replace('Haftalık Bağlam:', '').trim();
+        } else if (trimmed.startsWith('Açık Olay:')) {
+            // Kaldır — gösterme
+        } else if (trimmed.startsWith('Operasyon Durumu:')) {
+            // Kaldır — gösterme
+        } else {
+            // "Açık Olay" vs. prefix olmayan normal narration
+            cleanParts.push(trimmed);
+        }
+    }
+
+    // Eğer parse sonucu boşsa ve "Açık Olay:" yoksa, orijinal metni kullan
+    const clean = cleanParts.join(' ').trim();
+    if (!clean && !weeklyContext && !rawNarration.includes('Açık Olay:')) {
+        return { clean: rawNarration, weeklyContext: '' };
+    }
+
+    return { clean, weeklyContext };
+}
+
 /** Anlatım panelini güncelle */
-export function updateNarrationPanel(phase) {
+export function updateNarrationPanel(phase, currentPhaseIndex) {
     const title = document.getElementById('narrationTitle');
     const text = document.getElementById('narrationText');
+
+    // Narration metnini parse et
+    const { clean, weeklyContext } = parseNarration(phase.narration);
+
     if (title) {
         const icon = getNarrationIcon(phase.title || '');
-        title.innerHTML = `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${phase.title} – ${phase.date}`;
+        // Başlıktan da "· Günlük Akış" ve "Resmi Günlük Kayıt" gibi tekrar eden etiketleri temizle
+        let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
+        title.innerHTML = `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}`;
     }
-    if (text) text.textContent = phase.narration || '';
+
+    // Temizlenmiş metni veya haftalık bağlamı göster
+    if (text) {
+        if (clean) {
+            text.textContent = clean;
+        } else if (weeklyContext) {
+            text.textContent = weeklyContext;
+        } else {
+            text.textContent = '';
+        }
+    }
+
+    // Haftalık bağlam barını güncelle
+    updateWeeklyBar(phase.isoStart, currentPhaseIndex, weeklyContext);
 
     // Romantik katman
     updateRomanticQuote(phase.isoStart || '');
@@ -71,6 +126,50 @@ function updateRomanticQuote(isoDate) {
     el.style.display = 'block';
     el.className = `romantic-quote ${typeClass} ${factionClass}`;
     el.innerHTML = `<div class="romantic-header"><span class="romantic-emoji">${entry.emoji || '📜'}</span><span class="romantic-label">${typeLabels[entry.type] || 'Kayıt'}</span></div><div class="romantic-text">${entry.text}</div><div class="romantic-source">— ${entry.source}</div>`;
+}
+
+/** Haftalık bağlam progress barını güncelle */
+function updateWeeklyBar(isoDate, currentPhaseIndex, weeklyContext) {
+    let bar = document.getElementById('weeklyBar');
+    if (!bar) return;
+
+    const WEEKLY_GUIDE = getWeeklyGuide();
+    if (!WEEKLY_GUIDE.length) {
+        bar.style.display = 'none';
+        return;
+    }
+
+    const iso = String(isoDate || '');
+    const weekIdx = WEEKLY_GUIDE.findIndex((w) => w.startIso <= iso && iso <= w.endIso);
+    if (weekIdx === -1) {
+        bar.style.display = 'none';
+        return;
+    }
+
+    const week = WEEKLY_GUIDE[weekIdx];
+
+    // Hafta içindeki ilerleme oranını hesapla
+    const startMs = new Date(week.startIso + 'T00:00:00Z').getTime();
+    const endMs = new Date(week.endIso + 'T00:00:00Z').getTime();
+    const currentMs = new Date(iso + 'T00:00:00Z').getTime();
+    const totalSpan = Math.max(1, endMs - startMs);
+    const progress = Math.min(1, Math.max(0, (currentMs - startMs) / totalSpan));
+    const progressPct = Math.round(progress * 100);
+
+    // Haftalık bağlam metni: önce weeklyContext (parse edilmiş), yoksa guide narration
+    const contextText = weeklyContext || week.narration || '';
+
+    bar.style.display = 'block';
+    bar.innerHTML = `
+        <div class="weekly-bar-header">
+            <span class="weekly-bar-label">${week.title}</span>
+            <span class="weekly-bar-dates">${week.label}</span>
+        </div>
+        <div class="weekly-bar-track">
+            <div class="weekly-bar-fill" style="width:${progressPct}%"></div>
+        </div>
+        ${contextText ? `<div class="weekly-bar-context">${contextText}</div>` : ''}
+    `;
 }
 
 /** Atmosfer state güncelle (savaş durumuna göre border rengi) */
@@ -119,7 +218,9 @@ export function attachNarrationElements(container, phase) {
     nb.setAttribute('aria-live', 'polite');
     nb.setAttribute('role', 'status');
     const icon = getNarrationIcon(phase.title || '');
-    nb.innerHTML = `<div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${phase.title} – ${phase.date}</div><div class="narration-text" id="narrationText">${phase.narration}</div><div class="romantic-quote" id="romanticQuote" style="display:none"></div>`;
+    const { clean } = parseNarration(phase.narration);
+    let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
+    nb.innerHTML = `<div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div>`;
     container.appendChild(nb);
 
     // İlk romantik alıntıyı göster
