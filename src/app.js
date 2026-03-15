@@ -23,6 +23,7 @@ import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js';
 import { startAutoPlay, stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton } from './ui/autoplay-controller.js';
 import { initOnboarding } from './ui/onboarding.js';
 import { toggleStatsPanel } from './ui/stats-panel.js';
+import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js';
 
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
@@ -172,6 +173,8 @@ function setActivePhase(i) {
         }
         renderAtmosphere(animData.animationState);
         renderTransition(animData.sceneTransition);
+        // ── Ses efektleri: olay tipine göre tetikle ──
+        triggerPhaseSfx(animData, campaignPhase.id);
     } else {
         renderUnits(undefined);
         renderAtmosphere(null);
@@ -305,6 +308,10 @@ async function init() {
     setActivePhase(0);
     refreshAutoPlayButton();
     startAutoPlay(setActivePhase, getCurrentPhaseIndex);
+
+    // Ses kontrolleri ve müzik
+    renderAudioControls();
+    initAudioOnInteraction();
 
     const loader = document.getElementById('loadingOverlay');
     if (loader) {

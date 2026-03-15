@@ -144,3 +144,14 @@ body{
   .stats-grid{grid-template-columns:1fr}
   .stats-panel-inner{padding:16px}
 }
+
+/* ── Ses Kontrolleri ── */
+.audio-controls{display:flex;gap:4px;align-items:center;margin-right:4px}
+.audio-btn{
+  background:rgba(80,75,60,.12);border:1px solid var(--border-light);
+  color:var(--text-muted);width:28px;height:28px;border-radius:6px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;transition:background .15s,border-color .15s;padding:0
+}
+.audio-btn:hover{background:rgba(120,100,70,.2);border-color:var(--accent-dim)}
+.audio-icon{line-height:1}
