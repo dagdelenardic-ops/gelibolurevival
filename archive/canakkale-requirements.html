@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Çanakkale Battle Map – Project Requirements</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --bg-2: #10182b;
+      --panel: #111827;
+      --panel-2: #18233a;
+      --line: #334155;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --cyan: #22d3ee;
+      --gold: #f59e0b;
+      --ok: #34d399;
+      --bad: #fb7185;
+      --red: #ef4444;
+      --shadow: 0 14px 36px rgba(0, 0, 0, 0.38);
+      --mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+      --sans: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(239, 68, 68, 0.12) 0, transparent 32%),
+        radial-gradient(circle at 87% 15%, rgba(245, 158, 11, 0.12) 0, transparent 29%),
+        linear-gradient(165deg, #030712 0%, #0f172a 62%, #030712 100%);
+      line-height: 1.64;
+    }
+
+    body.lang-en .txt-tr { display: none !important; }
+    body.lang-tr .txt-en { display: none !important; }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+      background: rgba(127, 29, 29, 0.25);
+      border-radius: 999px;
+      font-size: 0.82rem;
+      padding: 6px 11px;
+      letter-spacing: 0.01em;
+    }
+
+    .lang-control {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #0b1220;
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      border-radius: 999px;
+    }
+
+    .lang-label {
+      font-family: var(--mono);
+      color: #bfdbfe;
+      font-size: 0.84rem;
+      min-width: 46px;
+      text-align: center;
+    }
+
+    .switch {
+      border: 1px solid #3b4d6f;
+      width: 66px;
+      height: 34px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #1f2937, #0f172a);
+      position: relative;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .switch .knob {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #67e8f9, #06b6d4);
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.25s ease;
+      box-shadow: 0 4px 12px rgba(34, 211, 238, 0.45);
+    }
+
+    body.lang-tr .switch .knob {
+      transform: translateX(30px);
+      background: linear-gradient(180deg, #fcd34d, #f59e0b);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.62rem, 3.4vw, 2.86rem);
+      line-height: 1.14;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.14rem, 2.2vw, 1.74rem);
+      line-height: 1.25;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1.04rem;
+      line-height: 1.35;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(127, 29, 29, 0.18), rgba(120, 53, 15, 0.2));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 14px;
+      padding: 22px;
+      align-items: center;
+    }
+
+    .muted { color: var(--muted); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 14px 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 14px 0;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 14px 0;
+    }
+
+    .card {
+      background: linear-gradient(170deg, rgba(24, 35, 58, 0.8), rgba(10, 16, 30, 0.92));
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+    }
+
+    .card p { margin: 0.45rem 0; }
+
+    .level {
+      display: inline-flex;
+      margin-bottom: 8px;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #fca5a5;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+      background: rgba(127, 29, 29, 0.35);
+    }
+
+    .xp {
+      display: inline-flex;
+      margin-left: 7px;
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #fde68a;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      background: rgba(120, 53, 15, 0.26);
+    }
+
+    .priority-tag {
+      display: inline-flex;
+      margin-left: 7px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+    .priority-tag.must {
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      background: rgba(127, 29, 29, 0.3);
+    }
+    .priority-tag.should {
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: #fde68a;
+      background: rgba(120, 53, 15, 0.3);
+    }
+    .priority-tag.nice {
+      border: 1px solid rgba(34, 211, 238, 0.45);
+      color: #a5f3fc;
+      background: rgba(8, 47, 73, 0.35);
+    }
+
+    .small-title {
+      color: #93c5fd;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    ul, ol { margin: 0.48rem 0 0.3rem 1.1rem; }
+    li { margin: 4px 0; }
+
+    code {
+      background: rgba(148, 163, 184, 0.18);
+      border-radius: 6px;
+      padding: 1px 5px;
+      font-family: var(--mono);
+      font-size: 0.9em;
+    }
+
+    pre {
+      margin: 10px 0;
+      padding: 11px;
+      overflow: auto;
+      border-radius: 12px;
+      background: #0a1221;
+      border: 1px solid #20314d;
+      color: #dbeafe;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+
+    .good {
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      background: rgba(6, 78, 59, 0.26);
+      border-radius: 11px;
+      padding: 9px;
+      margin-top: 8px;
+    }
+
+    .bad {
+      border: 1px solid rgba(251, 113, 133, 0.45);
+      background: rgba(136, 19, 55, 0.23);
+      border-radius: 11px;
+      padding: 9px;
+      margin-top: 8px;
+    }
+
+    .note {
+      border-left: 3px solid #60a5fa;
+      background: rgba(15, 23, 42, 0.55);
+      padding: 9px 11px;
+      border-radius: 0 9px 9px 0;
+      margin-top: 8px;
+    }
+
+    .analogy {
+      border-left: 3px solid var(--gold);
+      background: rgba(146, 64, 14, 0.2);
+      padding: 9px 11px;
+      border-radius: 0 9px 9px 0;
+      margin-top: 8px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .badge {
+      font-size: 0.8rem;
+      border-radius: 999px;
+      border: 1px solid #3a4f73;
+      background: #0c1423;
+      color: #c7d2fe;
+      padding: 4px 10px;
+      font-family: var(--mono);
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid #30435f;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #101a2d;
+      color: #bae6fd;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+    }
+
+    a {
+      color: #7dd3fc;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(125, 211, 252, 0.55);
+    }
+
+    a:hover { color: #dbeafe; }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.84rem;
+      margin: 20px 0 8px;
+    }
+
+    .ottoman { color: #ef4444; }
+    .british { color: #60a5fa; }
+    .anzac { color: #34d399; }
+    .french { color: #c084fc; }
+
+    .unit-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .unit-legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.88rem;
+    }
+    .unit-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .grid-2,
+      .grid-3,
+      .grid-4 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="lang-en">
+  <div class="wrap">
+    <div class="topbar">
+      <span class="pill txt-en">Çanakkale Battle Map • Project Requirements • EN/TR</span>
+      <span class="pill txt-tr">Çanakkale Savaş Haritası • Proje Gereksinimleri • EN/TR</span>
+
+      <div class="lang-control">
+        <span class="lang-label txt-en">Language</span>
+        <span class="lang-label txt-tr">Dil</span>
+        <button id="langToggle" class="switch" aria-label="Switch language">
+          <span class="knob"></span>
+        </button>
+        <span id="langState" class="lang-label">EN</span>
+      </div>
+    </div>
+
+    <!-- ═══════════ HERO ═══════════ -->
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <h1 class="txt-en">Çanakkale 1915: Interactive Battle Map</h1>
+          <h1 class="txt-tr">Çanakkale 1915: İnteraktif Savaş Haritası</h1>
+
+          <p class="muted txt-en">
+            A single-page web application that brings the 1915 Gallipoli Campaign to life on an animated, stylized map.
+            Users watch battle phases auto-play, pause at any moment, and inspect individual units, commanders, and tactical context.
+          </p>
+          <p class="muted txt-tr">
+            1915 Çanakkale Savaşı'nı animasyonlu, stilize bir haritada canlandıran tek sayfalık web uygulaması.
+            Kullanıcılar savaş fazlarını otomatik izler, istedikleri anda duraklatır, birlikleri, komutanları ve taktik bağlamı inceler.
+          </p>
+
+          <div class="badge-row">
+            <span class="badge">React / HTML+JS</span>
+            <span class="badge">SVG Map</span>
+            <span class="badge">Timeline Engine</span>
+            <span class="badge">Pause & Inspect</span>
+            <span class="badge txt-en">EN/TR Bilingual</span>
+            <span class="badge txt-tr">EN/TR İki Dilli</span>
+          </div>
+        </div>
+
+        <div>
+          <svg viewBox="0 0 420 240" width="100%" role="img" aria-label="Gallipoli peninsula sketch">
+            <defs>
+              <linearGradient id="sea" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0c4a6e" />
+                <stop offset="100%" stop-color="#164e63" />
+              </linearGradient>
+              <linearGradient id="land" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#365314" />
+                <stop offset="100%" stop-color="#1a2e05" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect width="420" height="240" rx="14" fill="url(#sea)" stroke="#334155"/>
+
+            <!-- Gallipoli Peninsula shape -->
+            <path d="M120 20 L160 30 L180 60 L200 90 L210 130 L190 160 L170 190 L150 220 L130 230 L110 210 L100 170 L90 130 L95 80 L105 40 Z"
+                  fill="url(#land)" stroke="#4d7c0f" stroke-width="1.5" opacity="0.85"/>
+
+            <!-- Asian side -->
+            <path d="M250 120 L420 100 L420 240 L250 240 L240 200 L260 160 Z"
+                  fill="url(#land)" stroke="#4d7c0f" stroke-width="1.5" opacity="0.7"/>
+
+            <!-- Dardanelles strait label -->
+            <text x="210" y="170" fill="#7dd3fc" font-size="9" font-family="monospace" opacity="0.7"
+                  transform="rotate(-50, 210, 170)">DARDANELLES</text>
+
+            <!-- Key locations -->
+            <circle cx="155" cy="55" r="4" fill="#ef4444" filter="url(#glow)">
+              <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <text x="163" y="58" fill="#fca5a5" font-size="8" font-family="monospace">Seddülbahir</text>
+
+            <circle cx="130" cy="110" r="4" fill="#34d399" filter="url(#glow)">
+              <animate attributeName="opacity" values="0.6;1;0.6" dur="2.3s" repeatCount="indefinite"/>
+            </circle>
+            <text x="138" y="113" fill="#a7f3d0" font-size="8" font-family="monospace">ANZAC Cove</text>
+
+            <circle cx="170" cy="80" r="4" fill="#f59e0b" filter="url(#glow)">
+              <animate attributeName="opacity" values="0.6;1;0.6" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+            <text x="178" y="83" fill="#fde68a" font-size="8" font-family="monospace">Conkbayırı</text>
+
+            <!-- Ship animation -->
+            <g filter="url(#glow)">
+              <polygon points="0,-4 10,0 0,4 2,0" fill="#60a5fa">
+                <animateMotion dur="8s" repeatCount="indefinite"
+                  path="M300 80 C280 100 240 140 220 170 C210 190 230 200 260 180"/>
+              </polygon>
+            </g>
+            <g filter="url(#glow)">
+              <polygon points="0,-3 8,0 0,3 2,0" fill="#60a5fa" opacity="0.6">
+                <animateMotion dur="9s" repeatCount="indefinite"
+                  path="M320 70 C300 90 260 130 240 160 C230 180 250 190 280 170"/>
+              </polygon>
+            </g>
+
+            <!-- Mines -->
+            <circle cx="230" cy="145" r="2.5" fill="#fde68a" opacity="0.5">
+              <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="222" cy="155" r="2.5" fill="#fde68a" opacity="0.5">
+              <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="236" cy="160" r="2.5" fill="#fde68a" opacity="0.5">
+              <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.8s" repeatCount="indefinite"/>
+            </circle>
+
+            <text x="14" y="22" fill="#93c5fd" font-size="11" font-family="monospace" class="txt-en">Project Vision: Animated Gallipoli</text>
+            <text x="14" y="22" fill="#93c5fd" font-size="11" font-family="monospace" class="txt-tr">Proje Vizyonu: Animasyonlu Çanakkale</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PROJECT OVERVIEW ═══════════ -->
+    <section class="card">
+      <span class="level">OVERVIEW</span><span class="xp">PROJECT SCOPE</span>
+      <h2 class="txt-en">What Is This Project?</h2>
+      <h2 class="txt-tr">Bu Proje Nedir?</h2>
+
+      <p class="txt-en">An educational, interactive web application that visualizes the entire 1915 Çanakkale (Gallipoli) Campaign on a stylized map. The app auto-plays animated battle phases with unit movements, attack arrows, and naval operations. At any moment, the user can <strong>pause</strong> and enter <strong>Inspect Mode</strong> to click on any unit and read detailed information about it.</p>
+      <p class="txt-tr">1915 Çanakkale (Gelibolu) Savaşı'nın tamamını stilize bir harita üzerinde görselleştiren eğitici, interaktif bir web uygulaması. Uygulama; birlik hareketleri, saldırı okları ve deniz operasyonları ile animasyonlu savaş fazlarını otomatik oynatır. Kullanıcı istediği anda <strong>duraklatıp</strong> <strong>İnceleme Modu</strong>'na geçerek herhangi bir birliğe tıklayıp detaylı bilgi okuyabilir.</p>
+
+      <div class="analogy">
+        <p class="txt-en"><strong>Analogy:</strong> Think of it as a "Netflix documentary you can pause and explore." The timeline plays like a film, but pausing turns it into a museum exhibit where you can walk around and read every label.</p>
+        <p class="txt-tr"><strong>Benzetme:</strong> Bunu "duraklatıp keşfedebildiğin bir Netflix belgeseli" gibi düşün. Zaman çizelgesi film gibi oynar, ama duraklattığında etrafında gezinip her etiketi okuyabileceğin bir müze sergisine dönüşür.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ PRIORITY LEGEND ═══════════ -->
+    <section class="card">
+      <h2 class="txt-en">Priority Legend</h2>
+      <h2 class="txt-tr">Öncelik Açıklaması</h2>
+      <div class="badge-row" style="gap:16px;">
+        <span><span class="priority-tag must">MUST</span> <span class="txt-en">– Core feature, project fails without it</span><span class="txt-tr">– Temel özellik, bu olmadan proje işlemez</span></span>
+        <span><span class="priority-tag should">SHOULD</span> <span class="txt-en">– Important, strong expectation</span><span class="txt-tr">– Önemli, güçlü beklenti</span></span>
+        <span><span class="priority-tag nice">NICE</span> <span class="txt-en">– Enhancement, adds polish</span><span class="txt-tr">– Geliştirme, kaliteyi artırır</span></span>
+      </div>
+    </section>
+
+    <!-- ═══════════ REQ 1: MAP ═══════════ -->
+    <section class="card">
+      <span class="level">REQ-1</span><span class="priority-tag must">MUST</span>
+      <h2 class="txt-en">Stylized SVG Map Layer</h2>
+      <h2 class="txt-tr">Stilize SVG Harita Katmanı</h2>
+
+      <p class="txt-en">Render a top-down SVG map of the Gallipoli Peninsula and Dardanelles Strait. This is the visual foundation of the entire application.</p>
+      <p class="txt-tr">Gelibolu Yarımadası ve Çanakkale Boğazı'nın kuşbakışı SVG haritasını oluştur. Bu, tüm uygulamanın görsel temelidir.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="txt-en">Requirement</th>
+              <th class="txt-tr">Gereksinim</th>
+              <th class="txt-en">Detail</th>
+              <th class="txt-tr">Detay</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt-en">Peninsula terrain</td>
+              <td class="txt-tr">Yarımada arazi</td>
+              <td class="txt-en">Show Gallipoli peninsula landmass with coastline, hills represented by contour shading</td>
+              <td class="txt-tr">Gelibolu yarımadası kara kütlesi, kıyı çizgisi, tepeler kontur gölgelendirmesiyle</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Key locations</td>
+              <td class="txt-tr">Anahtar konumlar</td>
+              <td class="txt-en">Label: Seddülbahir, Arıburnu (ANZAC Cove), Conkbayırı, Kilitbahir Plateau, Kumkale, the Narrows</td>
+              <td class="txt-tr">Etiketler: Seddülbahir, Arıburnu (ANZAC Koyu), Conkbayırı, Kilitbahir Platsu, Kumkale, Boğaz</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Fortifications</td>
+              <td class="txt-tr">Tahkimatlar</td>
+              <td class="txt-en">Show Ottoman coastal batteries, minefield lines across the strait</td>
+              <td class="txt-tr">Osmanlı kıyı bataryaları, boğaz boyunca mayın hatları</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Color palette</td>
+              <td class="txt-tr">Renk paleti</td>
+              <td class="txt-en">Muted, period-appropriate tones: parchment, military green/brown, dark sea blue</td>
+              <td class="txt-tr">Dönem uyumlu tonlar: parşömen, askeri yeşil/kahve, koyu deniz mavisi</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Asian shore</td>
+              <td class="txt-tr">Anadolu kıyısı</td>
+              <td class="txt-en">Visible but secondary; used during Phase 1 (naval) and Kumkale landing</td>
+              <td class="txt-tr">Görünür ama ikincil; Faz 1 (deniz) ve Kumkale çıkarmasında kullanılır</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Zoom / pan</td>
+              <td class="txt-tr">Yakınlaştırma / kaydırma</td>
+              <td class="txt-en">Optional: pinch-zoom and drag-pan for detail examination</td>
+              <td class="txt-tr">Opsiyonel: detay inceleme için yakınlaştırma ve sürükleme</td>
+              <td><span class="priority-tag nice">NICE</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bad">
+        <p class="txt-en"><strong>Wrong approach:</strong> Using a Leaflet/Mapbox real map with modern roads and city labels.</p>
+        <p class="txt-tr"><strong>Yanlış yaklaşım:</strong> Leaflet/Mapbox ile modern yollar ve şehir etiketleri olan gerçek harita kullanmak.</p>
+      </div>
+      <div class="good">
+        <p class="txt-en"><strong>Right approach:</strong> Custom SVG illustration showing only 1915-era geography, fortifications, and terrain features.</p>
+        <p class="txt-tr"><strong>Doğru yaklaşım:</strong> Yalnızca 1915 dönemi coğrafyası, tahkimatlar ve arazi özelliklerini gösteren özel SVG çizimi.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ REQ 2: UNITS ═══════════ -->
+    <section class="card">
+      <span class="level">REQ-2</span><span class="priority-tag must">MUST</span>
+      <h2 class="txt-en">Military Units & Forces</h2>
+      <h2 class="txt-tr">Askeri Birlikler & Kuvvetler</h2>
+
+      <p class="txt-en">Each military unit is represented as a small animated token on the map. Units must be visually distinguishable by faction.</p>
+      <p class="txt-tr">Her askeri birlik haritada küçük animasyonlu bir simge olarak temsil edilir. Birlikler taraf bazında görsel olarak ayırt edilebilir olmalıdır.</p>
+
+      <div class="unit-legend">
+        <span><span class="unit-dot" style="background:#ef4444;"></span> <span class="txt-en">Ottoman Forces</span><span class="txt-tr">Osmanlı Kuvvetleri</span></span>
+        <span><span class="unit-dot" style="background:#60a5fa;"></span> <span class="txt-en">British Forces</span><span class="txt-tr">İngiliz Kuvvetleri</span></span>
+        <span><span class="unit-dot" style="background:#34d399;"></span> <span class="txt-en">ANZAC Forces</span><span class="txt-tr">ANZAC Kuvvetleri</span></span>
+        <span><span class="unit-dot" style="background:#c084fc;"></span> <span class="txt-en">French Forces</span><span class="txt-tr">Fransız Kuvvetleri</span></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="txt-en">Requirement</th>
+              <th class="txt-tr">Gereksinim</th>
+              <th class="txt-en">Detail</th>
+              <th class="txt-tr">Detay</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt-en">Distinct shapes + colors</td>
+              <td class="txt-tr">Farklı şekil + renk</td>
+              <td class="txt-en">Each faction has unique icon shape (circle, diamond, square, triangle) AND color</td>
+              <td class="txt-tr">Her tarafa özgü simge şekli (daire, baklava, kare, üçgen) VE renk</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Unit label</td>
+              <td class="txt-tr">Birlik etiketi</td>
+              <td class="txt-en">Small text showing unit name (e.g. "57. Alay", "Lancashire Fusiliers")</td>
+              <td class="txt-tr">Birlik adını gösteren küçük metin (ör. "57. Alay", "Lancashire Fusiliers")</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Hover tooltip</td>
+              <td class="txt-tr">Üzerine gelme bilgisi</td>
+              <td class="txt-en">Hovering shows: unit name + commander name (quick glance info)</td>
+              <td class="txt-tr">Üzerine gelindiğinde: birlik adı + komutan adı (hızlı bakış)</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Naval ships</td>
+              <td class="txt-tr">Savaş gemileri</td>
+              <td class="txt-en">Allied fleet ships shown as ship icons during naval phase; sunk ships marked with ✕</td>
+              <td class="txt-tr">Müttefik donanma gemileri deniz fazında gemi simgesi olarak; batan gemiler ✕ ile işaretli</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="small-title txt-en">Key units to include</p>
+      <p class="small-title txt-tr">Dahil edilecek önemli birlikler</p>
+      <pre><code>{
+  "ottoman": [
+    { "id": "57-alay", "name": "57. Alay", "commander": "Yarbay Mustafa Kemal", "type": "infantry" },
+    { "id": "19-tumen", "name": "19. Tümen", "commander": "Yarbay Mustafa Kemal", "type": "division" },
+    { "id": "9-tumen", "name": "9. Tümen", "commander": "Albay Halil Sami", "type": "division" },
+    { "id": "nusret", "name": "Nusret Mayın Gemisi", "commander": "Yzb. Tophaneli Hakkı", "type": "naval" }
+  ],
+  "british": [
+    { "id": "29-div", "name": "29th Division", "commander": "Maj Gen Hunter-Weston", "type": "division" },
+    { "id": "hms-irresistible", "name": "HMS Irresistible", "commander": "Capt. Dent", "type": "naval" }
+  ],
+  "anzac": [
+    { "id": "anzac-1div", "name": "1st Australian Div", "commander": "Maj Gen Bridges", "type": "division" },
+    { "id": "nz-inf", "name": "NZ Infantry Brigade", "commander": "Col. Johnston", "type": "brigade" }
+  ],
+  "french": [
+    { "id": "fr-corps", "name": "Corps Expéditionnaire", "commander": "Gén. d'Amade", "type": "corps" }
+  ]
+}</code></pre>
+    </section>
+
+    <!-- ═══════════ REQ 3: TIMELINE ENGINE ═══════════ -->
+    <section class="card">
+      <span class="level">REQ-3</span><span class="priority-tag must">MUST</span>
+      <h2 class="txt-en">Timeline & Animation Engine</h2>
+      <h2 class="txt-tr">Zaman Çizelgesi & Animasyon Motoru</h2>
+
+      <p class="txt-en">The heart of the application. Divides the campaign into key phases and auto-plays smooth unit movements and attack animations between them.</p>
+      <p class="txt-tr">Uygulamanın kalbi. Muharebeyi ana fazlara böler ve fazlar arası düzgün birlik hareketleri ile saldırı animasyonlarını otomatik oynatır.</p>
+
+      <div class="grid-3">
+        <article class="card">
+          <h3 style="color: #60a5fa;">Phase 1</h3>
+          <p class="txt-en"><strong>Naval Assault</strong><br>18 March 1915</p>
+          <p class="txt-tr"><strong>Deniz Saldırısı</strong><br>18 Mart 1915</p>
+          <p class="muted txt-en">Allied fleet enters strait; mines + coastal batteries; 3 ships sunk, 3 crippled</p>
+          <p class="muted txt-tr">Müttefik donanma boğaza girer; mayınlar + kıyı bataryaları; 3 gemi batar, 3'ü hasar alır</p>
+        </article>
+        <article class="card">
+          <h3 style="color: #34d399;">Phase 2</h3>
+          <p class="txt-en"><strong>April Landings</strong><br>25 April 1915</p>
+          <p class="txt-tr"><strong>Nisan Çıkarması</strong><br>25 Nisan 1915</p>
+          <p class="muted txt-en">Simultaneous beach landings at Cape Helles and ANZAC Cove; Kumkale diversion</p>
+          <p class="muted txt-tr">Seddülbahir ve Arıburnu'na eş zamanlı çıkarma; Kumkale oyalama</p>
+        </article>
+        <article class="card">
+          <h3 style="color: #ef4444;">Phase 3</h3>
+          <p class="txt-en"><strong>Arıburnu/ANZAC Battles</strong><br>April – May 1915</p>
+          <p class="txt-tr"><strong>Arıburnu/ANZAC Muharebeleri</strong><br>Nisan – Mayıs 1915</p>
+          <p class="muted txt-en">Mustafa Kemal's 57th Regiment counterattack; trench stalemate at ANZAC sector</p>
+          <p class="muted txt-tr">Mustafa Kemal'in 57. Alay karşı saldırısı; ANZAC sektöründe siper savaşı</p>
+        </article>
+        <article class="card">
+          <h3 style="color: #c084fc;">Phase 4</h3>
+          <p class="txt-en"><strong>Seddülbahir Battles</strong><br>April – June 1915</p>
+          <p class="txt-tr"><strong>Seddülbahir Muharebeleri</strong><br>Nisan – Haziran 1915</p>
+          <p class="muted txt-en">Trench warfare at Cape Helles; Krithia battles; heavy casualties both sides</p>
+          <p class="muted txt-tr">Seddülbahir'de siper savaşı; Kirte muharebeleri; iki tarafta ağır kayıplar</p>
+        </article>
+        <article class="card">
+          <h3 style="color: #f59e0b;">Phase 5</h3>
+          <p class="txt-en"><strong>August Offensive</strong><br>6–21 August 1915</p>
+          <p class="txt-tr"><strong>Ağustos Taarruzu</strong><br>6–21 Ağustos 1915</p>
+          <p class="muted txt-en">Suvla Bay landing; Conkbayırı/Chunuk Bair assault; last major Allied push fails</p>
+          <p class="muted txt-tr">Suvla Koyu çıkarması; Conkbayırı taarruzu; son büyük Müttefik harekâtı başarısız</p>
+        </article>
+        <article class="card">
+          <h3 style="color: #9ca3af;">Phase 6</h3>
+          <p class="txt-en"><strong>Evacuation</strong><br>Dec 1915 – Jan 1916</p>
+          <p class="txt-tr"><strong>Tahliye</strong><br>Aralık 1915 – Ocak 1916</p>
+          <p class="muted txt-en">Allied forces withdraw; remarkably low casualties during retreat</p>
+          <p class="muted txt-tr">Müttefik kuvvetler çekilir; çekilme sırasında kayıp dikkat çekici ölçüde düşük</p>
+        </article>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="txt-en">Requirement</th>
+              <th class="txt-tr">Gereksinim</th>
+              <th class="txt-en">Detail</th>
+              <th class="txt-tr">Detay</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt-en">Timeline scrubber</td>
+              <td class="txt-tr">Zaman kaydırıcı</td>
+              <td class="txt-en">Horizontal bar at bottom of screen showing all 6 phases; user can click to jump to any phase</td>
+              <td class="txt-tr">Ekranın altında 6 fazı gösteren yatay çubuk; kullanıcı tıklayarak istediği faza atlayabilir</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Auto-play</td>
+              <td class="txt-tr">Otomatik oynatma</td>
+              <td class="txt-en">Smoothly animate unit movements, ship paths, and attack arrows between phases</td>
+              <td class="txt-tr">Fazlar arası birlik hareketleri, gemi rotaları ve saldırı oklarını akıcı animasyonla oynat</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Narration box</td>
+              <td class="txt-tr">Anlatım kutusu</td>
+              <td class="txt-en">Text area that updates with a brief description of what is happening in each phase (bilingual)</td>
+              <td class="txt-tr">Her fazda neler olduğunu kısaca anlatan metin alanı (iki dilli)</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Speed control</td>
+              <td class="txt-tr">Hız kontrolü</td>
+              <td class="txt-en">0.5x / 1x / 2x playback speed buttons</td>
+              <td class="txt-tr">0.5x / 1x / 2x oynatma hızı düğmeleri</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Attack arrows</td>
+              <td class="txt-tr">Saldırı okları</td>
+              <td class="txt-en">Animated directional arrows showing movement and attack directions during each phase</td>
+              <td class="txt-tr">Her fazda hareket ve saldırı yönlerini gösteren animasyonlu yön okları</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Phase transition</td>
+              <td class="txt-tr">Faz geçişi</td>
+              <td class="txt-en">Brief fade/dissolve between phases with date overlay ("18 March 1915")</td>
+              <td class="txt-tr">Fazlar arası kısa geçiş efekti ve tarih göstergesi ("18 Mart 1915")</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="analogy">
+        <p class="txt-en"><strong>Analogy:</strong> Like a football match replay with a timeline bar. The match plays automatically, you can scrub to any minute, speed it up, or slow it down to study a specific play.</p>
+        <p class="txt-tr"><strong>Benzetme:</strong> Zaman çizelgeli bir futbol maçı tekrarı gibi. Maç otomatik oynar, istediğin dakikaya atlar, hızlandırır veya belirli bir pozisyonu incelemek için yavaşlatırsın.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ REQ 4: PAUSE & INSPECT ═══════════ -->
+    <section class="card">
+      <span class="level">REQ-4</span><span class="priority-tag must">MUST</span>
+      <h2 class="txt-en">Pause & Inspect Mode</h2>
+      <h2 class="txt-tr">Duraklatma & İnceleme Modu</h2>
+
+      <p class="txt-en">The most critical interactive feature. When paused, the map becomes a fully explorable tactical board.</p>
+      <p class="txt-tr">En kritik interaktif özellik. Duraklatıldığında harita, tamamen keşfedilebilir bir taktik tahtasına dönüşür.</p>
+
+      <div class="grid-2">
+        <article class="card">
+          <h3 class="txt-en">Pause Behavior</h3>
+          <h3 class="txt-tr">Duraklatma Davranışı</h3>
+          <ul>
+            <li class="txt-en">Clicking Pause button OR pressing <code>Space</code> freezes all animation instantly</li>
+            <li class="txt-tr">Duraklat düğmesine tıklama VEYA <code>Space</code> tuşuna basma tüm animasyonu anında dondurur</li>
+            <li class="txt-en">All attack/movement arrows remain visible in frozen state</li>
+            <li class="txt-tr">Tüm saldırı/hareket okları dondurulmuş durumda görünür kalır</li>
+            <li class="txt-en">Unit positions locked at exact animation frame</li>
+            <li class="txt-tr">Birlik pozisyonları tam animasyon karesinde kilitlenir</li>
+            <li class="txt-en">Visual indicator that app is paused (pulsing border, "PAUSED" badge)</li>
+            <li class="txt-tr">Uygulamanın duraklatıldığını gösteren görsel işaret (nabız sınırı, "DURAKLATILDI" rozeti)</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3 class="txt-en">Inspect Panel (on unit click)</h3>
+          <h3 class="txt-tr">İnceleme Paneli (birlik tıklandığında)</h3>
+          <ul>
+            <li class="txt-en"><strong>Unit name</strong> and faction</li>
+            <li class="txt-tr"><strong>Birlik adı</strong> ve tarafı</li>
+            <li class="txt-en"><strong>Commander</strong> name and rank</li>
+            <li class="txt-tr"><strong>Komutan</strong> adı ve rütbesi</li>
+            <li class="txt-en"><strong>Strength</strong> – approximate troop count</li>
+            <li class="txt-tr"><strong>Mevcudiyet</strong> – yaklaşık asker sayısı</li>
+            <li class="txt-en"><strong>Current objective</strong> – what this unit is trying to do</li>
+            <li class="txt-tr"><strong>Mevcut hedef</strong> – bu birliğin ne yapmaya çalıştığı</li>
+            <li class="txt-en"><strong>Historical outcome</strong> – what actually happened</li>
+            <li class="txt-tr"><strong>Tarihî sonuç</strong> – gerçekte ne olduğu</li>
+            <li class="txt-en"><strong>Context paragraph</strong> – short narrative about this unit's role</li>
+            <li class="txt-tr"><strong>Bağlam paragrafı</strong> – bu birliğin rolü hakkında kısa anlatım</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="bad">
+        <p class="txt-en"><strong>Wrong:</strong> Pausing only stops auto-advance to next phase but doesn't freeze unit animation mid-movement.</p>
+        <p class="txt-tr"><strong>Yanlış:</strong> Duraklatma yalnızca bir sonraki faza geçişi durdurup birlik animasyonunu hareket ortasında dondurmaması.</p>
+      </div>
+      <div class="good">
+        <p class="txt-en"><strong>Right:</strong> Pausing freezes the EXACT frame — units mid-march, arrows mid-draw — creating a snapshot the user can explore.</p>
+        <p class="txt-tr"><strong>Doğru:</strong> Duraklatma TAM kareyi dondurur — yürüyüş ortasındaki birlikler, çizilmekte olan oklar — kullanıcının keşfedebileceği bir anlık görüntü.</p>
+      </div>
+
+      <div class="analogy">
+        <p class="txt-en"><strong>Analogy:</strong> Like pausing a strategy video game (Total War). The battle freezes, you hover over any regiment, and a panel shows all its stats and context.</p>
+        <p class="txt-tr"><strong>Benzetme:</strong> Bir strateji oyununu (Total War) duraklatmak gibi. Savaş donar, herhangi bir alaya gidersin ve bir panel tüm istatistik ve bağlamını gösterir.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ REQ 5: UI LAYOUT ═══════════ -->
+    <section class="card">
+      <span class="level">REQ-5</span><span class="priority-tag must">MUST</span>
+      <h2 class="txt-en">UI Layout & Controls</h2>
+      <h2 class="txt-tr">Arayüz Yerleşimi & Kontroller</h2>
+
+      <svg viewBox="0 0 900 420" width="100%" role="img" aria-label="UI layout wireframe">
+        <rect x="1" y="1" width="898" height="418" rx="14" fill="rgba(2,6,23,0.45)" stroke="#334155"/>
+
+        <!-- Top bar -->
+        <rect x="10" y="10" width="880" height="50" rx="8" fill="#101a2d" stroke="#30435f"/>
+        <text x="30" y="42" fill="#fca5a5" font-size="14" font-family="monospace" font-weight="bold">Çanakkale Savaşı 1915</text>
+        <rect x="380" y="22" width="140" height="26" rx="13" fill="#1c2a46" stroke="#4a6fa5"/>
+        <text x="405" y="40" fill="#93c5fd" font-size="11" font-family="monospace">Phase 2: Landings</text>
+        <rect x="780" y="22" width="90" height="26" rx="13" fill="#1c2a46" stroke="#4a6fa5"/>
+        <text x="796" y="40" fill="#fde68a" font-size="11" font-family="monospace">EN / TR</text>
+
+        <!-- Main map area -->
+        <rect x="10" y="70" width="620" height="280" rx="8" fill="#0a1a12" stroke="#30435f"/>
+        <text x="260" y="215" fill="#365314" font-size="18" font-family="monospace" opacity="0.6">MAP AREA</text>
+        <!-- mini peninsula -->
+        <path d="M200 110 L240 120 L260 160 L270 200 L250 240 L230 270 L210 290 L190 280 L180 240 L175 200 L180 150 L190 120 Z"
+              fill="#1a3a0a" stroke="#4d7c0f" stroke-width="1" opacity="0.4"/>
+
+        <!-- Right panel -->
+        <rect x="640" y="70" width="250" height="280" rx="8" fill="#111827" stroke="#30435f"/>
+        <text x="660" y="100" fill="#93c5fd" font-size="11" font-family="monospace">INSPECT PANEL</text>
+        <rect x="655" y="112" width="220" height="1" fill="#30435f"/>
+        <text x="660" y="134" fill="#fca5a5" font-size="10" font-family="monospace">Unit: 57. Alay</text>
+        <text x="660" y="154" fill="#e5e7eb" font-size="10" font-family="monospace">Cmdr: Yarbay M. Kemal</text>
+        <text x="660" y="174" fill="#e5e7eb" font-size="10" font-family="monospace">Strength: ~3,000</text>
+        <text x="660" y="194" fill="#e5e7eb" font-size="10" font-family="monospace">Objective: Hold Conkbayırı</text>
+        <text x="660" y="224" fill="#9ca3af" font-size="9" font-family="monospace">Ordered to counterattack</text>
+        <text x="660" y="240" fill="#9ca3af" font-size="9" font-family="monospace">the ANZAC advance at dawn.</text>
+        <text x="660" y="256" fill="#9ca3af" font-size="9" font-family="monospace">"I order you not just to</text>
+        <text x="660" y="272" fill="#9ca3af" font-size="9" font-family="monospace">attack, but to die."</text>
+
+        <!-- Bottom bar -->
+        <rect x="10" y="360" width="880" height="50" rx="8" fill="#101a2d" stroke="#30435f"/>
+
+        <!-- Play/pause -->
+        <rect x="30" y="372" width="70" height="26" rx="13" fill="#1f2937" stroke="#ef4444"/>
+        <text x="43" y="390" fill="#fca5a5" font-size="11" font-family="monospace">▶ PLAY</text>
+
+        <!-- Speed controls -->
+        <rect x="115" y="372" width="40" height="26" rx="13" fill="#1f2937" stroke="#30435f"/>
+        <text x="124" y="390" fill="#9ca3af" font-size="10" font-family="monospace">0.5x</text>
+        <rect x="162" y="372" width="32" height="26" rx="13" fill="#2a3a5a" stroke="#60a5fa"/>
+        <text x="172" y="390" fill="#93c5fd" font-size="10" font-family="monospace">1x</text>
+        <rect x="200" y="372" width="32" height="26" rx="13" fill="#1f2937" stroke="#30435f"/>
+        <text x="210" y="390" fill="#9ca3af" font-size="10" font-family="monospace">2x</text>
+
+        <!-- Timeline scrubber -->
+        <rect x="260" y="380" width="610" height="10" rx="5" fill="#1f2937"/>
+        <rect x="260" y="380" width="200" height="10" rx="5" fill="#ef4444" opacity="0.6"/>
+        <circle cx="460" cy="385" r="7" fill="#fde68a">
+          <animate attributeName="cx" values="260;870;260" dur="12s" repeatCount="indefinite"/>
+        </circle>
+
+        <!-- Phase markers on timeline -->
+        <line x1="362" y1="375" x2="362" y2="395" stroke="#4a6fa5" stroke-width="1"/>
+        <line x1="464" y1="375" x2="464" y2="395" stroke="#4a6fa5" stroke-width="1"/>
+        <line x1="566" y1="375" x2="566" y2="395" stroke="#4a6fa5" stroke-width="1"/>
+        <line x1="668" y1="375" x2="668" y2="395" stroke="#4a6fa5" stroke-width="1"/>
+        <line x1="770" y1="375" x2="770" y2="395" stroke="#4a6fa5" stroke-width="1"/>
+
+        <text x="270" y="370" fill="#9ca3af" font-size="8" font-family="monospace">18 Mar</text>
+        <text x="370" y="370" fill="#9ca3af" font-size="8" font-family="monospace">25 Apr</text>
+        <text x="470" y="370" fill="#9ca3af" font-size="8" font-family="monospace">May</text>
+        <text x="570" y="370" fill="#9ca3af" font-size="8" font-family="monospace">Jun</text>
+        <text x="670" y="370" fill="#9ca3af" font-size="8" font-family="monospace">Aug</text>
+        <text x="770" y="370" fill="#9ca3af" font-size="8" font-family="monospace">Dec</text>
+      </svg>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="txt-en">Zone</th>
+              <th class="txt-tr">Alan</th>
+              <th class="txt-en">Contents</th>
+              <th class="txt-tr">İçerik</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt-en">Top Bar</td>
+              <td class="txt-tr">Üst Çubuk</td>
+              <td class="txt-en">Title "Çanakkale Savaşı 1915", current phase indicator, language toggle (EN/TR)</td>
+              <td class="txt-tr">Başlık "Çanakkale Savaşı 1915", mevcut faz göstergesi, dil değiştirici (EN/TR)</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Center</td>
+              <td class="txt-tr">Merkez</td>
+              <td class="txt-en">SVG map with animated units, arrows, and narration overlay</td>
+              <td class="txt-tr">Animasyonlu birimler, oklar ve anlatım katmanı ile SVG harita</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Right Panel</td>
+              <td class="txt-tr">Sağ Panel</td>
+              <td class="txt-en">Collapsible inspect panel; shows unit detail when clicked in paused state</td>
+              <td class="txt-tr">Daraltılabilir inceleme paneli; duraklatılmış durumda tıklanan birlik detayı</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Bottom Bar</td>
+              <td class="txt-tr">Alt Çubuk</td>
+              <td class="txt-en">Play/Pause, speed control (0.5x/1x/2x), timeline scrubber with phase markers</td>
+              <td class="txt-tr">Oynat/Duraklat, hız kontrolü (0.5x/1x/2x), faz işaretli zaman kaydırıcı</td>
+              <td><span class="priority-tag must">MUST</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Narration Box</td>
+              <td class="txt-tr">Anlatım Kutusu</td>
+              <td class="txt-en">Semi-transparent overlay on bottom-left of map showing phase description text</td>
+              <td class="txt-tr">Haritanın sol altında faz açıklama metnini gösteren yarı saydam katman</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════ REQ 6: DATA MODEL ═══════════ -->
+    <section class="card">
+      <span class="level">REQ-6</span><span class="priority-tag must">MUST</span>
+      <h2 class="txt-en">Structured Data Model (JSON)</h2>
+      <h2 class="txt-tr">Yapılandırılmış Veri Modeli (JSON)</h2>
+
+      <p class="txt-en">All battle data must be stored in a structured JSON object. This allows the data to be extended, corrected, or translated without touching the rendering code.</p>
+      <p class="txt-tr">Tüm savaş verileri yapılandırılmış bir JSON nesnesinde saklanmalıdır. Bu, verilerin render koduna dokunmadan genişletilmesine, düzeltilmesine veya çevrilmesine olanak tanır.</p>
+
+      <pre><code>{
+  "phases": [
+    {
+      "id": "naval-assault",
+      "date": "1915-03-18",
+      "title": { "en": "Naval Assault", "tr": "Deniz Saldırısı" },
+      "narration": {
+        "en": "The Allied fleet of 18 warships enters...",
+        "tr": "18 savaş gemisinden oluşan Müttefik donanması..."
+      },
+      "units": [
+        {
+          "id": "57-alay",
+          "position": { "x": 145, "y": 82 },
+          "status": "defending",
+          "strength": 3000,
+          "objective": { "en": "Defend hilltop", "tr": "Tepeyi savun" },
+          "outcome": { "en": "Successfully held...", "tr": "Başarıyla tuttu..." }
+        }
+      ],
+      "arrows": [
+        {
+          "from": { "x": 300, "y": 50 },
+          "to": { "x": 220, "y": 140 },
+          "type": "naval-advance",
+          "faction": "british"
+        }
+      ]
+    }
+  ]
+}</code></pre>
+
+      <div class="analogy">
+        <p class="txt-en"><strong>Analogy:</strong> The JSON is the screenplay. The rendering engine is the film crew. A bad screenplay can't be saved by a good camera — get the data structure right first.</p>
+        <p class="txt-tr"><strong>Benzetme:</strong> JSON senaryodur. Render motoru film ekibidir. Kötü senaryoyu iyi kamera kurtaramaz — önce veri yapısını doğru kur.</p>
+      </div>
+
+      <div class="note">
+        <p class="txt-en"><strong>Key principle:</strong> Every text field that users see (titles, narrations, unit descriptions) must have <code>{ "en": "...", "tr": "..." }</code> structure for bilingual support.</p>
+        <p class="txt-tr"><strong>Temel ilke:</strong> Kullanıcıların gördüğü her metin alanı (başlıklar, anlatımlar, birlik açıklamaları) iki dil desteği için <code>{ "en": "...", "tr": "..." }</code> yapısına sahip olmalıdır.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ REQ 7: LANGUAGE ═══════════ -->
+    <section class="grid-2">
+      <article class="card">
+        <span class="level">REQ-7</span><span class="priority-tag should">SHOULD</span>
+        <h2 class="txt-en">Bilingual Support (EN/TR)</h2>
+        <h2 class="txt-tr">İki Dil Desteği (EN/TR)</h2>
+
+        <ul>
+          <li class="txt-en">Language toggle in top bar (same style as this document's toggle)</li>
+          <li class="txt-tr">Üst çubuğa dil değiştirici (bu belgenin dil değiştiricisiyle aynı stil)</li>
+          <li class="txt-en">All narrations, unit descriptions, and UI labels switch instantly</li>
+          <li class="txt-tr">Tüm anlatımlar, birlik açıklamaları ve arayüz etiketleri anında değişir</li>
+          <li class="txt-en">Place names remain in Turkish (Seddülbahir, Arıburnu, Conkbayırı) in both languages</li>
+          <li class="txt-tr">Yer isimleri her iki dilde de Türkçe kalır (Seddülbahir, Arıburnu, Conkbayırı)</li>
+          <li class="txt-en">User preference persisted in localStorage</li>
+          <li class="txt-tr">Kullanıcı tercihi localStorage'da saklanır</li>
+        </ul>
+
+        <div class="good">
+          <p class="txt-en"><strong>Right:</strong> "Arıburnu (ANZAC Cove)" — Turkish name primary, English alias in parentheses.</p>
+          <p class="txt-tr"><strong>Doğru:</strong> "Arıburnu (ANZAC Koyu)" — Türkçe isim birincil, İngilizce takma ad parantez içinde.</p>
+        </div>
+      </article>
+
+      <!-- ═══════════ REQ 8: ANIMATION ═══════════ -->
+      <article class="card">
+        <span class="level">REQ-8</span><span class="priority-tag should">SHOULD</span>
+        <h2 class="txt-en">Animation & Transitions</h2>
+        <h2 class="txt-tr">Animasyon & Geçişler</h2>
+
+        <ul>
+          <li class="txt-en">CSS transitions or GSAP for smooth unit movement</li>
+          <li class="txt-tr">Akıcı birlik hareketi için CSS geçişleri veya GSAP</li>
+          <li class="txt-en">Ship paths animated as moving along SVG path curves</li>
+          <li class="txt-tr">Gemi rotaları SVG yol eğrileri boyunca hareketle animasyonlu</li>
+          <li class="txt-en">Attack arrows draw progressively (stroke-dashoffset technique)</li>
+          <li class="txt-tr">Saldırı okları aşamalı çizilir (stroke-dashoffset tekniği)</li>
+          <li class="txt-en">Explosion/impact indicators at landing beaches</li>
+          <li class="txt-tr">Çıkarma plajlarında patlama/etki göstergeleri</li>
+          <li class="txt-en">Sunk ships: fade + tilt animation with ✕ marker</li>
+          <li class="txt-tr">Batan gemiler: solma + eğilme animasyonu ile ✕ işareti</li>
+        </ul>
+
+        <div class="note">
+          <p class="txt-en"><strong>Performance note:</strong> Prefer CSS animations over JS where possible. Use <code>will-change: transform</code> on animated elements. Keep animated elements under 50 for smooth 60fps.</p>
+          <p class="txt-tr"><strong>Performans notu:</strong> Mümkünse JS yerine CSS animasyonlarını tercih et. Animasyonlu öğelerde <code>will-change: transform</code> kullan. Akıcı 60fps için animasyonlu öğeleri 50'nin altında tut.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ═══════════ REQ 9: RESPONSIVE ═══════════ -->
+    <section class="card">
+      <span class="level">REQ-9</span><span class="priority-tag nice">NICE</span>
+      <h2 class="txt-en">Responsive & Accessibility</h2>
+      <h2 class="txt-tr">Uyumluluk & Erişilebilirlik</h2>
+
+      <div class="grid-3">
+        <article class="card">
+          <h3 class="txt-en">Desktop (Primary)</h3>
+          <h3 class="txt-tr">Masaüstü (Birincil)</h3>
+          <p class="txt-en">Map + side panel + bottom bar. Full experience with hover tooltips.</p>
+          <p class="txt-tr">Harita + yan panel + alt çubuk. Hover bilgi kutuları ile tam deneyim.</p>
+        </article>
+        <article class="card">
+          <h3 class="txt-en">Tablet</h3>
+          <h3 class="txt-tr">Tablet</h3>
+          <p class="txt-en">Side panel becomes bottom drawer. Map fills screen. Tap-to-inspect replaces hover.</p>
+          <p class="txt-tr">Yan panel alt çekmece olur. Harita ekranı kaplar. Hover yerine dokunarak inceleme.</p>
+        </article>
+        <article class="card">
+          <h3 class="txt-en">Mobile</h3>
+          <h3 class="txt-tr">Mobil</h3>
+          <p class="txt-en">Simplified: timeline + map stacked vertically. Inspect panel as modal overlay.</p>
+          <p class="txt-tr">Basitleştirilmiş: zaman çizelgesi + harita dikey yığın. İnceleme paneli modal olarak.</p>
+        </article>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="txt-en">Accessibility Feature</th>
+              <th class="txt-tr">Erişilebilirlik Özelliği</th>
+              <th class="txt-en">Implementation</th>
+              <th class="txt-tr">Uygulama</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt-en">Keyboard navigation</td>
+              <td class="txt-tr">Klavye navigasyonu</td>
+              <td class="txt-en">Space = pause, arrow keys = scrub timeline, Tab = cycle units</td>
+              <td class="txt-tr">Space = duraklat, ok tuşları = zaman kaydır, Tab = birimler arası geç</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">ARIA labels</td>
+              <td class="txt-tr">ARIA etiketleri</td>
+              <td class="txt-en">All interactive elements properly labeled for screen readers</td>
+              <td class="txt-tr">Tüm etkileşimli öğeler ekran okuyucular için düzgün etiketlenir</td>
+              <td><span class="priority-tag nice">NICE</span></td>
+            </tr>
+            <tr>
+              <td class="txt-en">Color-blind safe</td>
+              <td class="txt-tr">Renk körü güvenli</td>
+              <td class="txt-en">Different shapes per faction (not just colors) ensure distinction</td>
+              <td class="txt-tr">Her taraf için farklı şekiller (sadece renk değil) ayrımı sağlar</td>
+              <td><span class="priority-tag should">SHOULD</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════ TECH STACK ═══════════ -->
+    <section class="card">
+      <span class="level">TECH STACK</span><span class="xp">DECISION</span>
+      <h2 class="txt-en">Recommended Technology Choices</h2>
+      <h2 class="txt-tr">Önerilen Teknoloji Seçimleri</h2>
+
+      <div class="grid-2">
+        <article class="card">
+          <h3 class="txt-en">Option A: Single-File HTML (Simpler)</h3>
+          <h3 class="txt-tr">Seçenek A: Tek Dosya HTML (Basit)</h3>
+          <pre><code>- Vanilla JS + SVG
+- CSS animations
+- All data in inline JSON
+- No build step
+- Best for: quick prototype, sharing as single file</code></pre>
+          <div class="good">
+            <p class="txt-en"><strong>Pro:</strong> Zero setup, portable, easy to iterate with AI coding tools.</p>
+            <p class="txt-tr"><strong>Artı:</strong> Sıfır kurulum, taşınabilir, AI araçlarıyla kolay iterasyon.</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3 class="txt-en">Option B: React Application (Scalable)</h3>
+          <h3 class="txt-tr">Seçenek B: React Uygulaması (Ölçeklenebilir)</h3>
+          <pre><code>- React + Hooks + JSX
+- Framer Motion / GSAP
+- Separate JSON data file
+- Component architecture
+- Best for: extending later, adding features</code></pre>
+          <div class="good">
+            <p class="txt-en"><strong>Pro:</strong> Clean state management, reusable components, easier to scale.</p>
+            <p class="txt-tr"><strong>Artı:</strong> Temiz durum yönetimi, yeniden kullanılabilir bileşenler, ölçeklendirilmesi kolay.</p>
+          </div>
+        </article>
+      </div>
+
+      <div class="note">
+        <p class="txt-en"><strong>Recommendation:</strong> Start with Option A (single-file) to get a working prototype, then migrate to Option B if the project needs to grow.</p>
+        <p class="txt-tr"><strong>Öneri:</strong> Çalışan bir prototip için Seçenek A (tek dosya) ile başla, proje büyümesi gerekirse Seçenek B'ye geç.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ BUILD PHASES ═══════════ -->
+    <section class="card">
+      <span class="level">BUILD PLAN</span><span class="xp">ROADMAP</span>
+      <h2 class="txt-en">Incremental Build Phases</h2>
+      <h2 class="txt-tr">Aşamalı Geliştirme Planı</h2>
+
+      <p class="txt-en">Do NOT try to build everything in one prompt. Break into iterations:</p>
+      <p class="txt-tr">Her şeyi tek bir prompt'ta inşa etmeye ÇALIŞMA. İterasyonlara böl:</p>
+
+      <svg viewBox="0 0 1040 120" width="100%" role="img" aria-label="Build phase flow">
+        <rect x="1" y="1" width="1038" height="118" rx="14" fill="rgba(2,6,23,0.35)" stroke="#334155"/>
+
+        <path d="M80 65 L235 65 L390 65 L545 65 L700 65 L855 65" fill="none" stroke="url(#buildFlow)" stroke-width="5" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="buildFlow" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ef4444"/>
+            <stop offset="50%" stop-color="#f59e0b"/>
+            <stop offset="100%" stop-color="#34d399"/>
+          </linearGradient>
+        </defs>
+        <circle r="6" fill="#fde68a">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M80 65 L235 65 L390 65 L545 65 L700 65 L855 65"/>
+        </circle>
+
+        <g>
+          <rect x="30" y="35" width="100" height="60" rx="10" fill="#0f172a" stroke="#ef4444"/>
+          <text x="44" y="60" fill="#fca5a5" font-size="10" font-family="monospace">Sprint 1</text>
+          <text x="44" y="76" fill="#cbd5e1" font-size="9" font-family="monospace">Map + Units</text>
+        </g>
+        <g>
+          <rect x="185" y="35" width="100" height="60" rx="10" fill="#0f172a" stroke="#ef4444"/>
+          <text x="199" y="60" fill="#fca5a5" font-size="10" font-family="monospace">Sprint 2</text>
+          <text x="199" y="76" fill="#cbd5e1" font-size="9" font-family="monospace">Timeline</text>
+        </g>
+        <g>
+          <rect x="340" y="35" width="100" height="60" rx="10" fill="#0f172a" stroke="#f59e0b"/>
+          <text x="354" y="60" fill="#fde68a" font-size="10" font-family="monospace">Sprint 3</text>
+          <text x="354" y="76" fill="#cbd5e1" font-size="9" font-family="monospace">Pause/Inspect</text>
+        </g>
+        <g>
+          <rect x="495" y="35" width="100" height="60" rx="10" fill="#0f172a" stroke="#f59e0b"/>
+          <text x="509" y="60" fill="#fde68a" font-size="10" font-family="monospace">Sprint 4</text>
+          <text x="509" y="76" fill="#cbd5e1" font-size="9" font-family="monospace">Animations</text>
+        </g>
+        <g>
+          <rect x="650" y="35" width="100" height="60" rx="10" fill="#0f172a" stroke="#34d399"/>
+          <text x="664" y="60" fill="#a7f3d0" font-size="10" font-family="monospace">Sprint 5</text>
+          <text x="664" y="76" fill="#cbd5e1" font-size="9" font-family="monospace">Data + i18n</text>
+        </g>
+        <g>
+          <rect x="805" y="35" width="100" height="60" rx="10" fill="#111827" stroke="#34d399"/>
+          <text x="819" y="60" fill="#a7f3d0" font-size="10" font-family="monospace">Sprint 6</text>
+          <text x="819" y="76" fill="#cbd5e1" font-size="9" font-family="monospace">Polish</text>
+        </g>
+      </svg>
+
+      <div class="grid-3">
+        <article class="card">
+          <h3 class="txt-en">Sprint 1–2: Foundation</h3>
+          <h3 class="txt-tr">Sprint 1–2: Temel</h3>
+          <p class="txt-en">Static SVG map with unit tokens placed. Timeline bar renders but doesn't animate yet. Click a unit → console logs data.</p>
+          <p class="txt-tr">Birlik simgeleri yerleştirilmiş statik SVG harita. Zaman çubuğu render edilir ama henüz animasyon yok. Birime tıkla → konsolda veri.</p>
+        </article>
+        <article class="card">
+          <h3 class="txt-en">Sprint 3–4: Interaction</h3>
+          <h3 class="txt-tr">Sprint 3–4: Etkileşim</h3>
+          <p class="txt-en">Pause/resume working. Side panel opens with unit detail. Auto-play moves units between phases. Arrows animate.</p>
+          <p class="txt-tr">Duraklat/devam çalışıyor. Yan panel birlik detayıyla açılıyor. Otomatik oynatma birlikleri fazlar arası hareket ettiriyor. Oklar animasyonlu.</p>
+        </article>
+        <article class="card">
+          <h3 class="txt-en">Sprint 5–6: Polish</h3>
+          <h3 class="txt-tr">Sprint 5–6: Cilalama</h3>
+          <p class="txt-en">Full historical data filled in. EN/TR toggle. Speed control. Phase transitions. Visual polish and responsive tweaks.</p>
+          <p class="txt-tr">Tüm tarihî veriler doldurulmuş. EN/TR geçişi. Hız kontrolü. Faz geçişleri. Görsel cilalama ve uyumlu tasarım ayarları.</p>
+        </article>
+      </div>
+
+      <div class="analogy">
+        <p class="txt-en"><strong>Analogy:</strong> Build a house: first the foundation and walls (map + units), then the plumbing and wiring (timeline + interactivity), then paint and furnish (animations + data + polish).</p>
+        <p class="txt-tr"><strong>Benzetme:</strong> Ev inşaatı gibi: önce temel ve duvarlar (harita + birlikler), sonra tesisat ve elektrik (zaman çizelgesi + etkileşim), sonra boya ve mobilya (animasyonlar + veri + cilalama).</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ ACCEPTANCE CRITERIA ═══════════ -->
+    <section class="card">
+      <span class="level">CHECKPOINT</span><span class="xp">ACCEPTANCE</span>
+      <h2 class="txt-en">Acceptance Criteria Checklist</h2>
+      <h2 class="txt-tr">Kabul Kriteri Kontrol Listesi</h2>
+
+      <div class="grid-2">
+        <div>
+          <p class="small-title txt-en">MUST PASS</p>
+          <p class="small-title txt-tr">GEÇMELİ</p>
+          <ul>
+            <li class="txt-en">SVG map renders Gallipoli peninsula with labeled key locations</li>
+            <li class="txt-tr">SVG harita etiketli anahtar konumlarla Gelibolu yarımadasını render eder</li>
+            <li class="txt-en">At least 8 military unit tokens visible on map</li>
+            <li class="txt-tr">Haritada en az 8 askeri birlik simgesi görünür</li>
+            <li class="txt-en">Units visually distinguishable by faction (color + shape)</li>
+            <li class="txt-tr">Birlikler taraf bazında görsel olarak ayırt edilebilir (renk + şekil)</li>
+            <li class="txt-en">Timeline shows 6 phases and responds to click</li>
+            <li class="txt-tr">Zaman çizelgesi 6 fazı gösterir ve tıklamaya yanıt verir</li>
+            <li class="txt-en">Auto-play moves units between phases</li>
+            <li class="txt-tr">Otomatik oynatma birlikleri fazlar arasında hareket ettirir</li>
+            <li class="txt-en">Space key pauses/resumes animation</li>
+            <li class="txt-tr">Space tuşu animasyonu duraklatır/devam ettirir</li>
+            <li class="txt-en">Clicking a unit while paused opens inspect panel with details</li>
+            <li class="txt-tr">Duraklatılmışken birime tıklamak detaylı inceleme paneli açar</li>
+            <li class="txt-en">All data stored in structured JSON</li>
+            <li class="txt-tr">Tüm veriler yapılandırılmış JSON'da saklanır</li>
+          </ul>
+        </div>
+        <div>
+          <p class="small-title txt-en">SHOULD PASS</p>
+          <p class="small-title txt-tr">GEÇMESİ BEKLENİR</p>
+          <ul>
+            <li class="txt-en">EN/TR language toggle works</li>
+            <li class="txt-tr">EN/TR dil değiştirici çalışır</li>
+            <li class="txt-en">Narration text updates per phase</li>
+            <li class="txt-tr">Anlatım metni faz başına güncellenir</li>
+            <li class="txt-en">Attack arrows animate directionally</li>
+            <li class="txt-tr">Saldırı okları yönsel olarak animasyonlanır</li>
+            <li class="txt-en">Speed control (0.5x/1x/2x) affects playback</li>
+            <li class="txt-tr">Hız kontrolü (0.5x/1x/2x) oynatmayı etkiler</li>
+            <li class="txt-en">Phase transitions show date overlay</li>
+            <li class="txt-tr">Faz geçişleri tarih göstergesi ile yapılır</li>
+            <li class="txt-en">Hover tooltips on units</li>
+            <li class="txt-tr">Birimlerde hover bilgi kutuları</li>
+            <li class="txt-en">Fortifications and minefields visible on map</li>
+            <li class="txt-tr">Tahkimatlar ve mayın tarlaları haritada görünür</li>
+            <li class="txt-en">Keyboard navigation (Space, arrows, Tab)</li>
+            <li class="txt-tr">Klavye navigasyonu (Space, oklar, Tab)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ HISTORICAL SOURCES ═══════════ -->
+    <section class="card">
+      <span class="level">BONUS</span><span class="xp">+500 XP</span>
+      <h2 class="txt-en">Historical Reference Sources</h2>
+      <h2 class="txt-tr">Tarihî Kaynak Referansları</h2>
+
+      <p class="txt-en">For accurate unit positions, troop strengths, and phase timelines, consult:</p>
+      <p class="txt-tr">Doğru birlik pozisyonları, asker mevcutları ve faz zaman çizelgeleri için başvur:</p>
+
+      <ul>
+        <li class="txt-en"><strong>Primary:</strong> Turkish General Staff – "Birinci Dünya Harbinde Türk Harbi: Çanakkale Cephesi"</li>
+        <li class="txt-tr"><strong>Birincil:</strong> Genelkurmay Başkanlığı – "Birinci Dünya Harbinde Türk Harbi: Çanakkale Cephesi"</li>
+        <li class="txt-en"><strong>English ref:</strong> Peter Hart – "Gallipoli" (2011)</li>
+        <li class="txt-tr"><strong>İngilizce kaynak:</strong> Peter Hart – "Gallipoli" (2011)</li>
+        <li class="txt-en"><strong>Maps:</strong> Australian War Memorial Gallipoli maps collection</li>
+        <li class="txt-tr"><strong>Haritalar:</strong> Australian War Memorial Gelibolu harita koleksiyonu</li>
+        <li class="txt-en"><strong>Digital:</strong> Gallipoli: The First Day (ABC Interactive) — excellent UI reference</li>
+        <li class="txt-tr"><strong>Dijital:</strong> Gallipoli: The First Day (ABC Interactive) — mükemmel arayüz referansı</li>
+      </ul>
+
+      <div class="note">
+        <p class="txt-en"><strong>Note:</strong> Historical accuracy should be prioritized. When in doubt, use Turkish General Staff sources as the primary authority for Ottoman positions and actions.</p>
+        <p class="txt-tr"><strong>Not:</strong> Tarihî doğruluk öncelikli olmalıdır. Şüphe durumunda, Osmanlı pozisyonları ve eylemleri için birincil otorite olarak Genelkurmay kaynaklarını kullan.</p>
+      </div>
+    </section>
+
+    <p class="footer txt-en">
+      Çanakkale 1915 Interactive Battle Map — Project Requirements Document v1.0 — Created for iterative AI-assisted development.
+    </p>
+    <p class="footer txt-tr">
+      Çanakkale 1915 İnteraktif Savaş Haritası — Proje Gereksinimleri Dokümanı v1.0 — İteratif yapay zeka destekli geliştirme için oluşturuldu.
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      const body = document.body;
+      const btn = document.getElementById('langToggle');
+      const state = document.getElementById('langState');
+      const saved = localStorage.getItem('canakkale-req-lang');
+
+      function setLang(lang) {
+        const use = lang === 'tr' ? 'tr' : 'en';
+        body.classList.remove('lang-en', 'lang-tr');
+        body.classList.add('lang-' + use);
+        state.textContent = use.toUpperCase();
+        localStorage.setItem('canakkale-req-lang', use);
+        btn.setAttribute('aria-label', use === 'en' ? 'Switch to Turkish' : 'Switch to English');
+      }
+
+      setLang(saved || 'en');
+      btn.addEventListener('click', function () {
+        setLang(body.classList.contains('lang-en') ? 'tr' : 'en');
+      });
+    })();
+  </script>
+</body>
+</html>

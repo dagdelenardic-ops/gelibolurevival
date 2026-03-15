@@ -1,0 +1,102 @@
+/* ══════════════════════════════════════════════════════════════
+   Gelibolu Revival — Birim Detay Paneli
+   ══════════════════════════════════════════════════════════════ */
+
+.unit-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(360px, 84vw);
+    max-width: 88vw;
+    background: linear-gradient(190deg, var(--bg-card), var(--bg));
+    border-left: 2px solid var(--red-dim);
+    box-shadow: -20px 0 50px rgba(0, 0, 0, .5);
+    transform: translateX(100%);
+    transition: transform .33s ease;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    padding: 16px 18px 20px;
+}
+
+.unit-panel.open {
+    transform: translateX(0)
+}
+
+.unit-panel-title {
+    font-family: var(--mono);
+    font-size: .95rem;
+    color: var(--red-light);
+    letter-spacing: .04em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border)
+}
+
+.panel-close {
+    border: 1px solid var(--border-light);
+    background: rgba(220, 53, 69, .08);
+    color: var(--text);
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    cursor: pointer
+}
+
+.unit-panel dl {
+    display: grid;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: .84rem
+}
+
+.unit-panel dt {
+    color: var(--accent);
+    margin-bottom: 2px;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    font-family: var(--mono)
+}
+.unit-panel dt img {
+    vertical-align: middle;
+    margin-right: 4px;
+    opacity: .75;
+    filter: brightness(1.2)
+}
+
+.unit-panel dd {
+    margin: 0;
+    color: var(--text);
+    line-height: 1.5
+}
+
+/* ── Faction Banner ── */
+.panel-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, .3);
+}
+
+.panel-banner span {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .1em;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+    font-weight: 700
+}
+
+.panel-banner img {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4))
+}

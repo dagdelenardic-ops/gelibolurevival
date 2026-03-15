@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Çanakkale 1915 – İnteraktif Savaş Haritası</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/map.css">
+<link rel="stylesheet" href="styles/timeline.css">
+<link rel="stylesheet" href="styles/panel.css">
+<link rel="preload" as="image" href="assets/icons/soldier-man.png">
+<link rel="preload" as="image" href="assets/icons/cannon.png">
+<link rel="preload" as="image" href="assets/icons/battleship.png">
+<link rel="preload" as="image" href="assets/icons/naval-mine.png">
+<link rel="preload" as="image" href="assets/icons/army-star.png">
+<link rel="preload" as="image" href="assets/icons/wwi-tommy-helmet.png">
+<link rel="preload" as="image" href="assets/icons/french-poilu-helmet.png">
+<link rel="preload" as="image" href="assets/icons/old-war-bunker.png">
+<script>
+  window.ANIMATION_EVENTS_READY = fetch('book/animation-events.json')
+    .then(res => res.json())
+    .then(data => {
+      window.ANIMATION_EVENTS = data;
+      window.ANIMATION_EVENTS_BY_DATE = Object.fromEntries(
+        data.map(e => [e.date, e])
+      );
+      return data;
+    })
+    .catch(err => {
+      console.warn('Animasyon verileri yüklenemedi:', err);
+      window.ANIMATION_EVENTS = [];
+      window.ANIMATION_EVENTS_BY_DATE = {};
+      return null;
+    });
+</script>
+<script type="module" src="src/app.js"></script>
+</head>
+<body>
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Veriler yükleniyor…</div>
+</div>
+<header class="topbar"></header>
+<main class="map-container"></main>
+<footer class="timeline"></footer>
+<aside id="unitPanel" class="unit-panel" aria-label="Birim detay paneli">
+  <div id="panelBanner" class="panel-banner"></div>
+  <div class="unit-panel-title">
+    <span>Birim İnceleme</span>
+    <button id="closeUnitPanelBtn" class="panel-close" type="button" aria-label="Paneli kapat">×</button>
+  </div>
+  <dl>
+    <dt><img src="assets/icons/flag.png" width="14" height="14" alt=""> İsim</dt><dd id="panelUnitName">-</dd>
+    <dt><img src="assets/icons/medal.png" width="14" height="14" alt=""> Komutan</dt><dd id="panelUnitCommander">-</dd>
+    <dt><img src="assets/icons/soldier-man.png" width="14" height="14" alt=""> Kuvvet</dt><dd id="panelUnitStrength">-</dd>
+    <dt><img src="assets/icons/sword.png" width="14" height="14" alt=""> Durum</dt><dd id="panelUnitStatus">-</dd>
+    <dt><img src="assets/icons/binoculars.png" width="14" height="14" alt=""> Hedef</dt><dd id="panelUnitObjective">-</dd>
+    <dt><img src="assets/icons/army-star.png" width="14" height="14" alt=""> Sonuç</dt><dd id="panelUnitOutcome">-</dd>
+    <dt><img src="assets/icons/compass.png" width="14" height="14" alt=""> Açıklama</dt><dd id="panelUnitDescription">-</dd>
+  </dl>
+</aside>
+</body>
+</html>

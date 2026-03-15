@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Olay Akışı Logu</title>
+  <style>
+    :root {
+      --bg: #0f141a;
+      --panel: #141b23;
+      --text: #e8edf2;
+      --muted: #9db0c2;
+      --line: #202a35;
+      --accent: #f2c14e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.55 "Menlo", "Consolas", "Monaco", monospace;
+      padding: 20px;
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #111821;
+    }
+    h1 {
+      margin: 0;
+      font-size: 16px;
+      color: var(--accent);
+    }
+    .meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    pre {
+      margin: 0;
+      padding: 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: calc(100vh - 150px);
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Olay Akışı Logu</h1>
+      <div id="meta" class="meta">Yükleniyor...</div>
+    </div>
+    <pre id="log"></pre>
+  </div>
+
+  <script src="book/gallipoli-events.js"></script>
+  <script>
+    (function () {
+      var out = document.getElementById('log');
+      var meta = document.getElementById('meta');
+      var events = Array.isArray(window.BOOK_PHASE_EVENTS) ? window.BOOK_PHASE_EVENTS.slice() : [];
+      var months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+      function formatTrFromIso(iso) {
+        var m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return '';
+        var year = Number(m[1]);
+        var month = Number(m[2]);
+        var day = Number(m[3]);
+        var monthName = months[month - 1] || '';
+        return day + ' ' + monthName + ' ' + year;
+      }
+
+      events.sort(function (a, b) {
+        var ai = String(a.isoStart || '');
+        var bi = String(b.isoStart || '');
+        if (ai < bi) return -1;
+        if (ai > bi) return 1;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
+
+      var lines = events.map(function (e) {
+        var iso = String(e.isoStart || '');
+        var tr = formatTrFromIso(iso) || String(e.date || '');
+        var eventText = String(e.narration || e.title || 'Olay kaydı');
+        var codes = Array.isArray(e.evidenceCodes) ? e.evidenceCodes.filter(Boolean) : [];
+        var sourceTag = codes.length ? (' [Kaynak: ' + codes.join(', ') + ']') : '';
+        return iso + ' - ' + tr + ' - ' + eventText + sourceTag;
+      });
+
+      meta.textContent = events.length + ' kayıt';
+      out.textContent = lines.join('\n');
+    })();
+  </script>
+</body>
+</html>

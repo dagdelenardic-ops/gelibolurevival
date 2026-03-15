@@ -1,0 +1,501 @@
+/* ══════════════════════════════════════════════════════════════
+   Gelibolu Revival — Harita Stilleri (Modern Visual Upgrade)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Harita Konteyner — derinlik ve atmosfer ── */
+.map-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    overflow: hidden;
+    position: relative;
+    background: radial-gradient(ellipse at 50% 40%, #0e1a22, #0a0a0c 70%);
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, .5)
+}
+
+.map-container svg {
+    width: 100%;
+    height: 100%;
+    max-width: 1600px;
+    max-height: calc(100vh - 94px);
+    border-radius: 4px;
+    filter: contrast(1.04) saturate(1.08)
+}
+
+/* SVG deniz animasyonu */
+.sea-caustics {
+    animation: causticShift 12s ease-in-out infinite alternate
+}
+
+@keyframes causticShift {
+    0% { opacity: .04 }
+    50% { opacity: .07 }
+    100% { opacity: .04 }
+}
+
+/* ── Birlik Tokenleri ── */
+.unit-token {
+    cursor: pointer;
+    transition: transform .34s linear, opacity .3s ease-out, filter .18s;
+    transform-box: fill-box;
+    transform-origin: center
+}
+
+.unit-token.is-moving {
+    filter: drop-shadow(var(--trail-x1, 0px) var(--trail-y1, 0px) 4px rgba(220, 53, 69, .45)) drop-shadow(var(--trail-x2, 0px) var(--trail-y2, 0px) 8px rgba(220, 53, 69, .25))
+}
+
+.unit-token.is-muted {
+    filter: saturate(.45) brightness(.72)
+}
+
+.unit-token.is-active {
+    filter: brightness(1.25) drop-shadow(0 0 8px rgba(38, 198, 218, .6))
+}
+
+.unit-token:hover {
+    filter: brightness(1.35) drop-shadow(0 0 10px rgba(255, 255, 255, .4));
+    cursor: pointer
+}
+
+.battle-effects {
+    pointer-events: none
+}
+
+.battery-shot {
+    stroke: #ff6b7a;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-dasharray: 4 8;
+    opacity: .85;
+    animation: shotDash .55s linear infinite;
+    animation-delay: var(--shot-delay, 0s)
+}
+
+.battery-impact {
+    fill: rgba(255, 107, 122, .3);
+    stroke: rgba(255, 107, 122, .8);
+    stroke-width: 1.2
+}
+
+@keyframes shotDash {
+    from { stroke-dashoffset: 0 }
+    to { stroke-dashoffset: -18 }
+}
+
+.unit-label {
+    font-family: var(--mono);
+    pointer-events: none;
+    opacity: 1;
+    text-shadow: 0 1px 4px rgba(0,0,0,.95), 0 0 3px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.5);
+    font-weight: 700
+}
+
+/* ── Lokasyon Etiketleri — modern parlak ── */
+.location-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    fill: #f0f0f0;
+    font-weight: 700;
+    opacity: 1;
+    paint-order: stroke;
+    stroke: rgba(0,0,0,.85);
+    stroke-width: 3.5px;
+    transition: fill .2s ease
+}
+
+.location-dot {
+    fill: #ffffff;
+    stroke: var(--accent);
+    stroke-width: 1.8;
+    opacity: 1;
+    filter: drop-shadow(0 0 3px rgba(38, 198, 218, .3));
+    transition: filter .2s ease
+}
+
+.location-group {
+    transition: opacity .25s ease, transform .2s ease
+}
+
+.location-group:hover .location-dot {
+    filter: drop-shadow(0 0 6px rgba(38, 198, 218, .6))
+}
+
+.location-group:hover .location-label {
+    fill: #ffffff
+}
+
+.location-group.is-scene-hidden,
+.scene-annotation-group.is-scene-hidden {
+    opacity: .06
+}
+
+.scene-annotation-group {
+    transition: opacity .25s ease
+}
+
+.scene-focus-line {
+    fill: none;
+    stroke: rgba(38, 198, 218, .55);
+    stroke-width: 1.2;
+    stroke-dasharray: 6 4;
+    opacity: .75;
+    filter: drop-shadow(0 0 2px rgba(38, 198, 218, .2))
+}
+
+.scene-ridge {
+    fill: none;
+    stroke: rgba(76, 175, 80, .55);
+    stroke-width: 1.4;
+    stroke-dasharray: 7 4;
+    opacity: .8;
+    filter: drop-shadow(0 0 2px rgba(76, 175, 80, .15))
+}
+
+.scene-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    fill: #f5f5f5;
+    font-weight: 700;
+    letter-spacing: .18em;
+    paint-order: stroke;
+    stroke: rgba(0,0,0,.85);
+    stroke-width: 3.5px;
+    opacity: 1
+}
+
+.scene-label-sub {
+    font-size: 6.5px;
+    opacity: .85
+}
+
+#minefields.is-scene-dimmed,
+#forts.is-scene-dimmed {
+    opacity: .2
+}
+
+.units-layer {
+    transition: opacity .2s ease
+}
+
+/* ── Tarih Chip — glassmorphism ── */
+.map-date-chip {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(145deg, rgba(12, 12, 16, .88), rgba(20, 20, 28, .92));
+    border: 1px solid rgba(220, 53, 69, .35);
+    border-radius: 999px;
+    padding: 7px 18px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .55), 0 2px 8px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .05);
+    backdrop-filter: blur(12px);
+    z-index: 3
+}
+
+.map-date-day {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    color: #fff;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: right;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .4)
+}
+
+.map-date-month {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--accent);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(38, 198, 218, .2)
+}
+
+.map-date-year {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--text-muted);
+    padding-left: 10px;
+    border-left: 1px solid rgba(220, 53, 69, .3)
+}
+
+/* ── Anlatım Kutusu — modern glassmorphism ── */
+.narration-box {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: linear-gradient(145deg, rgba(12, 12, 16, .92), rgba(18, 18, 24, .95));
+    border: 1px solid rgba(60, 60, 70, .4);
+    border-left: 3px solid var(--red);
+    border-radius: 10px;
+    padding: 14px 18px;
+    max-width: 460px;
+    min-height: 120px;
+    backdrop-filter: blur(16px) saturate(1.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .5), 0 4px 12px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .04);
+    transition: border-left-color .3s ease
+}
+
+.narration-title {
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--red-light);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+    text-shadow: 0 0 12px rgba(220, 53, 69, .15)
+}
+
+.narration-icon {
+    vertical-align: middle;
+    margin-right: 6px;
+    opacity: .85;
+    filter: brightness(1.15) drop-shadow(0 1px 2px rgba(0, 0, 0, .3))
+}
+
+.narration-text {
+    font-size: .88rem;
+    color: var(--text);
+    line-height: 1.65
+}
+
+.narration-transition {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(220, 53, 69, .2);
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--text-dim);
+    line-height: 1.4
+}
+
+/* ── Romantik Katman — daha derin renk geçişleri ── */
+.romantic-quote {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(220, 53, 69, .06), rgba(38, 198, 218, .04));
+    border-left: 2px solid rgba(220, 53, 69, .4);
+    animation: romanticFadeIn .6s ease-out;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, .15)
+}
+
+.romantic-quote.romantic-type-quote {
+    border-left-color: rgba(255, 215, 0, .6);
+    background: linear-gradient(135deg, rgba(255, 215, 0, .06), rgba(10, 10, 12, .3))
+}
+
+.romantic-quote.romantic-type-letter {
+    border-left-color: rgba(38, 198, 218, .6);
+    background: linear-gradient(135deg, rgba(38, 198, 218, .06), rgba(10, 10, 12, .3))
+}
+
+.romantic-quote.romantic-type-anecdote {
+    border-left-color: rgba(156, 39, 176, .5);
+    background: linear-gradient(135deg, rgba(156, 39, 176, .06), rgba(10, 10, 12, .3))
+}
+
+.romantic-quote.romantic-type-witness {
+    border-left-color: rgba(76, 175, 80, .5);
+    background: linear-gradient(135deg, rgba(76, 175, 80, .06), rgba(10, 10, 12, .3))
+}
+
+.romantic-quote.romantic-type-spirit {
+    border-left-color: rgba(220, 53, 69, .6);
+    background: linear-gradient(135deg, rgba(220, 53, 69, .07), rgba(10, 10, 12, .3))
+}
+
+.romantic-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 6px
+}
+
+.romantic-emoji {
+    font-size: 1.05rem;
+    line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3))
+}
+
+.romantic-label {
+    font-family: var(--mono);
+    font-size: .64rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--accent);
+    opacity: .85
+}
+
+.romantic-text {
+    font-size: .84rem;
+    color: var(--text);
+    line-height: 1.65;
+    font-style: italic;
+    opacity: .92
+}
+
+.romantic-source {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: .62rem;
+    color: var(--text-dim);
+    text-align: right;
+    opacity: .7
+}
+
+@keyframes romanticFadeIn {
+    from { opacity: 0; transform: translateY(8px) }
+    to { opacity: 1; transform: translateY(0) }
+}
+
+/* ── Frontline & Combat FX ── */
+.frontline-segment {
+    stroke: rgba(220, 53, 69, 0.45);
+    stroke-width: 1.5;
+    stroke-dasharray: 6 3;
+    fill: none;
+    animation: frontlinePulse 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 2px rgba(220, 53, 69, .2))
+}
+
+.frontline-segment[data-intensity="high"] {
+    stroke: rgba(220, 53, 69, 0.7);
+    stroke-width: 2;
+    animation-duration: 1.2s;
+    filter: drop-shadow(0 0 4px rgba(220, 53, 69, .3))
+}
+
+.frontline-segment[data-intensity="low"] {
+    stroke: rgba(220, 53, 69, 0.25);
+    stroke-width: 1;
+    animation-duration: 4s
+}
+
+@keyframes frontlinePulse {
+    0%, 100% { opacity: .4 }
+    50% { opacity: .72 }
+}
+
+.engagement-zone {
+    fill: rgba(220, 53, 69, 0.08);
+    stroke: none;
+    pointer-events: none
+}
+
+.combat-contact-line {
+    stroke: rgba(220, 53, 69, 0.35);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 4;
+    fill: none;
+    pointer-events: none;
+    filter: drop-shadow(0 0 1px rgba(220, 53, 69, .15))
+}
+
+.combat-dust {
+    fill: rgba(160, 130, 90, 0.2);
+    filter: url(#glow);
+    pointer-events: none;
+    animation: dustFade 2s ease-in-out infinite
+}
+
+@keyframes dustFade {
+    0%, 100% { opacity: .1 }
+    50% { opacity: .28 }
+}
+
+.combat-muzzle {
+    fill: rgba(255, 200, 150, 0.85);
+    pointer-events: none;
+    animation: muzzleFlash .2s ease-out forwards
+}
+
+@keyframes muzzleFlash {
+    0% { opacity: .85; r: 2 }
+    100% { opacity: 0; r: 5 }
+}
+
+.land-combat-fx-group {
+    pointer-events: none
+}
+
+/* ── Fortification Layer ── */
+#layer-fortifications {
+    pointer-events: none;
+    transition: opacity .3s ease
+}
+
+#layer-fortifications.is-scene-dimmed {
+    opacity: .08
+}
+
+/* ── Layer visibility ── */
+#layer-zones,
+#layer-routes,
+#layer-combat-fx {
+    pointer-events: none
+}
+
+/* ── Location Highlight (info card sync) ── */
+.location-group.is-highlighted .location-dot {
+    fill: #fff;
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, .8)) drop-shadow(0 0 16px rgba(38, 198, 218, .4))
+}
+
+.location-group.is-highlighted .location-label {
+    fill: #fff;
+    opacity: 1
+}
+
+/* ── Unit Reference (info card sync) ── */
+.unit-token.is-referenced {
+    filter: brightness(1.4) drop-shadow(0 0 10px rgba(38, 198, 218, .7)) drop-shadow(0 0 20px rgba(38, 198, 218, .3))
+}
+
+/* ── Mobile Responsive ── */
+@media(max-width:768px){
+    .map-container{
+        min-height:55vh;
+        padding:0;
+        touch-action:manipulation
+    }
+    .map-container svg{
+        max-height:none;
+        height:auto;
+        min-height:300px;
+        filter:none
+    }
+    .narration-box{
+        position:fixed;
+        bottom:0;
+        left:0;
+        right:0;
+        max-width:100%;
+        width:100%;
+        border-radius:14px 14px 0 0;
+        border-left:none;
+        border-top:2px solid var(--red);
+        padding:14px 18px 18px;
+        min-height:auto;
+        max-height:40vh;
+        overflow-y:auto;
+        z-index:5;
+        box-shadow:0 -10px 32px rgba(0,0,0,.6)
+    }
+    .narration-title{font-size:.78rem}
+    .narration-text{font-size:.9rem}
+    .map-date-chip{
+        top:4px;
+        padding:5px 12px;
+        gap:7px
+    }
+    .map-date-day{font-size:.92rem}
+    .map-date-month,.map-date-year{font-size:.68rem}
+}
