@@ -1,18 +1,19 @@
 // ══════════════════════════════════════════════════════════════
 // Gelibolu Revival — Birim Detay Paneli
-// Birim tıklayınca açılan sağ panel yönetimi
+// Birim tıklayınca açılan sağ panel — komutan portresi dahil
 // ══════════════════════════════════════════════════════════════
 
 import { BATTLE_DATA } from '../data/battle-data.js';
 import { getUnitIcon } from '../data/icon-registry.js';
+import { getCommanderPortrait } from '../data/commander-portraits.js';
 
-/** Faksiyon banner rengi */
+/** Faksiyon banner rengi — desatüre askeri tonlar */
 function getFactionBanner(faction) {
     const colors = {
-        ottoman: { bg: 'linear-gradient(135deg, #8b1a25 0%, #dc3545 50%, #8b1a25 100%)', label: 'OSMANLI KUVVETLERİ' },
-        british: { bg: 'linear-gradient(135deg, #0d47a1 0%, #2196F3 50%, #0d47a1 100%)', label: 'İNGİLİZ KUVVETLERİ' },
-        anzac: { bg: 'linear-gradient(135deg, #1b5e20 0%, #4CAF50 50%, #1b5e20 100%)', label: 'ANZAC KUVVETLERİ' },
-        french: { bg: 'linear-gradient(135deg, #4a148c 0%, #9C27B0 50%, #4a148c 100%)', label: 'FRANSIZ KUVVETLERİ' },
+        ottoman: { bg: 'linear-gradient(135deg, #5a2828 0%, #8b3a3a 50%, #5a2828 100%)', label: 'OSMANLI KUVVETLERİ' },
+        british: { bg: 'linear-gradient(135deg, #2a4a5a 0%, #4a6a82 50%, #2a4a5a 100%)', label: 'İNGİLİZ KUVVETLERİ' },
+        anzac: { bg: 'linear-gradient(135deg, #2a4a22 0%, #5a7a52 50%, #2a4a22 100%)', label: 'ANZAC KUVVETLERİ' },
+        french: { bg: 'linear-gradient(135deg, #3a2a4a 0%, #6a5a7a 50%, #3a2a4a 100%)', label: 'FRANSIZ KUVVETLERİ' },
     };
     return colors[faction] || colors.ottoman;
 }
@@ -28,7 +29,26 @@ export function showUnitPanel(u, d) {
     if (bannerEl) {
         const iconInfo = getUnitIcon(u.id);
         bannerEl.style.background = banner.bg;
-        bannerEl.innerHTML = `<img src="assets/icons/${iconInfo.icon}.png" width="28" height="28" alt="" style="opacity:.9;filter:brightness(1.3)"><span>${banner.label}</span>`;
+        bannerEl.innerHTML = `<img src="assets/icons/${iconInfo.icon}.png" width="28" height="28" alt="" style="opacity:.85"><span>${banner.label}</span>`;
+    }
+
+    // Komutan portresi
+    const portraitEl = document.getElementById('panelPortrait');
+    const portrait = getCommanderPortrait(u.id);
+    if (portraitEl) {
+        if (portrait) {
+            portraitEl.style.display = 'block';
+            portraitEl.innerHTML = `
+                <div class="portrait-frame">
+                    <img src="${portrait.url}" alt="${portrait.caption}" class="portrait-img" loading="lazy"
+                         onerror="this.parentElement.parentElement.style.display='none'"/>
+                    <div class="portrait-caption">${portrait.caption}</div>
+                    <div class="portrait-credit">${portrait.credit}</div>
+                </div>`;
+        } else {
+            portraitEl.style.display = 'none';
+            portraitEl.innerHTML = '';
+        }
     }
 
     document.getElementById('panelUnitName').textContent = u.name || '-';

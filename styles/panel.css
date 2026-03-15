@@ -100,3 +100,46 @@
 .panel-banner img {
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4))
 }
+
+/* ── Komutan Portresi ── */
+.panel-portrait {
+    margin-bottom: 12px
+}
+
+.portrait-frame {
+    text-align: center;
+    background: rgba(30, 28, 24, .5);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px;
+    overflow: hidden
+}
+
+.portrait-img {
+    width: 100%;
+    max-width: 180px;
+    height: auto;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 4px;
+    filter: sepia(.15) contrast(1.05);
+    border: 1px solid rgba(120, 100, 70, .3);
+    display: block;
+    margin: 0 auto 8px
+}
+
+.portrait-caption {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 3px
+}
+
+.portrait-credit {
+    font-family: var(--mono);
+    font-size: .58rem;
+    color: var(--text-dim);
+    opacity: .6;
+    font-style: italic
+}
