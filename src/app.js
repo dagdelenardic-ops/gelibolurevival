@@ -116,6 +116,16 @@ function renderTopBar() {
 // ── Önceki campaign fazını takip et ──
 let prevCampaignPhaseId = null;
 
+// ── Sessiz dönem tespiti (autoplay-controller ile senkron) ──
+const QUIET_PERIODS = [
+    { start: '1914-11-10', end: '1915-02-18' },
+    { start: '1915-08-25', end: '1915-12-06' },
+];
+function isQuietPeriod(iso) {
+    return iso && QUIET_PERIODS.some(p => iso >= p.start && iso <= p.end);
+}
+let narrationTimer = null;
+
 // ── Phase Geçişi ──
 function setActivePhase(i) {
     const len = BATTLE_DATA.phases.length;
@@ -128,6 +138,25 @@ function setActivePhase(i) {
     const fromPhaseIndex = currentPhaseIndex;
     currentPhaseIndex = nextIndex;
     const p = BATTLE_DATA.phases[nextIndex];
+    const currentIso = String(p.isoStart || normalizeDateText(p.date, nextIndex));
+    const quiet = isMobile && isQuietPeriod(currentIso);
+
+    // ── MOBİL SESSIZ DÖNEM: Sadece tarih chip güncelle, geri kalanı atla ──
+    if (quiet) {
+        const ind = document.getElementById('phaseIndicator');
+        if (ind) ind.textContent = `${p.title} – ${p.date}`;
+        updateMapDateIndicator(p.date);
+        // Narration'ı throttle — her 5 fazda bir güncelle (fotoğraf glitch önleme)
+        if (nextIndex % 5 === 0) {
+            const campaignPhase = resolveCampaignPhase(currentIso);
+            const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
+            prevCampaignPhaseId = campaignPhase.id;
+            if (narrationTimer) clearTimeout(narrationTimer);
+            narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), 200);
+        }
+        return;
+    }
+
     const ind = document.getElementById('phaseIndicator');
     if (ind) {
         ind.textContent = `${p.title} – ${p.date}`;
@@ -137,7 +166,6 @@ function setActivePhase(i) {
     updateMapDateIndicator(p.date);
 
     // ── Campaign phase resolution ──
-    const currentIso = String(p.isoStart || normalizeDateText(p.date, nextIndex));
     const campaignPhase = resolveCampaignPhase(currentIso);
     const isTransition = prevCampaignPhaseId && prevCampaignPhaseId !== campaignPhase.id;
 
@@ -196,7 +224,6 @@ function setActivePhase(i) {
     const tg = document.getElementById('unitTokens');
     if (tg) {
         if (isMobile) {
-            // Mobilde: mevcut token'ları güncelle, innerHTML yerine DOM patching
             patchTokens(tg, p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
         } else {
             const nextMarkup = renderTokens(p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
@@ -206,18 +233,13 @@ function setActivePhase(i) {
         }
     }
     if (isMobile) {
-        // ── MOBİL: Sadece gerekli minimum işlemleri yap ──
-        // Frontline, battle effects, combat FX, animation orchestrator ATLA
-        // Camera geçişi sadece transition'da
         if (isTransition) {
             const svg = document.getElementById('battleMap');
             if (svg) animateCamera(svg, campaignPhase.camera);
         }
-        // Ses efektleri (hafif)
         if (animData) triggerPhaseSfx(animData, campaignPhase.id);
         updateMapSceneState(p, animData);
     } else {
-        // ── DESKTOP: Tam deneyim ──
         renderBattleEffects(nextIndex);
         renderFrontlines(campaignPhase, currentIso);
         renderLandCombatFX(campaignPhase, animData);
@@ -246,9 +268,9 @@ function setActivePhase(i) {
         updateMapSceneState(p, animData);
     }
 
-    // ── Info card: sahne stabilize olduktan sonra güncelle ──
-    // Mobilde daha geç güncelle (GPU baskısı azalt)
-    setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), isMobile ? 800 : 360);
+    // ── Info card ──
+    if (narrationTimer) clearTimeout(narrationTimer);
+    narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), isMobile ? 800 : 360);
 
     // ── Update global state ──
     prevCampaignPhaseId = campaignPhase.id;
