@@ -138,83 +138,128 @@ function createNoiseBuffer(duration) {
     return buf;
 }
 
+/** Rastgele pitch varyasyonu — monotonluğu kır */
+function rp(base, variance) {
+    return base + (Math.random() - 0.5) * variance;
+}
+
+/** Rastgele gecikme */
+function rd(base, variance) {
+    return base + Math.random() * variance;
+}
+
 /**
- * 🔊 Top ateşi — kısa, keskin patlama
- * Kullanım: Kıyı bataryası ateşi, deniz bombardımanı
+ * 🔊 Top ateşi — keskin patlama + metalik geri tepme + yankı
+ * Kullanım: Kıyı bataryası ateşi
  */
 export function sfxCannonFire() {
     if (!sfxEnabled) return;
     const ctx = ensureContext();
     const now = ctx.currentTime;
 
-    // Gürültü (patlama gövdesi)
+    // Patlama gövdesi (randomize edilmiş)
     const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(0.3);
+    noise.buffer = createNoiseBuffer(0.5);
     const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.6, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-    // Bandpass — top sesi tonalitesi
+    noiseGain.gain.setValueAtTime(rp(0.55, 0.1), now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + rp(0.35, 0.1));
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
-    bp.frequency.value = 800;
+    bp.frequency.value = rp(700, 200);
     bp.Q.value = 1.5;
-
     noise.connect(bp).connect(noiseGain).connect(sfxGain);
     noise.start(now);
-    noise.stop(now + 0.3);
+    noise.stop(now + 0.5);
 
     // Düşük vuruş (boom)
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+    osc.frequency.setValueAtTime(rp(110, 20), now);
+    osc.frequency.exponentialRampToValueAtTime(35, now + 0.2);
     const oscGain = ctx.createGain();
-    oscGain.gain.setValueAtTime(0.5, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    oscGain.gain.setValueAtTime(0.45, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
     osc.connect(oscGain).connect(sfxGain);
     osc.start(now);
-    osc.stop(now + 0.25);
+    osc.stop(now + 0.3);
+
+    // Metalik geri tepme tıkırtısı
+    const click = ctx.createOscillator();
+    click.type = 'square';
+    click.frequency.setValueAtTime(rp(2000, 500), now + 0.05);
+    click.frequency.exponentialRampToValueAtTime(500, now + 0.1);
+    const clickG = ctx.createGain();
+    clickG.gain.setValueAtTime(0.08, now + 0.05);
+    clickG.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+    click.connect(clickG).connect(sfxGain);
+    click.start(now + 0.05);
+    click.stop(now + 0.15);
 }
 
 /**
- * 💥 Büyük patlama — gemi batması, mayın infilakı
- * Kullanım: Bouvet/Irresistible/Ocean batışları
+ * 💥 Büyük patlama — çok katmanlı: şok dalgası + enkaz + yankı
+ * Kullanım: Bouvet/Irresistible/Ocean batışları, mayın infilakı
  */
 export function sfxExplosion() {
     if (!sfxEnabled) return;
     const ctx = ensureContext();
     const now = ctx.currentTime;
 
-    // Uzun gürültü
-    const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(1.2);
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.7, now);
-    noiseGain.gain.linearRampToValueAtTime(0.5, now + 0.1);
-    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+    // 1. İlk şok dalgası (keskin, kısa)
+    const shock = ctx.createBufferSource();
+    shock.buffer = createNoiseBuffer(0.15);
+    const shockG = ctx.createGain();
+    shockG.gain.setValueAtTime(0.7, now);
+    shockG.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+    const shockHp = ctx.createBiquadFilter();
+    shockHp.type = 'highpass';
+    shockHp.frequency.value = 1500;
+    shock.connect(shockHp).connect(shockG).connect(sfxGain);
+    shock.start(now);
+    shock.stop(now + 0.15);
 
-    // Lowpass — derin patlama
+    // 2. Ana patlama gövdesi
+    const noise = ctx.createBufferSource();
+    noise.buffer = createNoiseBuffer(1.5);
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.65, now + 0.03);
+    noiseGain.gain.linearRampToValueAtTime(0.45, now + 0.15);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
-    lp.frequency.setValueAtTime(2000, now);
-    lp.frequency.exponentialRampToValueAtTime(200, now + 0.8);
-
+    lp.frequency.setValueAtTime(2500, now);
+    lp.frequency.exponentialRampToValueAtTime(150, now + 1.0);
     noise.connect(lp).connect(noiseGain).connect(sfxGain);
-    noise.start(now);
-    noise.stop(now + 1.2);
+    noise.start(now + 0.02);
+    noise.stop(now + 1.5);
 
-    // Derin bas boom
+    // 3. Derin bas boom (göğüste hissedilen)
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(80, now);
-    osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+    osc.frequency.setValueAtTime(rp(70, 15), now);
+    osc.frequency.exponentialRampToValueAtTime(18, now + 0.6);
     const oscGain = ctx.createGain();
     oscGain.gain.setValueAtTime(0.6, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
     osc.connect(oscGain).connect(sfxGain);
     osc.start(now);
-    osc.stop(now + 0.7);
+    osc.stop(now + 0.75);
+
+    // 4. Enkaz düşme sesleri (gecikmeli tıkırtılar)
+    for (let i = 0; i < 4; i++) {
+        const t = now + 0.5 + rd(0.2, 0.4) * i;
+        const deb = ctx.createBufferSource();
+        deb.buffer = createNoiseBuffer(0.06);
+        const dg = ctx.createGain();
+        dg.gain.setValueAtTime(rp(0.06, 0.03), t);
+        dg.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+        const dhp = ctx.createBiquadFilter();
+        dhp.type = 'highpass';
+        dhp.frequency.value = rp(3000, 1000);
+        deb.connect(dhp).connect(dg).connect(sfxGain);
+        deb.start(t);
+        deb.stop(t + 0.06);
+    }
 }
 
 /**
@@ -258,31 +303,47 @@ export function sfxMineExplosion() {
 }
 
 /**
- * 🔫 Tüfek/siper ateşi — kısa, keskin
+ * 🔫 Tüfek/siper ateşi — keskin atış + mermi çınlaması + 2-3 aralıklı atış
  * Kullanım: Siper savaşı, keskin nişancı
  */
 export function sfxRifleShot() {
     if (!sfxEnabled) return;
     const ctx = ensureContext();
     const now = ctx.currentTime;
+    const shots = 2 + Math.floor(Math.random() * 2); // 2-3 atış
 
-    const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(0.08);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+    for (let i = 0; i < shots; i++) {
+        const t = now + i * rd(0.3, 0.2);
 
-    const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 2000;
+        // Atış patlaması
+        const noise = ctx.createBufferSource();
+        noise.buffer = createNoiseBuffer(0.1);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(rp(0.2, 0.05), t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.07);
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = rp(2200, 400);
+        noise.connect(hp).connect(gain).connect(sfxGain);
+        noise.start(t);
+        noise.stop(t + 0.1);
 
-    noise.connect(hp).connect(gain).connect(sfxGain);
-    noise.start(now);
-    noise.stop(now + 0.08);
+        // Mermi çınlaması (vızıltı)
+        const whiz = ctx.createOscillator();
+        whiz.type = 'sine';
+        whiz.frequency.setValueAtTime(rp(4000, 800), t + 0.03);
+        whiz.frequency.exponentialRampToValueAtTime(1000, t + 0.12);
+        const wg = ctx.createGain();
+        wg.gain.setValueAtTime(0.03, t + 0.03);
+        wg.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        whiz.connect(wg).connect(sfxGain);
+        whiz.start(t + 0.03);
+        whiz.stop(t + 0.13);
+    }
 }
 
 /**
- * ⚓ Gemi düdüğü — uzun, derin
+ * ⚓ Gemi düdüğü — derin, yankılı, çift tonlu buharlı düdük
  * Kullanım: Donanma hareketi, çıkarma
  */
 export function sfxShipHorn() {
@@ -290,33 +351,50 @@ export function sfxShipHorn() {
     const ctx = ensureContext();
     const now = ctx.currentTime;
 
+    // İki tonlu düdük (buharlı gemi karakteristiği)
+    const f1 = rp(165, 10);
     const osc1 = ctx.createOscillator();
     osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(180, now);
-    osc1.frequency.linearRampToValueAtTime(175, now + 1.5);
+    osc1.frequency.setValueAtTime(f1, now);
+    osc1.frequency.linearRampToValueAtTime(f1 - 5, now + 2.0);
 
     const osc2 = ctx.createOscillator();
     osc2.type = 'sawtooth';
-    osc2.frequency.setValueAtTime(220, now);
-    osc2.frequency.linearRampToValueAtTime(215, now + 1.5);
+    osc2.frequency.setValueAtTime(f1 * 1.25, now);
+    osc2.frequency.linearRampToValueAtTime(f1 * 1.25 - 5, now + 2.0);
 
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.15, now + 0.3);
-    gain.gain.setValueAtTime(0.15, now + 1.0);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.8);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.4);
+    gain.gain.setValueAtTime(0.12, now + 1.3);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 2.2);
 
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
-    lp.frequency.value = 400;
+    lp.frequency.value = 350;
 
     osc1.connect(lp);
     osc2.connect(lp);
     lp.connect(gain).connect(sfxGain);
     osc1.start(now);
     osc2.start(now);
-    osc1.stop(now + 1.9);
-    osc2.stop(now + 1.9);
+    osc1.stop(now + 2.3);
+    osc2.stop(now + 2.3);
+
+    // Buhar sızıntı sesi
+    const steam = ctx.createBufferSource();
+    steam.buffer = createNoiseBuffer(1.0);
+    const steamG = ctx.createGain();
+    steamG.gain.setValueAtTime(0, now + 1.8);
+    steamG.gain.linearRampToValueAtTime(0.04, now + 2.0);
+    steamG.gain.exponentialRampToValueAtTime(0.001, now + 2.8);
+    const steamLp = ctx.createBiquadFilter();
+    steamLp.type = 'bandpass';
+    steamLp.frequency.value = 4000;
+    steamLp.Q.value = 3;
+    steam.connect(steamLp).connect(steamG).connect(sfxGain);
+    steam.start(now + 1.8);
+    steam.stop(now + 2.8);
 }
 
 /**
@@ -344,28 +422,44 @@ export function sfxWarDrum() {
 }
 
 /**
- * 🔫 Makineli tüfek — seri atış, 5-6 hızlı tıklama
+ * 🔫 Makineli tüfek — gerçekçi seri atış: hızlı rafale + geri tepme ritmi
  * Kullanım: Siper savaşı, yoğun çatışma
  */
 export function sfxMachineGun() {
     if (!sfxEnabled) return;
     const ctx = ensureContext();
     const now = ctx.currentTime;
+    const burstLen = 8 + Math.floor(Math.random() * 5); // 8-12 atış
 
-    for (let i = 0; i < 6; i++) {
-        const t = now + i * 0.09;
+    for (let i = 0; i < burstLen; i++) {
+        const t = now + i * rp(0.075, 0.015); // Hafif düzensiz ritim
+
+        // Her atış
         const noise = ctx.createBufferSource();
-        noise.buffer = createNoiseBuffer(0.04);
+        noise.buffer = createNoiseBuffer(0.05);
         const g = ctx.createGain();
-        g.gain.setValueAtTime(0.18, t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + 0.035);
-        const hp = ctx.createBiquadFilter();
-        hp.type = 'highpass';
-        hp.frequency.value = 2500 + Math.random() * 500;
-        noise.connect(hp).connect(g).connect(sfxGain);
+        g.gain.setValueAtTime(rp(0.16, 0.04), t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = rp(3000, 600);
+        bp.Q.value = 2;
+        noise.connect(bp).connect(g).connect(sfxGain);
         noise.start(t);
-        noise.stop(t + 0.04);
+        noise.stop(t + 0.05);
     }
+
+    // Mekanizma sesi (arka plan tıkırtısı)
+    const mech = ctx.createOscillator();
+    mech.type = 'square';
+    mech.frequency.setValueAtTime(120, now);
+    const mechG = ctx.createGain();
+    mechG.gain.setValueAtTime(0.03, now);
+    mechG.gain.setValueAtTime(0.03, now + burstLen * 0.075);
+    mechG.gain.exponentialRampToValueAtTime(0.001, now + burstLen * 0.075 + 0.1);
+    mech.connect(mechG).connect(sfxGain);
+    mech.start(now);
+    mech.stop(now + burstLen * 0.075 + 0.15);
 }
 
 /**
@@ -456,7 +550,7 @@ export function sfxMortarWhistle() {
 }
 
 /**
- * 🌊 Deniz dalgası — ambient döngü
+ * 🌊 Deniz dalgası — çift katmanlı: derin dalga + köpük
  * Kullanım: Deniz fazları arka planı
  */
 export function sfxWaves() {
@@ -464,21 +558,36 @@ export function sfxWaves() {
     const ctx = ensureContext();
     const now = ctx.currentTime;
 
-    const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(2.5);
-    const nGain = ctx.createGain();
-    // Dalga efekti: yavaş yükselip alçalma
-    nGain.gain.setValueAtTime(0.02, now);
-    nGain.gain.linearRampToValueAtTime(0.08, now + 0.8);
-    nGain.gain.linearRampToValueAtTime(0.03, now + 1.5);
-    nGain.gain.linearRampToValueAtTime(0.07, now + 2.0);
-    nGain.gain.exponentialRampToValueAtTime(0.01, now + 2.4);
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 500;
-    noise.connect(lp).connect(nGain).connect(sfxGain);
-    noise.start(now);
-    noise.stop(now + 2.5);
+    // Derin dalga (düşük frekans)
+    const deep = ctx.createBufferSource();
+    deep.buffer = createNoiseBuffer(3.5);
+    const deepG = ctx.createGain();
+    deepG.gain.setValueAtTime(0.01, now);
+    deepG.gain.linearRampToValueAtTime(0.07, now + 1.0);
+    deepG.gain.linearRampToValueAtTime(0.02, now + 2.0);
+    deepG.gain.linearRampToValueAtTime(0.06, now + 2.8);
+    deepG.gain.exponentialRampToValueAtTime(0.01, now + 3.3);
+    const deepLp = ctx.createBiquadFilter();
+    deepLp.type = 'lowpass';
+    deepLp.frequency.value = 350;
+    deep.connect(deepLp).connect(deepG).connect(sfxGain);
+    deep.start(now);
+    deep.stop(now + 3.5);
+
+    // Köpük/çakıl sesi (yüksek frekans, dalga kırılması)
+    const foam = ctx.createBufferSource();
+    foam.buffer = createNoiseBuffer(1.5);
+    const foamG = ctx.createGain();
+    foamG.gain.setValueAtTime(0, now + 0.8);
+    foamG.gain.linearRampToValueAtTime(0.04, now + 1.2);
+    foamG.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+    const foamBp = ctx.createBiquadFilter();
+    foamBp.type = 'bandpass';
+    foamBp.frequency.value = 5000;
+    foamBp.Q.value = 1;
+    foam.connect(foamBp).connect(foamG).connect(sfxGain);
+    foam.start(now + 0.7);
+    foam.stop(now + 2.2);
 }
 
 /**
