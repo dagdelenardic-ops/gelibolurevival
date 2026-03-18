@@ -30,13 +30,13 @@ function getAdaptiveInterval(phaseIndex) {
     if (!phase) return MINOR_INTERVAL;
 
     const iso = phase.isoStart || '';
-    const major = isMajorPhase(phase);
 
-    // Sessiz dönemlerde hızlı geç (major olaylar hariç)
-    if (!major && isQuietPeriod(iso)) {
+    // Sessiz dönemlerde HER ŞEY hızlı geçer — major/minor fark etmez
+    if (isQuietPeriod(iso)) {
         return 500;
     }
 
+    const major = isMajorPhase(phase);
     const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;
     const narrationLen = (phase.narration || '').length;
     const readTime = narrationLen / CHARS_PER_MS;
