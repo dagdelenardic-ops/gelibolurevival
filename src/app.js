@@ -287,7 +287,7 @@ function initKeyboardNav() {
     });
 }
 
-// ── Pinch-to-Zoom (mobile) ──
+// ── Pinch-to-Zoom + Pan (mobile) ──
 function initPinchZoom() {
     const ctr = document.querySelector('.map-container');
     const svg = document.getElementById('battleMap');
@@ -297,6 +297,8 @@ function initPinchZoom() {
     let lastDist = 0;
     let translateX = 0, translateY = 0;
     let lastTouchX = 0, lastTouchY = 0;
+    let isPanning = false;
+    let panStartX = 0, panStartY = 0;
 
     function getTouchDist(touches) {
         const dx = touches[0].clientX - touches[1].clientX;
@@ -316,18 +318,53 @@ function initPinchZoom() {
         });
     }
 
+    function resetZoom() {
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+        applyTransform();
+        updateResetBtn();
+    }
+
+    // Reset butonu
+    function updateResetBtn() {
+        let btn = document.getElementById('mapResetBtn');
+        if (scale > 1.05) {
+            if (!btn) {
+                btn = document.createElement('button');
+                btn.id = 'mapResetBtn';
+                btn.className = 'map-reset-btn';
+                btn.type = 'button';
+                btn.textContent = '⟲';
+                btn.title = 'Haritayı sıfırla';
+                btn.addEventListener('click', resetZoom);
+                ctr.appendChild(btn);
+            }
+            btn.style.display = 'flex';
+        } else if (btn) {
+            btn.style.display = 'none';
+        }
+    }
+
     ctr.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
             e.preventDefault();
+            isPanning = false;
             lastDist = getTouchDist(e.touches);
             lastTouchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             lastTouchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        } else if (e.touches.length === 1 && scale > 1.05) {
+            // Tek parmak pan (sadece zoom'dayken)
+            isPanning = true;
+            panStartX = e.touches[0].clientX - translateX;
+            panStartY = e.touches[0].clientY - translateY;
         }
     }, { passive: false });
 
     ctr.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2) {
             e.preventDefault();
+            isPanning = false;
             const dist = getTouchDist(e.touches);
             const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -347,17 +384,35 @@ function initPinchZoom() {
             lastDist = dist;
             lastTouchX = midX;
             lastTouchY = midY;
+        } else if (e.touches.length === 1 && isPanning && scale > 1.05) {
+            // Tek parmak pan
+            e.preventDefault();
+            translateX = e.touches[0].clientX - panStartX;
+            translateY = e.touches[0].clientY - panStartY;
+            applyTransform();
         }
     }, { passive: false });
 
-    ctr.addEventListener('touchend', () => {
-        lastDist = 0;
-        if (scale <= 1.05) {
-            scale = 1;
-            translateX = 0;
-            translateY = 0;
-            applyTransform();
+    ctr.addEventListener('touchend', (e) => {
+        if (e.touches.length === 0) {
+            lastDist = 0;
+            isPanning = false;
+            if (scale <= 1.05) {
+                resetZoom();
+            }
+            updateResetBtn();
         }
+    });
+
+    // Çift dokunma ile zoom sıfırla
+    let lastTap = 0;
+    ctr.addEventListener('touchend', (e) => {
+        if (e.touches.length > 0) return;
+        const now = Date.now();
+        if (now - lastTap < 300 && scale > 1.05) {
+            resetZoom();
+        }
+        lastTap = now;
     });
 }
 

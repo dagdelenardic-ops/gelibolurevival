@@ -550,6 +550,25 @@
     stroke-width: 1.2px
 }
 
+/* ── Zoom Reset Butonu (mobil) ── */
+.map-reset-btn{
+    display:none;
+    position:absolute;
+    top:48px;
+    right:10px;
+    width:40px;height:40px;
+    border-radius:50%;
+    background:rgba(20,18,16,.85);
+    border:1px solid rgba(120,100,70,.3);
+    color:#c9a84c;
+    font-size:1.3rem;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index:4;
+    box-shadow:0 2px 8px rgba(0,0,0,.4)
+}
+
 /* ── Toggle: desktop'ta gizle, content her zaman göster ── */
 .narration-toggle{display:none !important}
 .narration-content{display:block !important}

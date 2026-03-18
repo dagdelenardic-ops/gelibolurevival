@@ -5,7 +5,28 @@
 
 const STORAGE_KEY = 'gelibolu_onboarding_done';
 
-const STEPS = [
+const isMobileSteps = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+const STEPS = isMobileSteps ? [
+    {
+        target: null,
+        title: 'Çanakkale Savaşı Haritası',
+        text: '433 günlük savaşı gün gün izleyin.\nBirlik simgelerine dokunarak detay görün.',
+        position: 'center'
+    },
+    {
+        target: null,
+        title: 'Harita Kontrolleri',
+        text: 'İki parmakla yakınlaştırın.\nYakınken tek parmakla kaydırın.\nÇift dokunarak sıfırlayın.\n⟲ butonu ile tam görünüme dönün.',
+        position: 'center'
+    },
+    {
+        target: null,
+        title: 'Zaman Çizelgesi & Anlatım',
+        text: 'Alt çubuktan herhangi bir haftaya dokunun.\n▼ butonu ile anlatım panelini açıp kapatın.\n▶ Başlat ile otomatik oynatın.',
+        position: 'center'
+    },
+] : [
     {
         target: '.map-container svg',
         title: 'İnteraktif Savaş Haritası',
@@ -27,7 +48,7 @@ const STEPS = [
     {
         target: null,
         title: 'Klavye Kısayolları',
-        text: '← → Ok tuşlarıyla fazlar arası geçiş yapın.\nSpace ile oynat/duraklat.\nEsc ile paneli kapatın.\nMobilde iki parmakla yakınlaştırın.',
+        text: '← → Ok tuşlarıyla fazlar arası geçiş yapın.\nSpace ile oynat/duraklat.\nEsc ile paneli kapatın.',
         position: 'center'
     }
 ];
