@@ -378,7 +378,6 @@ async function init() {
     initPinchZoom();
     setActivePhase(0);
     refreshAutoPlayButton();
-    startAutoPlay(setActivePhase, getCurrentPhaseIndex);
 
     // Ses kontrolleri ve müzik
     renderAudioControls();
@@ -390,8 +389,10 @@ async function init() {
         setTimeout(() => loader.remove(), 500);
     }
 
-    // Onboarding tutorial (ilk ziyarette)
-    initOnboarding();
+    // Onboarding tutorial — tutorial sırasında autoplay başlatma
+    const startPlay = () => startAutoPlay(setActivePhase, getCurrentPhaseIndex);
+    const tutorialShown = initOnboarding({ onFinish: startPlay });
+    if (!tutorialShown) startPlay();
 }
 
 document.addEventListener('DOMContentLoaded', init);

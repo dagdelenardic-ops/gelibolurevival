@@ -91,7 +91,6 @@ function positionCard(overlay, step, index) {
                 border-radius:8px;
                 z-index:10001;
                 pointer-events:none;
-                box-shadow:0 0 0 9999px rgba(0,0,0,.6);
             `;
             overlay.appendChild(highlight);
 
@@ -172,8 +171,13 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
-export function initOnboarding() {
-    if (localStorage.getItem(STORAGE_KEY)) return;
+/**
+ * @param {object} opts
+ * @param {Function} opts.onFinish — tutorial bitince çağrılır (autoplay başlatmak için)
+ * @returns {boolean} tutorial gösterildi mi
+ */
+export function initOnboarding(opts = {}) {
+    if (localStorage.getItem(STORAGE_KEY)) return false;
 
     injectStyles();
 
@@ -191,7 +195,11 @@ export function initOnboarding() {
             localStorage.setItem(STORAGE_KEY, '1');
             overlay.style.opacity = '0';
             overlay.style.transition = 'opacity .3s';
-            setTimeout(() => overlay.remove(), 300);
+            setTimeout(() => {
+                overlay.remove();
+                // Tutorial bitti — autoplay başlatılabilir
+                if (typeof opts.onFinish === 'function') opts.onFinish();
+            }, 300);
         }
 
         overlay.querySelector('.onboarding-next').addEventListener('click', () => {
@@ -215,4 +223,6 @@ export function initOnboarding() {
 
         show(0);
     }, 800);
+
+    return true;
 }
