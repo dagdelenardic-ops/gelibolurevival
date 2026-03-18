@@ -7,16 +7,16 @@ import { isMajorPhase } from '../engine/phase-engine.js';
 import { BATTLE_DATA } from '../data/battle-data.js';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-const MINOR_INTERVAL = isMobile ? 5000 : 2500;
-const MAJOR_INTERVAL = isMobile ? 10000 : 6000;
-const CHARS_PER_MS = 0.08; // ~80 karakter/saniye okuma hızı → 1 char = 12.5ms
+const MINOR_INTERVAL = isMobile ? 3000 : 2500;
+const MAJOR_INTERVAL = isMobile ? 7000 : 6000;
+const MAX_INTERVAL = isMobile ? 5000 : 8000; // Narration readTime üst sınırı
 
 let autoplayTimer = null;
 let isAutoPlaying = false;
 
 // Sessiz dönemler — büyük olay olmayan aralıklar hızlı geçer
 const QUIET_PERIODS = [
-    { start: '1914-11-10', end: '1915-02-18' },  // İlk bombardıman sonrası → deniz harekâtı öncesi
+    { start: '1914-11-04', end: '1915-02-18' },  // İlk bombardıman sonrası → deniz harekâtı öncesi
     { start: '1915-08-25', end: '1915-12-06' },  // Anafartalar sonrası → tahliye kararı öncesi
 ];
 
@@ -45,10 +45,8 @@ function getAdaptiveInterval(phaseIndex) {
     }
 
     const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;
-    const narrationLen = (phase.narration || '').length;
-    const readTime = narrationLen / CHARS_PER_MS;
 
-    return Math.max(base, readTime);
+    return Math.min(MAX_INTERVAL, base);
 }
 
 function scheduleNext(setActivePhase, getCurrentPhaseIndex) {

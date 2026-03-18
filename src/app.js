@@ -118,7 +118,7 @@ let prevCampaignPhaseId = null;
 
 // ── Sessiz dönem tespiti (autoplay-controller ile senkron) ──
 const QUIET_PERIODS = [
-    { start: '1914-11-10', end: '1915-02-18' },
+    { start: '1914-11-04', end: '1915-02-18' },
     { start: '1915-08-25', end: '1915-12-06' },
 ];
 function isQuietPeriod(iso) {
