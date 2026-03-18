@@ -116,7 +116,7 @@ function buildDailyHistoricalPhases(templatePhases = []) {
             id: `gun-${String(i + 1).padStart(4, '0')}`,
             isoStart: iso,
             date: formatISOToTR(iso),
-            title: anchor ? anchor.title : (exactParsed ? exactParsed.title : ((base.title || 'Cephe Günü') + ' · Günlük Akış')),
+            title: anchor ? anchor.title : (exactParsed ? exactParsed.title : (base.title || 'Cephe Günü')),
             narration: anchor ? anchor.narration : (exactParsed ? exactParsed.narration : (base.narration || `${formatISOToTR(iso)} tarihinde cephede hareketlilik sürdü.`)),
             importance: anchor ? 'major' : (exactParsed ? exactParsed.importance : 'minor'),
             locationIds: anchor && Array.isArray(anchor.locationIds) ? anchor.locationIds : mergeLocationIdArrays(active.locationIds, next.locationIds),

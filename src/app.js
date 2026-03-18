@@ -18,7 +18,7 @@ import { renderFrontlines, renderLandCombatFX } from './render/frontline-rendere
 import { animateCamera } from './render/camera.js';
 import { orchestrateAnimations } from './render/animation-orchestrator.js';
 import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition } from './ui/narration-panel.js';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, cleanTitle } from './ui/narration-panel.js';
 import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js';
 import { startAutoPlay, stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton } from './ui/autoplay-controller.js';
 import { initOnboarding } from './ui/onboarding.js';
@@ -105,7 +105,7 @@ function renderTopBar() {
     const p = BATTLE_DATA.phases[currentPhaseIndex];
     document.querySelector('.topbar').innerHTML = `
     <div class="topbar-title">Çanakkale Savaşı <span>1914-1916</span></div>
-    <div class="phase-indicator" id="phaseIndicator">${p.title} – ${p.date}</div>
+    <div class="phase-indicator" id="phaseIndicator">${cleanTitle(p.title)} – ${p.date}</div>
     <div class="legend">
       <button class="stats-btn" id="statsBtn" type="button"><img src="assets/icons/medal.png" width="14" height="14" alt=""> Kayıplar</button>
       ${Object.values(BATTLE_DATA.factions).map(f => `
@@ -144,7 +144,7 @@ function setActivePhase(i) {
     // ── MOBİL SESSIZ DÖNEM: Sadece tarih chip güncelle, geri kalanı atla ──
     if (quiet) {
         const ind = document.getElementById('phaseIndicator');
-        if (ind) ind.textContent = `${p.title} – ${p.date}`;
+        if (ind) ind.textContent = `${cleanTitle(p.title)} – ${p.date}`;
         updateMapDateIndicator(p.date);
         // Narration'ı throttle — her 5 fazda bir güncelle (fotoğraf glitch önleme)
         if (nextIndex % 5 === 0) {
@@ -159,7 +159,7 @@ function setActivePhase(i) {
 
     const ind = document.getElementById('phaseIndicator');
     if (ind) {
-        ind.textContent = `${p.title} – ${p.date}`;
+        ind.textContent = `${cleanTitle(p.title)} – ${p.date}`;
     }
     updateTimelineActiveState(nextIndex);
     focusActiveTimelineMarker();
@@ -449,6 +449,13 @@ function initPinchZoom() {
 
 // ── Ana Başlatma ──
 async function init() {
+    // Mobil: kart bazlı deneyime yönlendir (harita yüklenmez)
+    if (isMobile) {
+        const { initMobileTimeline } = await import('./ui/mobile-timeline.js');
+        initMobileTimeline();
+        return;
+    }
+
     await hydrateTimelineData();
     expandUnitTrails();
     initPositions();
@@ -475,13 +482,19 @@ async function init() {
     const startPlay = () => startAutoPlay(setActivePhase, getCurrentPhaseIndex);
 
     if (loader) {
-        // CSS introAutoHide animasyonu bitince DOM'dan kaldır
-        loader.addEventListener('animationend', () => {
+        let introHandled = false;
+        const handleIntroEnd = () => {
+            if (introHandled) return;
+            introHandled = true;
             loader.remove();
             // Onboarding tutorial — intro bittikten SONRA göster
             const tutorialShown = initOnboarding({ onFinish: startPlay });
             if (!tutorialShown) startPlay();
-        });
+        };
+        // CSS introAutoHide animasyonu bitince DOM'dan kaldır
+        loader.addEventListener('animationend', handleIntroEnd);
+        // Fallback: animationend tetiklenmezse 6s sonra zorla başlat
+        setTimeout(handleIntroEnd, 6000);
     } else {
         const tutorialShown = initOnboarding({ onFinish: startPlay });
         if (!tutorialShown) startPlay();
