@@ -205,42 +205,46 @@ function setActivePhase(i) {
             requestAnimationFrame(() => applyTokenSlideWithTrail(tokenNodes));
         }
     }
-    if (!isMobile) renderBattleEffects(nextIndex);
+    if (isMobile) {
+        // ── MOBİL: Sadece gerekli minimum işlemleri yap ──
+        // Frontline, battle effects, combat FX, animation orchestrator ATLA
+        // Camera geçişi sadece transition'da
+        if (isTransition) {
+            const svg = document.getElementById('battleMap');
+            if (svg) animateCamera(svg, campaignPhase.camera);
+        }
+        // Ses efektleri (hafif)
+        if (animData) triggerPhaseSfx(animData, campaignPhase.id);
+        updateMapSceneState(p, animData);
+    } else {
+        // ── DESKTOP: Tam deneyim ──
+        renderBattleEffects(nextIndex);
+        renderFrontlines(campaignPhase, currentIso);
+        renderLandCombatFX(campaignPhase, animData);
 
-    // ── Frontline & Land Combat FX ──
-    renderFrontlines(campaignPhase, currentIso);
-    if (!isMobile) renderLandCombatFX(campaignPhase, animData);
-
-    // ── Animation Orchestrator: eventType'a göre savaş animasyonları ──
-    // Mobilde sadece route'ları göster, FX katmanını atla (DOM thrashing azaltma)
-    const { routes: animRoutes, fx: animFx } = orchestrateAnimations(animData, nextPositions);
-    const routesLayer = document.getElementById('layer-routes');
-    if (routesLayer) routesLayer.innerHTML = animRoutes;
-    if (!isMobile) {
+        const { routes: animRoutes, fx: animFx } = orchestrateAnimations(animData, nextPositions);
+        const routesLayer = document.getElementById('layer-routes');
+        if (routesLayer) routesLayer.innerHTML = animRoutes;
         const combatLayer = document.getElementById('layer-combat-fx');
         if (combatLayer) combatLayer.innerHTML += animFx;
-    }
 
-    // ── Camera focus on campaign phase transition ──
-    if (isTransition) {
-        const svg = document.getElementById('battleMap');
-        if (svg) animateCamera(svg, campaignPhase.camera);
-    }
-
-    if (animData) {
-        if (animData.units?.length) {
-            renderAnimationUnits(animData);
+        if (isTransition) {
+            const svg = document.getElementById('battleMap');
+            if (svg) animateCamera(svg, campaignPhase.camera);
         }
-        renderAtmosphere(animData.animationState);
-        renderTransition(animData.sceneTransition);
-        // ── Ses efektleri: olay tipine göre tetikle ──
-        triggerPhaseSfx(animData, campaignPhase.id);
-    } else {
-        renderUnits(undefined);
-        renderAtmosphere(null);
-        renderTransition('');
+
+        if (animData) {
+            if (animData.units?.length) renderAnimationUnits(animData);
+            renderAtmosphere(animData.animationState);
+            renderTransition(animData.sceneTransition);
+            triggerPhaseSfx(animData, campaignPhase.id);
+        } else {
+            renderUnits(undefined);
+            renderAtmosphere(null);
+            renderTransition('');
+        }
+        updateMapSceneState(p, animData);
     }
-    updateMapSceneState(p, animData);
 
     // ── Info card: sahne stabilize olduktan sonra güncelle ──
     setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), 360);

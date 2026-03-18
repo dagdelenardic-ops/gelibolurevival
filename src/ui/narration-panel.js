@@ -93,9 +93,11 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
 
     if (title) {
         const icon = getNarrationIcon(phase.title || '');
-        // Başlıktan da "· Günlük Akış" ve "Resmi Günlük Kayıt" gibi tekrar eden etiketleri temizle
         let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
         title.innerHTML = `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}`;
+        // Toggle label güncelle
+        const toggleLabel = document.querySelector('.narration-toggle-label');
+        if (toggleLabel) toggleLabel.textContent = displayTitle;
     }
 
     // Temizlenmiş metni veya haftalık bağlamı göster
@@ -283,16 +285,27 @@ export function renderTransition(sceneTransition) {
 
 /** Anlatım kutusu DOM elemanlarını oluştur */
 export function attachNarrationElements(container, phase) {
+    const isMobileNarr = window.innerWidth <= 768;
     const nb = document.createElement('div');
-    nb.className = 'narration-box';
+    nb.className = 'narration-box' + (isMobileNarr ? ' is-collapsed' : '');
     nb.id = 'narrationBox';
     nb.setAttribute('aria-live', 'polite');
     nb.setAttribute('role', 'status');
     const icon = getNarrationIcon(phase.title || '');
     const { clean } = parseNarration(phase.narration);
     let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-    nb.innerHTML = `<div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div>`;
+    nb.innerHTML = `<button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat"><span class="narration-toggle-icon">▲</span> <span class="narration-toggle-label">${displayTitle}</span></button><div class="narration-content" id="narrationContent"><div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div></div>`;
     container.appendChild(nb);
+
+    // Toggle butonu
+    const toggleBtn = document.getElementById('narrationToggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            nb.classList.toggle('is-collapsed');
+            const icon = toggleBtn.querySelector('.narration-toggle-icon');
+            if (icon) icon.textContent = nb.classList.contains('is-collapsed') ? '▲' : '▼';
+        });
+    }
 
     // İlk romantik alıntıyı göster
     updateRomanticQuote(phase.isoStart || '');

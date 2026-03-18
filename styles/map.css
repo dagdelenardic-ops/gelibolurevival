@@ -550,12 +550,17 @@
     stroke-width: 1.2px
 }
 
+/* ── Toggle: desktop'ta gizle, content her zaman göster ── */
+.narration-toggle{display:none !important}
+.narration-content{display:block !important}
+.narration-box.is-collapsed{max-height:none}
+
 /* ── Mobile Responsive ── */
 @media(max-width:768px){
     .map-container{
-        min-height:55vh;
+        min-height:60vh;
         padding:0;
-        padding-bottom:8vh;
+        padding-bottom:48px;
         touch-action:manipulation;
         background:#131820;
         box-shadow:none
@@ -567,9 +572,9 @@
         filter:none;
         will-change:transform
     }
-    /* ── Mobilde ağır filter'ları kapat, will-change kaldır (GPU bellek tasarrufu) ── */
+    /* ── Mobilde: transition tamamen kapat (50+ token'da .18s bile pahalı) ── */
     .unit-token{
-        transition:transform .18s linear,opacity .15s ease-out;
+        transition:none;
         will-change:auto
     }
     .unit-token.is-moving{
@@ -586,6 +591,8 @@
     .unit-token:hover{
         filter:none
     }
+    /* ── Mobilde tüm transition'ları kapat (GPU tasarrufu) ── */
+    .location-group,.scene-annotation-group,.units-layer,.location-dot,.location-label{transition:none}
     /* ── Mobilde sürekli çalışan animasyonları durdur ── */
     .frontline-segment{animation:none;opacity:.4}
     .combat-dust{animation:none;opacity:.12}
@@ -609,17 +616,59 @@
         border-radius:12px 12px 0 0;
         border-left:none;
         border-top:2px solid #8b3a3a;
-        padding:14px 18px 18px;
+        padding:0;
         min-height:auto;
-        max-height:55vh;
-        overflow-y:auto;
+        max-height:60vh;
+        overflow:hidden;
         z-index:5;
         box-shadow:0 -8px 24px rgba(0,0,0,.5);
         backdrop-filter:none;
-        background:rgba(20,18,16,.97)
+        background:rgba(20,18,16,.97);
+        transition:max-height .3s ease
+    }
+    .narration-box.is-collapsed{
+        max-height:44px
+    }
+    .narration-box.is-collapsed .narration-content{
+        display:none !important
+    }
+    .narration-toggle{
+        display:flex !important;
+        align-items:center;
+        gap:8px;
+        width:100%;
+        padding:12px 18px;
+        background:none;
+        border:none;
+        color:#c9a84c;
+        font-family:var(--mono);
+        font-size:.76rem;
+        font-weight:600;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+        cursor:pointer;
+        text-align:left
+    }
+    .narration-toggle-icon{
+        font-size:.7rem;
+        transition:transform .2s
+    }
+    .narration-toggle-label{
+        flex:1;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap
+    }
+    .narration-content{
+        padding:0 18px 18px;
+        max-height:calc(60vh - 44px);
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch
     }
     .narration-title{font-size:.78rem}
     .narration-text{font-size:.9rem}
+    /* ── Mobilde video otomatik oynatma performansı ── */
+    .event-video-player{max-height:160px}
     .map-date-chip{
         top:4px;
         padding:5px 12px;
