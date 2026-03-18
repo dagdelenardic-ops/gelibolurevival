@@ -156,16 +156,22 @@ function updateRomanticQuote(isoDate) {
 }
 
 /** Tarihsel olay görselini güncelle — { hasImage, context } döner */
+let lastImageUrl = '';
 function updateEventImage(isoDate) {
     let el = document.getElementById('eventImage');
     if (!el) return { hasImage: false, context: '' };
 
     const img = getEventImage(isoDate);
     if (!img) {
-        el.style.display = 'none';
-        el.innerHTML = '';
+        if (lastImageUrl) { el.style.display = 'none'; el.innerHTML = ''; lastImageUrl = ''; }
         return { hasImage: false, context: '' };
     }
+
+    // Aynı fotoğrafsa DOM'a dokunma — glitch önleme
+    if (img.url === lastImageUrl) {
+        return { hasImage: true, context: img.context || '' };
+    }
+    lastImageUrl = img.url;
 
     el.style.display = 'block';
     const posStyle = img.cropFocus ? ` style="object-position:${img.cropFocus}"` : '';
@@ -174,6 +180,7 @@ function updateEventImage(isoDate) {
 }
 
 /** Gerçek görüntü videosunu güncelle */
+let lastVideoFile = '';
 function updateEventVideo(hasImage, campaignPhaseId, animData) {
     let el = document.getElementById('eventVideo');
     if (!el) return;
@@ -181,26 +188,25 @@ function updateEventVideo(hasImage, campaignPhaseId, animData) {
     const eventType = animData?.eventType || 'IDLE';
     const intensity = animData?.intensity ?? 0;
 
-    // Yoğun olaylarda video her zaman göster (fotoğrafı gizle)
-    // Düşük yoğunlukta fotoğraf varsa video gösterme
     if (hasImage && intensity < 7) {
-        el.style.display = 'none';
-        el.innerHTML = '';
+        if (lastVideoFile) { el.style.display = 'none'; el.innerHTML = ''; lastVideoFile = ''; }
         return;
     }
 
     const clip = getEventVideo(campaignPhaseId, eventType, intensity);
 
     if (!clip) {
-        el.style.display = 'none';
-        el.innerHTML = '';
+        if (lastVideoFile) { el.style.display = 'none'; el.innerHTML = ''; lastVideoFile = ''; }
         return;
     }
 
-    // Yoğun olayda fotoğrafı gizle, video göster
+    // Aynı video çalıyorsa DOM'a dokunma
+    if (clip.file === lastVideoFile) return;
+    lastVideoFile = clip.file;
+
     if (hasImage) {
         const imgEl = document.getElementById('eventImage');
-        if (imgEl) { imgEl.style.display = 'none'; imgEl.innerHTML = ''; }
+        if (imgEl) { imgEl.style.display = 'none'; imgEl.innerHTML = ''; lastImageUrl = ''; }
     }
 
     el.style.display = 'block';

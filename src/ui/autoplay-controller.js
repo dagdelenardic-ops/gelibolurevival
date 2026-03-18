@@ -31,12 +31,19 @@ function getAdaptiveInterval(phaseIndex) {
 
     const iso = phase.isoStart || '';
 
-    // Sessiz dönemlerde HER ŞEY hızlı geçer — major/minor fark etmez
+    // Sessiz dönemlerde hızlı geç
     if (isQuietPeriod(iso)) {
         return 500;
     }
 
     const major = isMajorPhase(phase);
+
+    // Sessiz dönemden çıkışta kademeli yavaşlama (ani 500ms→5s atlama yok)
+    // Şubat 19 – Mart 15: orta hız (geçiş dönemi)
+    if (!major && iso >= '1915-02-19' && iso <= '1915-03-15') {
+        return isMobile ? 3000 : 1800;
+    }
+
     const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;
     const narrationLen = (phase.narration || '').length;
     const readTime = narrationLen / CHARS_PER_MS;
