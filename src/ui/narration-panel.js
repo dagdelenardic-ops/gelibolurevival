@@ -100,9 +100,15 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
         if (toggleLabel) toggleLabel.textContent = displayTitle;
     }
 
-    // Temizlenmiş metni veya haftalık bağlamı göster
+    // Tarihsel olay görseli veya gerçek görüntü videosu
+    const imageResult = updateEventImage(phase.isoStart || '');
+    updateEventVideo(imageResult.hasImage, campaignPhaseId, animData);
+
+    // Narration metni: görsel bağlamı varsa onu göster, yoksa parse edilmiş metni
     if (text) {
-        if (clean) {
+        if (imageResult.context) {
+            text.textContent = imageResult.context;
+        } else if (clean) {
             text.textContent = clean;
         } else if (weeklyContext) {
             text.textContent = weeklyContext;
@@ -113,10 +119,6 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
 
     // Haftalık bağlam barını güncelle
     updateWeeklyBar(phase.isoStart, currentPhaseIndex, weeklyContext);
-
-    // Tarihsel olay görseli veya gerçek görüntü videosu
-    const hasImage = updateEventImage(phase.isoStart || '');
-    updateEventVideo(hasImage, campaignPhaseId, animData);
 
     // Romantik katman
     updateRomanticQuote(phase.isoStart || '');
@@ -149,22 +151,22 @@ function updateRomanticQuote(isoDate) {
     el.innerHTML = `<div class="romantic-header"><span class="romantic-emoji">${entry.emoji || '📜'}</span><span class="romantic-label">${typeLabels[entry.type] || 'Kayıt'}</span></div><div class="romantic-text">${entry.text}</div><div class="romantic-source">— ${entry.source}</div>`;
 }
 
-/** Tarihsel olay görselini güncelle — görsel varsa true döner */
+/** Tarihsel olay görselini güncelle — { hasImage, context } döner */
 function updateEventImage(isoDate) {
     let el = document.getElementById('eventImage');
-    if (!el) return false;
+    if (!el) return { hasImage: false, context: '' };
 
     const img = getEventImage(isoDate);
     if (!img) {
         el.style.display = 'none';
         el.innerHTML = '';
-        return false;
+        return { hasImage: false, context: '' };
     }
 
     el.style.display = 'block';
     const posStyle = img.cropFocus ? ` style="object-position:${img.cropFocus}"` : '';
     el.innerHTML = `<img src="${img.url}" alt="${img.caption}" class="event-image-photo" loading="lazy" referrerpolicy="no-referrer"${posStyle} onerror="this.parentElement.style.display='none'"><div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
-    return true;
+    return { hasImage: true, context: img.context || '' };
 }
 
 /** Gerçek görüntü videosunu güncelle */

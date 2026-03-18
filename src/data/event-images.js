@@ -20,6 +20,7 @@ export const EVENT_IMAGES = [
         caption:  'İtilaf donanması Boğaz önünde — Kasım 1914',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center',
+        context:  '3 Kasım 1914\'te İngiliz ve Fransız savaş gemileri Seddülbahir ve Kumkale tabyalarını bombaladı. Bu saldırı Osmanlı\'yı uyararak Boğaz savunmasının güçlendirilmesine yol açtı — stratejik bir hata.',
     },
     // ── 2. Osmanlı Savaş İlanı / Cihat ──
     {
@@ -29,6 +30,7 @@ export const EVENT_IMAGES = [
         caption:  'Sultan V. Mehmed — Cihat ilanı, 14 Kasım 1914',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center 20%',
+        context:  'Sultan V. Mehmed, 14 Kasım 1914\'te İtilaf Devletleri\'ne karşı cihat ilan etti. Bu karar Osmanlı İmparatorluğu\'nu resmen I. Dünya Savaşı\'na soktu ve Çanakkale Cephesi\'nin açılmasına zemin hazırladı.',
     },
     // ── 2a. Enver Paşa — Savaş kararı ──
     {
@@ -38,6 +40,7 @@ export const EVENT_IMAGES = [
         caption:  'Enver Paşa — Harbiye Nazırı, savaş kararının mimarı',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center 20%',
+        context:  'Harbiye Nazırı Enver Paşa, Osmanlı\'nın Almanya safında savaşa girmesinin baş mimarıydı. Boğazların savunmasını en yüksek öncelik ilan ederek kıyı bataryalarının takviyesini ve mayın hatlarının döşenmesini emretti.',
     },
     // ── 2b. Kilitbahir Kalesi — Boğaz savunmasının kalbi ──
     {
@@ -47,6 +50,7 @@ export const EVENT_IMAGES = [
         caption:  'Kilitbahir Kalesi — Boğaz savunmasının merkezi',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center',
+        context:  'Kilitbahir Kalesi, Boğaz\'ın en dar noktasını kontrol eden kilit savunma mevziiydi. Osmanlı mühendisleri Aralık 1914\'te kaleyi modern toplarla tahkim ederek mayın hatlarını koruyan ateş şemsiyesi oluşturdu.',
     },
     // ── 2c. Cevat Paşa — Müstahkem Mevki Komutanı ──
     {
@@ -56,6 +60,7 @@ export const EVENT_IMAGES = [
         caption:  'Cevat Paşa (Çobanlı) — Çanakkale Müstahkem Mevki Komutanı',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center 20%',
+        context:  'Cevat Paşa (Çobanlı), Çanakkale Müstahkem Mevki Komutanı olarak Boğaz savunmasının asıl yöneticisiydi. 82 sabit top ve 230 seyyar topun koordinasyonunu sağlayarak İtilaf donanmasına karşı çok katmanlı savunma hattı kurdu.',
     },
     // ── 2d. Churchill — Gelibolu harekâtının politik mimarı ──
     {
@@ -65,6 +70,7 @@ export const EVENT_IMAGES = [
         caption:  'Winston Churchill — Bahriye Nazırı, Çanakkale harekâtının mimarı',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center 25%',
+        context:  'İngiliz Bahriye Nazırı Winston Churchill, Çanakkale harekâtının en ateşli savunucusuydu. 13 Ocak 1915\'te Savaş Konseyi\'ni Boğazları denizden zorlamaya ikna etti. Harekâtın başarısızlığı siyasi kariyerini geçici olarak sona erdirecekti.',
     },
     // ── 2e. Osmanlı siperleri — Boğaz savunma tahkimatı ──
     {
@@ -74,6 +80,7 @@ export const EVENT_IMAGES = [
         caption:  'Osmanlı askerleri siperde — Çanakkale savunma hattı',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center',
+        context:  'Ocak-Şubat 1915\'te Osmanlı birlikleri Gelibolu Yarımadası boyunca savunma mevzileri inşa etti. Kıyı tahkimatları, tel örgüler ve siper hatları olası bir kara çıkarmasına karşı hazırlandı.',
     },
     // ── 2f. Boğaz savunma haritası — tahkimat düzeni ──
     {
@@ -83,6 +90,7 @@ export const EVENT_IMAGES = [
         caption:  'Çanakkale Boğazı savunma düzeni — 1915 haritası',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center',
+        context:  'Şubat 1915 itibarıyla Boğaz savunması çok katmanlı bir sistem haline geldi: 11 sıra mayın hattı (toplam 373 mayın), kıyı bataryaları, seyyar obüsler ve Nusret mayın gemisinin gizli seferleri. İtilaf donanması 19 Şubat\'ta ilk büyük saldırıyı başlatacaktı.',
     },
     // ── 3. Deniz Harekâtı Başlangıcı / Bombardıman Dönemi ──
     {
