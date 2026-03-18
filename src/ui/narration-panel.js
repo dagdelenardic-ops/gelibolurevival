@@ -9,6 +9,13 @@ import { getWeeklyGuide, getActiveWeekIndex } from '../engine/phase-engine.js';
 import { getEventImage } from '../data/event-images.js';
 import { getEventVideo } from '../data/event-videos.js';
 
+/** Teknik etiketleri başlıktan temizle (EPUB Kaydı, Haftalık Bağ, Günlük Akış vb.) */
+export function cleanTitle(raw) {
+    return (raw || '')
+        .replace(/\s*[·–-]\s*(EPUB Kaydı|Epub Kaydı|Haftalık Bağ|Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '')
+        .trim() || raw;
+}
+
 /** Tarih metni → gün/ay/yıl parçaları */
 export function splitDisplayDateParts(dateText) {
     const raw = String(dateText || '').trim();
@@ -75,10 +82,16 @@ function parseNarration(rawNarration) {
     }
 
     // Eğer parse sonucu boşsa ve "Açık Olay:" yoksa, orijinal metni kullan
-    const clean = unique.join(' ').trim();
+    let clean = unique.join(' ').trim();
     if (!clean && !weeklyContext && !rawNarration.includes('Açık Olay:')) {
-        return { clean: rawNarration, weeklyContext: '' };
+        clean = rawNarration;
     }
+
+    // Generic/teknik cümleleri filtrele
+    clean = clean
+        .replace(/\b\d+\s*Kasım\s*\d{4}\s*günü\s*EPUB kaydı[^.]*\./gi, '')
+        .replace(/EPUB kaydı[^.]*içeriyor\.\s*/gi, '')
+        .trim();
 
     return { clean, weeklyContext };
 }
@@ -93,8 +106,8 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
 
     if (title) {
         const icon = getNarrationIcon(phase.title || '');
-        let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-        title.innerHTML = `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}`;
+        const displayTitle = cleanTitle(phase.title);
+        title.innerHTML = `<span class="narration-date-label">${phase.date}</span><span class="narration-event-name"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle}</span>`;
         // Toggle label güncelle
         const toggleLabel = document.querySelector('.narration-toggle-label');
         if (toggleLabel) toggleLabel.textContent = displayTitle;
@@ -175,7 +188,22 @@ function updateEventImage(isoDate) {
 
     el.style.display = 'block';
     const posStyle = img.cropFocus ? ` style="object-position:${img.cropFocus}"` : '';
-    el.innerHTML = `<img src="${img.url}" alt="${img.caption}" class="event-image-photo" loading="lazy" referrerpolicy="no-referrer"${posStyle} onerror="this.parentElement.style.display='none'"><div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
+    // Crossfade: yeni resmi gizli ekle, yüklenince fade-in yap
+    const newImg = document.createElement('img');
+    newImg.className = 'event-image-photo event-image-entering';
+    newImg.alt = img.caption;
+    newImg.loading = 'lazy';
+    newImg.referrerPolicy = 'no-referrer';
+    if (img.cropFocus) newImg.style.objectPosition = img.cropFocus;
+    newImg.onerror = () => { el.style.display = 'none'; };
+    newImg.onload = () => {
+        // Eski resmi kaldır, yenisini göster
+        requestAnimationFrame(() => { newImg.classList.remove('event-image-entering'); });
+    };
+    // Eski içeriği temizle, caption/source ekle
+    el.innerHTML = `<div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
+    el.prepend(newImg);
+    newImg.src = img.url;
     return { hasImage: true, context: img.context || '' };
 }
 
@@ -246,13 +274,10 @@ function updateWeeklyBar(isoDate, currentPhaseIndex, weeklyContext) {
 
     bar.style.display = 'block';
     bar.innerHTML = `
-        <div class="weekly-bar-header">
-            <span class="weekly-bar-label">${week.title}</span>
-            <span class="weekly-bar-dates">${week.label}</span>
-        </div>
         <div class="weekly-bar-track">
             <div class="weekly-bar-fill" style="width:${progressPct}%"></div>
         </div>
+        <div class="weekly-bar-dates">${week.label}</div>
         ${contextText ? `<div class="weekly-bar-context">${contextText}</div>` : ''}
     `;
 }
@@ -292,7 +317,7 @@ export function renderTransition(sceneTransition) {
         return;
     }
     el.style.display = 'block';
-    el.textContent = `Geçiş: ${sceneTransition}`;
+    el.textContent = sceneTransition;
 }
 
 /** Mobilde: boş içerikte paneli kapat, zengin içerik gelince ışıldat */
@@ -328,8 +353,8 @@ export function attachNarrationElements(container, phase) {
     nb.setAttribute('role', 'status');
     const icon = getNarrationIcon(phase.title || '');
     const { clean } = parseNarration(phase.narration);
-    let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-    nb.innerHTML = `<button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat"><span class="narration-toggle-icon">▼</span> <span class="narration-toggle-label">${displayTitle}</span></button><div class="narration-content" id="narrationContent"><div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div></div>`;
+    const displayTitle = cleanTitle(phase.title);
+    nb.innerHTML = `<button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat"><span class="narration-toggle-icon">▼</span> <span class="narration-toggle-label">${displayTitle}</span></button><div class="narration-content" id="narrationContent"><div class="narration-title" id="narrationTitle"><span class="narration-date-label">${phase.date}</span><span class="narration-event-name"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle}</span></div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div></div>`;
     container.appendChild(nb);
 
     // Toggle butonu
