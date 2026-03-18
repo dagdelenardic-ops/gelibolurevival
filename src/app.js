@@ -247,7 +247,8 @@ function setActivePhase(i) {
     }
 
     // ── Info card: sahne stabilize olduktan sonra güncelle ──
-    setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), 360);
+    // Mobilde daha geç güncelle (GPU baskısı azalt)
+    setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), isMobile ? 800 : 360);
 
     // ── Update global state ──
     prevCampaignPhaseId = campaignPhase.id;
@@ -362,7 +363,7 @@ function initPinchZoom() {
 
 // ── Ana Başlatma ──
 async function init() {
-    hydrateTimelineData();
+    await hydrateTimelineData();
     expandUnitTrails();
     initPositions();
     await waitForAnimationEvents();

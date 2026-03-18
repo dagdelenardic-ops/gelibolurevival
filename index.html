@@ -83,14 +83,14 @@
 <link rel="stylesheet" href="styles/map.css">
 <link rel="stylesheet" href="styles/timeline.css">
 <link rel="stylesheet" href="styles/panel.css">
-<link rel="preload" as="image" href="assets/icons/soldier-man.png">
-<link rel="preload" as="image" href="assets/icons/cannon.png">
-<link rel="preload" as="image" href="assets/icons/battleship.png">
-<link rel="preload" as="image" href="assets/icons/naval-mine.png">
-<link rel="preload" as="image" href="assets/icons/army-star.png">
-<link rel="preload" as="image" href="assets/icons/wwi-tommy-helmet.png">
-<link rel="preload" as="image" href="assets/icons/french-poilu-helmet.png">
-<link rel="preload" as="image" href="assets/icons/old-war-bunker.png">
+<!-- Icon preloads: sadece desktop (mobilde gereksiz bant genişliği) -->
+<script>
+if(window.innerWidth>768){
+  ['soldier-man','cannon','battleship','naval-mine','army-star','wwi-tommy-helmet','french-poilu-helmet','old-war-bunker'].forEach(n=>{
+    const l=document.createElement('link');l.rel='preload';l.as='image';l.href='assets/icons/'+n+'.png';document.head.appendChild(l);
+  });
+}
+</script>
 <script>
   window.ANIMATION_EVENTS_READY = fetch('book/animation-events.json')
     .then(res => res.json())

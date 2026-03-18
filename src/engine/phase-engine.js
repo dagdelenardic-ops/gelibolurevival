@@ -10,7 +10,22 @@ import {
     formatISOToTR, dayDiffISO, normalizeValue, normalizeDateText
 } from './date-utils.js';
 import { unitSeed } from './position-engine.js';
-import { BOOK_PHASE_EVENTS, BOOK_WEEKLY_GUIDE } from '../../book/gallipoli-events.js';
+// Dynamic import — 1.1MB dosyayı ana modül parse'ını bloklamadan yükle
+let BOOK_PHASE_EVENTS = [];
+let BOOK_WEEKLY_GUIDE = [];
+let _bookDataLoaded = false;
+
+export async function loadBookData() {
+    if (_bookDataLoaded) return;
+    try {
+        const mod = await import('../../book/gallipoli-events.js');
+        BOOK_PHASE_EVENTS = mod.BOOK_PHASE_EVENTS || [];
+        BOOK_WEEKLY_GUIDE = mod.BOOK_WEEKLY_GUIDE || [];
+        _bookDataLoaded = true;
+    } catch (err) {
+        console.warn('Kitap verisi yüklenemedi:', err);
+    }
+}
 import { CANONICAL_POSITIONS, getCanonicalPosition } from '../data/canonical-positions.js';
 
 // ── Modül State ──
@@ -268,7 +283,8 @@ export function getNavalEraProgress(phaseIndex) {
 }
 
 /** Tüm veri hazırlama orchestrator — init() tarafından çağrılır */
-export function hydrateTimelineData() {
+export async function hydrateTimelineData() {
+    await loadBookData();
     ensureExpandedPhases();
     computePhaseMajorOrder();
     computeUnitEntryPhaseIndexes();
