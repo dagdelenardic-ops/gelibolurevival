@@ -188,7 +188,6 @@ export function initOnboarding(opts = {}) {
 
     injectStyles();
 
-    // Small delay to let the map render
     setTimeout(() => {
         const overlay = createOverlay();
         let currentStep = 0;
@@ -229,7 +228,7 @@ export function initOnboarding(opts = {}) {
         document.addEventListener('keydown', escHandler);
 
         show(0);
-    }, 800);
+    }, 100);
 
     return true;
 }

@@ -384,16 +384,22 @@ async function init() {
     renderAudioControls();
     initAudioOnInteraction();
 
+    // Sinematik giriş — CSS animasyonla 5.5s sonra otomatik kaybolur
     const loader = document.getElementById('loadingOverlay');
-    if (loader) {
-        loader.classList.add('hidden');
-        setTimeout(() => loader.remove(), 500);
-    }
-
-    // Onboarding tutorial — tutorial sırasında autoplay başlatma
     const startPlay = () => startAutoPlay(setActivePhase, getCurrentPhaseIndex);
-    const tutorialShown = initOnboarding({ onFinish: startPlay });
-    if (!tutorialShown) startPlay();
+
+    if (loader) {
+        // CSS introAutoHide animasyonu bitince DOM'dan kaldır
+        loader.addEventListener('animationend', () => {
+            loader.remove();
+            // Onboarding tutorial — intro bittikten SONRA göster
+            const tutorialShown = initOnboarding({ onFinish: startPlay });
+            if (!tutorialShown) startPlay();
+        });
+    } else {
+        const tutorialShown = initOnboarding({ onFinish: startPlay });
+        if (!tutorialShown) startPlay();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', init);

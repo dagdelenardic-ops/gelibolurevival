@@ -107,11 +107,101 @@ body{
 .legend-icon{width:12px;height:12px;display:flex;align-items:center;justify-content:center}
 
 /* ── Loading Overlay ── */
-.loading-overlay{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:16px;transition:opacity .4s ease}
-.loading-overlay.hidden{opacity:0;pointer-events:none}
-.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite}
-.loading-text{font-family:var(--mono);font-size:.82rem;color:var(--text-muted);letter-spacing:.04em}
+/* ── Sinematik Giriş ── */
+.cinematic-intro{
+  position:fixed;inset:0;z-index:10010;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#080a0c 0%,#0e1014 40%,#1a1510 80%,#0e1014 100%);
+  transition:opacity .8s ease
+}
+.cinematic-intro.hidden{opacity:0;pointer-events:none}
+/* Intro kendi kendine 5s sonra kaybolur (JS yedek olarak da kaldırır) */
+.cinematic-intro{animation:introAutoHide 5.5s ease-in-out forwards}
+@keyframes introAutoHide{
+  0%,85%{opacity:1;pointer-events:auto}
+  100%{opacity:0;pointer-events:none}
+}
+.intro-content{
+  text-align:center;
+  max-width:520px;
+  padding:24px
+}
+.intro-year{
+  font-family:var(--mono);
+  font-size:4.5rem;
+  font-weight:700;
+  color:#c9a84c;
+  letter-spacing:.15em;
+  opacity:0;
+  animation:introFadeUp 1.2s ease-out .3s forwards
+}
+.intro-line{
+  width:60px;height:2px;
+  background:linear-gradient(90deg,transparent,#8b3a3a,transparent);
+  margin:16px auto;
+  opacity:0;
+  animation:introFadeUp .8s ease-out .8s forwards
+}
+.intro-title{
+  font-family:var(--mono);
+  font-size:2.2rem;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  opacity:0;
+  animation:introFadeUp 1s ease-out 1.2s forwards
+}
+.intro-subtitle{
+  font-family:var(--sans);
+  font-size:1.05rem;
+  color:var(--text-muted);
+  margin-top:10px;
+  font-style:italic;
+  opacity:0;
+  animation:introFadeUp .8s ease-out 1.8s forwards
+}
+.intro-quote{
+  font-family:var(--mono);
+  font-size:1.1rem;
+  color:#c4645a;
+  margin-top:24px;
+  font-weight:600;
+  letter-spacing:.05em;
+  opacity:0;
+  animation:introFadeUp .8s ease-out 2.3s forwards
+}
+.intro-detail{
+  font-family:var(--mono);
+  font-size:.7rem;
+  color:var(--text-dim);
+  margin-top:20px;
+  letter-spacing:.06em;
+  opacity:0;
+  animation:introFadeUp .6s ease-out 2.8s forwards
+}
+.cinematic-intro .loading-spinner{
+  width:24px;height:24px;
+  border:2px solid var(--border);
+  border-top-color:var(--red);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin:24px auto 0;
+  opacity:0;
+  animation:spin .8s linear infinite, introFadeUp .4s ease-out 3.2s forwards
+}
+@keyframes introFadeUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .intro-year{font-size:3rem}
+  .intro-title{font-size:1.5rem;letter-spacing:.2em}
+  .intro-subtitle{font-size:.9rem}
+  .intro-quote{font-size:.95rem}
+}
 
 /* ── Erişilebilirlik (a11y) ── */
 @media(prefers-reduced-motion:reduce){
