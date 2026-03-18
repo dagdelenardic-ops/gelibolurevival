@@ -62,8 +62,19 @@ function parseNarration(rawNarration) {
         }
     }
 
+    // Tekrarlanan cümleleri kaldır (Açık Olay ve Operasyon Durumu aynı metni içerebilir)
+    const unique = [];
+    const seen = new Set();
+    for (const part of cleanParts) {
+        const normalized = part.replace(/\s+/g, ' ').trim();
+        if (normalized && !seen.has(normalized)) {
+            seen.add(normalized);
+            unique.push(normalized);
+        }
+    }
+
     // Eğer parse sonucu boşsa ve "Açık Olay:" yoksa, orijinal metni kullan
-    const clean = cleanParts.join(' ').trim();
+    const clean = unique.join(' ').trim();
     if (!clean && !weeklyContext && !rawNarration.includes('Açık Olay:')) {
         return { clean: rawNarration, weeklyContext: '' };
     }
@@ -147,7 +158,8 @@ function updateEventImage(isoDate) {
     }
 
     el.style.display = 'block';
-    el.innerHTML = `<img src="${img.url}" alt="${img.caption}" class="event-image-photo" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"><div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
+    const posStyle = img.cropFocus ? ` style="object-position:${img.cropFocus}"` : '';
+    el.innerHTML = `<img src="${img.url}" alt="${img.caption}" class="event-image-photo" loading="lazy" referrerpolicy="no-referrer"${posStyle} onerror="this.parentElement.style.display='none'"><div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
 }
 
 /** Haftalık bağlam progress barını güncelle */

@@ -17,12 +17,25 @@ function getSceneKey(phase, animData) {
     return 'general';
 }
 
+// ── Cached DOM references (her fazda querySelectorAll yapmamak için) ──
+let cachedLocationGroups = null;
+let cachedAnnotationGroups = null;
+let cachedMinefields = null;
+let cachedForts = null;
+let cachedFortifications = null;
+let lastSceneKey = null;
+
 export function updateMapSceneState(phase, animData) {
     const svg = document.getElementById('battleMap');
     const ctr = document.querySelector('.map-container');
     if (!svg || !ctr) return;
 
     const sceneKey = getSceneKey(phase, animData);
+
+    // Sahne değişmediyse DOM işlemi yapma
+    if (sceneKey === lastSceneKey) return;
+    lastSceneKey = sceneKey;
+
     svg.dataset.scene = sceneKey;
     ctr.dataset.scene = sceneKey;
 
@@ -34,21 +47,25 @@ export function updateMapSceneState(phase, animData) {
     };
     const visible = visibleByScene[sceneKey] || null;
 
-    svg.querySelectorAll('.location-group').forEach((el) => {
+    // Cache DOM queries — sadece ilk seferde yap
+    if (!cachedLocationGroups) cachedLocationGroups = [...svg.querySelectorAll('.location-group')];
+    if (!cachedAnnotationGroups) cachedAnnotationGroups = [...svg.querySelectorAll('.scene-annotation-group')];
+    if (!cachedMinefields) cachedMinefields = document.getElementById('minefields');
+    if (!cachedForts) cachedForts = document.getElementById('forts');
+    if (!cachedFortifications) cachedFortifications = document.getElementById('layer-fortifications');
+
+    cachedLocationGroups.forEach((el) => {
         const locationId = el.dataset.locationId;
         el.classList.toggle('is-scene-hidden', !!visible && !visible.has(locationId));
     });
 
-    svg.querySelectorAll('.scene-annotation-group').forEach((el) => {
+    cachedAnnotationGroups.forEach((el) => {
         el.classList.toggle('is-scene-hidden', el.dataset.sceneGroup !== sceneKey);
     });
 
-    const minefields = document.getElementById('minefields');
-    const forts = document.getElementById('forts');
-    const fortifications = document.getElementById('layer-fortifications');
-    if (minefields) minefields.classList.toggle('is-scene-dimmed', sceneKey !== 'naval');
-    if (forts) forts.classList.toggle('is-scene-dimmed', sceneKey === 'anzac');
-    if (fortifications) fortifications.classList.toggle('is-scene-dimmed', sceneKey === 'naval');
+    if (cachedMinefields) cachedMinefields.classList.toggle('is-scene-dimmed', sceneKey !== 'naval');
+    if (cachedForts) cachedForts.classList.toggle('is-scene-dimmed', sceneKey === 'anzac');
+    if (cachedFortifications) cachedFortifications.classList.toggle('is-scene-dimmed', sceneKey === 'naval');
 }
 
 /** Mayın hattı SVG helper */
@@ -134,6 +151,8 @@ const ASIA_PATH = `
     C 518 214, 524 200, 530 190 Z
 `;
 
+const isMobileMap = typeof window !== 'undefined' && window.innerWidth <= 768;
+
 /** Ana SVG harita oluştur ve DOM'a ekle */
 export function renderMap(currentPhaseIndex, currentPositions) {
     const ctr = document.querySelector('.map-container');
@@ -191,7 +210,14 @@ export function renderMap(currentPhaseIndex, currentPositions) {
       <stop offset="100%" stop-color="#000" stop-opacity=".2"/>
     </radialGradient>
 
-    <!-- ═══ FILTERS — doğal, subtil ═══ -->
+    <!-- ═══ FILTERS — mobilde hafif, masaüstünde tam ═══ -->
+    ${isMobileMap ? `
+    <!-- Mobilde: ağır filter'ları no-op yap (GPU tasarrufu) -->
+    <filter id="terrainRelief"><feFlood flood-opacity="0" result="noop"/><feMerge><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="paperTex"><feFlood flood-opacity="0" result="noop"/><feMerge><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="coastSoft"><feFlood flood-opacity="0" result="noop"/><feMerge><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%"><feFlood flood-opacity="0" result="noop"/><feMerge><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    ` : `
     <filter id="terrainRelief" x="-2%" y="-2%" width="104%" height="104%">
       <feTurbulence type="fractalNoise" baseFrequency=".025" numOctaves="5" seed="12" result="noise"/>
       <feDiffuseLighting in="noise" lighting-color="#f0ead0" surfaceScale="1.2" diffuseConstant=".6" result="light">
@@ -216,6 +242,7 @@ export function renderMap(currentPhaseIndex, currentPositions) {
       <feGaussianBlur stdDeviation="1.5" result="b"/>
       <feComposite in="SourceGraphic" in2="b" operator="over"/>
     </filter>
+    `}
 
     <!-- ═══ PATTERNS — doğal harita dokusu ═══ -->
     <pattern id="wave" width="60" height="16" patternUnits="userSpaceOnUse">

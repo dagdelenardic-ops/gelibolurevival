@@ -42,9 +42,17 @@ export function renderTimeline(setActivePhase, toggleAutoPlay) {
 }
 
 /** Aktif timeline marker'ını güncelle */
+let cachedPhaseMarkers = null;
+let lastActiveWeekIndex = -1;
+
 export function updateTimelineActiveState(currentPhaseIndex) {
     const activeWeekIndex = getActiveWeekIndex(currentPhaseIndex);
-    document.querySelectorAll('.phase-marker').forEach((el) => {
+    // Aynı hafta indeksiyse DOM dokunma
+    if (activeWeekIndex === lastActiveWeekIndex) return;
+    lastActiveWeekIndex = activeWeekIndex;
+
+    if (!cachedPhaseMarkers) cachedPhaseMarkers = [...document.querySelectorAll('.phase-marker')];
+    cachedPhaseMarkers.forEach((el) => {
         el.classList.toggle('active', Number(el.dataset.weekIndex) === activeWeekIndex);
     });
 }

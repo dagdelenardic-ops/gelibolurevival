@@ -7,10 +7,10 @@ import { BATTLE_DATA } from './data/battle-data.js';
 import { ENTITY_TYPES } from './data/entity-types.js';
 import { getTerrainAtPoint, clampToAllowedTerrain } from './data/terrain-zones.js';
 import { isUnitDestroyed } from './data/canonical-positions.js';
-import { normalizeDateText } from './engine/date-utils.js';
+import { normalizeDateText, normalizeValue } from './engine/date-utils.js';
 import { hydrateTimelineData, getUnitEntryPhaseIndex } from './engine/phase-engine.js';
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
-import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation } from './engine/position-engine.js';
+import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation, getClusterOffset } from './engine/position-engine.js';
 import { renderMap, updateMapSceneState } from './render/map-renderer.js';
 import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js';
 import { renderBattleEffects } from './render/effects-renderer.js';
@@ -28,6 +28,58 @@ import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
 const currentPositions = {};
+const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+// ── Mobile DOM Patching: innerHTML yerine mevcut token'ları güncelle ──
+function patchTokens(tg, pid, prevPositions, nextPositions, phaseIndex, prevPhaseIndex, isoDate, animData) {
+    const UNIT_ENTRY = getUnitEntryPhaseIndex();
+    const existingNodes = new Map();
+    tg.querySelectorAll('.unit-token').forEach(el => {
+        existingNodes.set(el.dataset.unitId, el);
+    });
+
+    const activeUnitIds = new Set();
+
+    BATTLE_DATA.units.forEach((u) => {
+        const entryIndex = UNIT_ENTRY[u.id] ?? 0;
+        if (phaseIndex < entryIndex) return;
+
+        const targetBase = nextPositions[u.id];
+        if (!targetBase) return;
+
+        const phaseData = u.phases[pid];
+        const visible = phaseData ? 1 : 0.55;
+        const offset = getClusterOffset({}, targetBase.x, targetBase.y, u, phaseIndex);
+        const tx = normalizeValue(Math.round(targetBase.x + offset.x), 45, 680);
+        const ty = normalizeValue(Math.round(targetBase.y + offset.y), 18, 548);
+
+        activeUnitIds.add(u.id);
+
+        const existing = existingNodes.get(u.id);
+        if (existing) {
+            // Sadece pozisyon ve opacity güncelle — DOM silmeden
+            existing.style.transform = `translate(${tx}px, ${ty}px)`;
+            existing.style.opacity = String(visible);
+            existing.dataset.targetX = tx;
+            existing.dataset.targetY = ty;
+        } else {
+            // Yeni token: sadece ilk kez girenlerde innerHTML ekle
+            const nextMarkup = renderTokens(pid, prevPositions, { [u.id]: nextPositions[u.id] }, phaseIndex, prevPhaseIndex, isoDate, animData);
+            if (nextMarkup.trim()) {
+                const temp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                temp.innerHTML = nextMarkup;
+                while (temp.firstChild) tg.appendChild(temp.firstChild);
+            }
+        }
+    });
+
+    // Artık ekranda olmaması gereken token'ları gizle (silmeden)
+    existingNodes.forEach((el, id) => {
+        if (!activeUnitIds.has(id)) {
+            el.style.opacity = '0';
+        }
+    });
+}
 
 function getCurrentPhaseIndex() { return currentPhaseIndex; }
 async function waitForAnimationEvents() {
@@ -143,23 +195,31 @@ function setActivePhase(i) {
 
     const tg = document.getElementById('unitTokens');
     if (tg) {
-        const nextMarkup = renderTokens(p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
-        tg.innerHTML = nextMarkup;
-        const tokenNodes = [...tg.querySelectorAll('.unit-token')];
-        requestAnimationFrame(() => applyTokenSlideWithTrail(tokenNodes));
+        if (isMobile) {
+            // Mobilde: mevcut token'ları güncelle, innerHTML yerine DOM patching
+            patchTokens(tg, p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
+        } else {
+            const nextMarkup = renderTokens(p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
+            tg.innerHTML = nextMarkup;
+            const tokenNodes = [...tg.querySelectorAll('.unit-token')];
+            requestAnimationFrame(() => applyTokenSlideWithTrail(tokenNodes));
+        }
     }
-    renderBattleEffects(nextIndex);
+    if (!isMobile) renderBattleEffects(nextIndex);
 
     // ── Frontline & Land Combat FX ──
     renderFrontlines(campaignPhase, currentIso);
-    renderLandCombatFX(campaignPhase, animData);
+    if (!isMobile) renderLandCombatFX(campaignPhase, animData);
 
     // ── Animation Orchestrator: eventType'a göre savaş animasyonları ──
+    // Mobilde sadece route'ları göster, FX katmanını atla (DOM thrashing azaltma)
     const { routes: animRoutes, fx: animFx } = orchestrateAnimations(animData, nextPositions);
     const routesLayer = document.getElementById('layer-routes');
     if (routesLayer) routesLayer.innerHTML = animRoutes;
-    const combatLayer = document.getElementById('layer-combat-fx');
-    if (combatLayer) combatLayer.innerHTML += animFx;
+    if (!isMobile) {
+        const combatLayer = document.getElementById('layer-combat-fx');
+        if (combatLayer) combatLayer.innerHTML += animFx;
+    }
 
     // ── Camera focus on campaign phase transition ──
     if (isTransition) {
@@ -239,9 +299,16 @@ function initPinchZoom() {
         return Math.hypot(dx, dy);
     }
 
+    svg.style.willChange = 'transform';
+    let rafPending = false;
     function applyTransform() {
-        svg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        svg.style.transformOrigin = 'center center';
+        if (rafPending) return;
+        rafPending = true;
+        requestAnimationFrame(() => {
+            svg.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
+            svg.style.transformOrigin = 'center center';
+            rafPending = false;
+        });
     }
 
     ctr.addEventListener('touchstart', (e) => {

@@ -14,6 +14,7 @@ import { getUnitStrength, formatStrength } from '../data/casualty-model.js';
 import { getUnitIcon } from '../data/icon-registry.js';
 
 let tokenTrailTimer = null;
+const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
 
 /** Faction SVG ikonu (legend için) */
 export function factionSVG(f, s) {
@@ -213,10 +214,17 @@ function getTokenTranslate(el) {
 /** Token kayma animasyonu (trail efekti ile) */
 export function applyTokenSlideWithTrail(tokenNodes) {
     tokenNodes.forEach((el) => {
-        const from = getTokenTranslate(el);
         const tx = +el.dataset.targetX;
         const ty = +el.dataset.targetY;
         if (!Number.isFinite(tx) || !Number.isFinite(ty)) return;
+
+        // Mobilde trail efektini atla — sadece pozisyon güncelle
+        if (isMobileDevice) {
+            el.style.transform = `translate(${tx}px, ${ty}px)`;
+            return;
+        }
+
+        const from = getTokenTranslate(el);
         const dx = tx - from.x;
         const dy = ty - from.y;
         const dist = Math.hypot(dx, dy);
@@ -233,6 +241,8 @@ export function applyTokenSlideWithTrail(tokenNodes) {
         }
         el.style.transform = `translate(${tx}px, ${ty}px)`;
     });
+
+    if (isMobileDevice) return; // Mobilde trail timer gereksiz
 
     if (tokenTrailTimer) clearTimeout(tokenTrailTimer);
     tokenTrailTimer = setTimeout(() => {

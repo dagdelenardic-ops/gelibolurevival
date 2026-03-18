@@ -143,3 +143,49 @@
     opacity: .6;
     font-style: italic
 }
+
+/* ── Mobil Bottom Sheet ── */
+@media(max-width:768px){
+    .unit-panel{
+        top:auto;
+        bottom:0;
+        left:0;
+        right:0;
+        width:100%;
+        max-width:100%;
+        height:auto;
+        max-height:70vh;
+        border-left:none;
+        border-top:2px solid var(--red-dim);
+        border-radius:16px 16px 0 0;
+        transform:translateY(100%);
+        box-shadow:0 -12px 40px rgba(0,0,0,.5);
+        padding:12px 18px 24px;
+        will-change:transform;
+        contain:layout style paint
+    }
+    .unit-panel::before{
+        content:'';
+        display:block;
+        width:36px;
+        height:4px;
+        background:rgba(160,152,128,.3);
+        border-radius:2px;
+        margin:0 auto 10px
+    }
+    .unit-panel.open{
+        transform:translateY(0)
+    }
+    .panel-close{
+        width:44px;
+        height:44px;
+        font-size:1.2rem
+    }
+    .portrait-img{
+        max-width:120px;
+        max-height:160px
+    }
+    .unit-panel dl{
+        font-size:.8rem
+    }
+}

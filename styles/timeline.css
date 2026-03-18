@@ -177,7 +177,8 @@
     .timeline{
         flex-wrap:wrap;
         padding:6px 8px 8px;
-        gap:6px
+        gap:6px;
+        contain:layout style
     }
     .timeline-label{
         display:none
@@ -189,23 +190,28 @@
     .timeline-btn{
         flex:1;
         text-align:center;
-        padding:8px 14px;
-        font-size:.78rem
+        padding:10px 14px;
+        font-size:.78rem;
+        min-height:44px
     }
     .timeline-track{
         height:36px;
-        -webkit-overflow-scrolling:touch
+        -webkit-overflow-scrolling:touch;
+        contain:content
     }
     .timeline-phases{
         gap:3px
     }
     .phase-marker{
-        width:10px;
-        height:28px
+        width:14px;
+        height:44px;
+        padding:0 2px
     }
+    .phase-marker:hover{transform:none}
     .phase-dot{
-        width:5px;
-        height:5px
+        width:6px;
+        height:6px;
+        transition:none
     }
     .phase-marker.major .phase-dot{
         width:10px;
@@ -217,4 +223,5 @@
     .phase-marker.active:not(.major){
         display:flex
     }
+    .phase-tooltip{display:none!important}
 }

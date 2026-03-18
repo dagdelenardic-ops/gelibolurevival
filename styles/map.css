@@ -272,7 +272,7 @@
 
 .event-image-photo {
     width: 100%;
-    max-height: 160px;
+    max-height: 200px;
     object-fit: cover;
     display: block;
     filter: sepia(.25) contrast(1.05) brightness(.92);
@@ -553,14 +553,50 @@
     .map-container{
         min-height:55vh;
         padding:0;
-        touch-action:manipulation
+        padding-bottom:8vh;
+        touch-action:manipulation;
+        background:#131820;
+        box-shadow:none
     }
     .map-container svg{
         max-height:none;
         height:auto;
         min-height:300px;
+        filter:none;
+        will-change:transform
+    }
+    /* ── Mobilde ağır filter'ları kapat, will-change kaldır (GPU bellek tasarrufu) ── */
+    .unit-token{
+        transition:transform .18s linear,opacity .15s ease-out;
+        will-change:auto
+    }
+    .unit-token.is-moving{
         filter:none
     }
+    .unit-token.is-muted{
+        filter:none;
+        opacity:.3 !important
+    }
+    .unit-token.is-active{
+        filter:none;
+        opacity:1 !important
+    }
+    .unit-token:hover{
+        filter:none
+    }
+    /* ── Mobilde sürekli çalışan animasyonları durdur ── */
+    .frontline-segment{animation:none;opacity:.4}
+    .combat-dust{animation:none;opacity:.12}
+    .combat-muzzle{animation:none;opacity:0}
+    .battery-shot{animation:none}
+    /* ── Mobilde ağır SVG filter'ları devre dışı bırak ── */
+    .map-container svg{
+        filter:none
+    }
+    .location-group:hover .location-dot{filter:none}
+    .unit-token.is-referenced{filter:none}
+    /* ── backdrop-filter mobilde pahalı ── */
+    .map-date-chip{backdrop-filter:none}
     .narration-box{
         position:fixed;
         bottom:0;
@@ -573,18 +609,25 @@
         border-top:2px solid #8b3a3a;
         padding:14px 18px 18px;
         min-height:auto;
-        max-height:40vh;
+        max-height:55vh;
         overflow-y:auto;
         z-index:5;
-        box-shadow:0 -8px 24px rgba(0,0,0,.5)
+        box-shadow:0 -8px 24px rgba(0,0,0,.5);
+        backdrop-filter:none;
+        background:rgba(20,18,16,.97)
     }
     .narration-title{font-size:.78rem}
     .narration-text{font-size:.9rem}
     .map-date-chip{
         top:4px;
         padding:5px 12px;
-        gap:7px
+        gap:7px;
+        backdrop-filter:none;
+        background:rgba(20,18,16,.94)
     }
     .map-date-day{font-size:.92rem}
     .map-date-month,.map-date-year{font-size:.68rem}
+    /* ── Event image & romantic quote: mobilde animasyonu kapat ── */
+    .event-image{animation:none}
+    .romantic-quote{animation:none}
 }

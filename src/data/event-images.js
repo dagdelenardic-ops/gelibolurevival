@@ -19,6 +19,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/dardanelles-fleet.jpg`,
         caption:  'İtilaf donanması Boğaz önünde — Kasım 1914',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center',
     },
     // ── 2. Osmanlı Savaş İlanı / Cihat ──
     {
@@ -27,6 +28,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/sultan-mehmed-v.jpg`,
         caption:  'Sultan V. Mehmed — Cihat ilanı, 14 Kasım 1914',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 20%',
     },
     // ── 3. Deniz Harekâtı Başlangıcı / Bombardıman Dönemi ──
     {
@@ -35,6 +37,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/ottoman-heavy-gun.jpg`,
         caption:  'Osmanlı ağır topu, Çanakkale Boğazı savunması',
         source:   'Bundesarchiv, CC BY-SA 3.0',
+        cropFocus: 'center 30%',
     },
     // ── 4. Nusret Mayın Seferi ──
     {
@@ -43,6 +46,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/nusret-1912.png`,
         caption:  'Nusret Mayın Gemisi — 1912 deniz denemesi',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center',
     },
     // ── 5. Mayın Temizleme / 18 Mart Öncesi ──
     {
@@ -51,6 +55,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/ottoman-battery.jpg`,
         caption:  'Osmanlı topçu bataryası — Boğaz savunması',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 6. 18 Mart Deniz Zaferi — Bouvet Batışı ──
     {
@@ -59,6 +64,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/bouvet-sinking.jpg`,
         caption:  'Bouvet zırhlısının batışı — 18 Mart 1915',
         source:   'TSK Arşivi, Wikimedia Commons',
+        cropFocus: 'center',
     },
     // ── 7. 5. Ordu Kuruluşu — Savunma Hazırlığı ──
     {
@@ -67,6 +73,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/ottoman-battery.jpg`,
         caption:  'Osmanlı topçu bataryası, Gelibolu savunma hazırlığı',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 8. Büyük Kara Çıkarması — 25 Nisan ──
     {
@@ -75,6 +82,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/anzac-landing-painting.jpg`,
         caption:  '«Anzac, the Landing» — 25 Nisan çıkarma tablosu',
         source:   'Charles Dixon, Australian War Memorial, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 9. ANZAC Çıkarması Sonrası ──
     {
@@ -83,6 +91,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/anzac-landing.jpg`,
         caption:  'ANZAC çıkarması — 25 Nisan 1915, Arıburnu',
         source:   'Australian War Memorial, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 10. V Beach / Seddülbahir ──
     {
@@ -91,6 +100,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/v-beach-river-clyde.jpg`,
         caption:  'V Beach ve Seddülbahir kalesi — SS River Clyde\'dan görünüm',
         source:   'Royal Museums Greenwich, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 11. W Beach / Helles ──
     {
@@ -99,6 +109,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/w-beach-helles.jpg`,
         caption:  'W Beach, Helles — Lancashire Fusiliers çıkarması',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 12. Osmanlı Taarruzu / 19 Mayıs ──
     {
@@ -107,6 +118,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/ottoman-assault.jpg`,
         caption:  'Osmanlı askerleri taarruzda — Çanakkale 1915',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 13. Siper Savaşı Dönemi — Osmanlı Siperleri ──
     {
@@ -115,6 +127,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/ottoman-trench.jpg`,
         caption:  'Osmanlı siperleri — Çanakkale Cephesi',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 14. Siper Savaşı — MG Mevzisi ──
     {
@@ -123,6 +136,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/ottoman-mg.jpg`,
         caption:  'Osmanlı makineli tüfek mevzisi — Çanakkale',
         source:   'Bundesarchiv, CC BY-SA 3.0',
+        cropFocus: 'center 30%',
     },
     // ── 15. Conkbayırı / Anafartalar — Mustafa Kemal ──
     {
@@ -131,6 +145,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/mustafa-kemal-gallipoli.jpg`,
         caption:  'Yarbay Mustafa Kemal — Anafartalar Grup Komutanı, 1915',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 25%',
     },
     // ── 16. Mustafa Kemal ve silah arkadaşları ──
     {
@@ -139,6 +154,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/ataturk-anafartalar.jpg`,
         caption:  'Mustafa Kemal Bey ve silah arkadaşları — Anafartalar, 1915',
         source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 15%',
     },
     // ── 17. Siper Savaşı Son Dönemi ──
     {
@@ -147,6 +163,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/anzac-trench.jpg`,
         caption:  'ANZAC siperleri — Arıburnu',
         source:   'Australian War Memorial, Public Domain',
+        cropFocus: 'center 30%',
     },
     // ── 18. Tahliye Dönemi ──
     {
@@ -155,6 +172,7 @@ export const EVENT_IMAGES = [
         url:      `${P}/periscope-rifle.jpg`,
         caption:  'Periskoplu tüfek — Tahliye öncesi ANZAC buluşu',
         source:   'Australian War Memorial, Public Domain',
+        cropFocus: 'center 30%',
     },
 ];
 

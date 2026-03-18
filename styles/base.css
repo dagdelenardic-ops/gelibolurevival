@@ -46,7 +46,42 @@ body{
 }
 
 @media(max-width:768px){
-  body{overflow:auto;overflow-x:hidden}
+  body{overflow:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  .topbar{
+    flex-wrap:wrap;
+    padding:6px 10px;
+    gap:4px;
+    backdrop-filter:none;
+    background:rgba(16,16,20,.97)
+  }
+  .topbar-title{
+    font-size:.82rem;
+    flex:1;
+    min-width:0
+  }
+  .phase-indicator{
+    order:1;
+    width:100%;
+    max-width:100%;
+    font-size:.68rem;
+    padding:2px 8px
+  }
+  .legend{
+    gap:6px;
+    flex-wrap:wrap
+  }
+  .legend-item{
+    font-size:.65rem
+  }
+  .stats-btn{
+    padding:6px 10px;
+    min-height:44px
+  }
+  .audio-btn{
+    width:44px;
+    height:44px
+  }
+  .stats-panel{backdrop-filter:none;background:rgba(0,0,0,.85)}
 }
 
 /* ── Üst Bar — modern glassmorphism ── */

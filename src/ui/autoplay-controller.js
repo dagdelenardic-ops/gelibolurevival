@@ -6,8 +6,9 @@
 import { isMajorPhase } from '../engine/phase-engine.js';
 import { BATTLE_DATA } from '../data/battle-data.js';
 
-const MINOR_INTERVAL = 2500;
-const MAJOR_INTERVAL = 6000;
+const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+const MINOR_INTERVAL = isMobile ? 3500 : 2500;
+const MAJOR_INTERVAL = isMobile ? 8000 : 6000;
 const CHARS_PER_MS = 0.08; // ~80 karakter/saniye okuma hızı → 1 char = 12.5ms
 
 let autoplayTimer = null;

@@ -1,0 +1,17 @@
+{
+  "name": "Çanakkale 1915 – İnteraktif Savaş Haritası",
+  "short_name": "Çanakkale 1915",
+  "description": "Çanakkale Savaşı'nı interaktif SVG haritası üzerinde gün gün yaşayın.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e1014",
+  "theme_color": "#0e1014",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "assets/icons/cannon.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
