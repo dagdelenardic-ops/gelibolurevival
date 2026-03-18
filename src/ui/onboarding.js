@@ -42,14 +42,16 @@ function createOverlay() {
             <h3 class="onboarding-title"></h3>
             <p class="onboarding-text"></p>
             <div class="onboarding-actions">
-                <button class="onboarding-skip" type="button">Atla</button>
-                <button class="onboarding-next" type="button">İleri</button>
+                <button class="onboarding-skip" type="button" onclick="window.__onboardingSkip&&window.__onboardingSkip()">Atla</button>
+                <button class="onboarding-next" type="button" onclick="window.__onboardingNext&&window.__onboardingNext()">İleri</button>
             </div>
         </div>
     `;
     document.body.appendChild(overlay);
     return overlay;
 }
+
+const isMobileOnboarding = typeof window !== 'undefined' && window.innerWidth <= 768;
 
 function positionCard(overlay, step, index) {
     const card = overlay.querySelector('.onboarding-card');
@@ -73,9 +75,16 @@ function positionCard(overlay, step, index) {
     card.style.transform = '';
 
     // Highlight target element
-    const backdrop = overlay.querySelector('.onboarding-backdrop');
     const existingHighlight = overlay.querySelector('.onboarding-highlight');
     if (existingHighlight) existingHighlight.remove();
+
+    // Mobilde: her zaman center, highlight yok (GPU tasarrufu + pozisyon sorunu yok)
+    if (isMobileOnboarding) {
+        card.style.top = '50%';
+        card.style.left = '50%';
+        card.style.transform = 'translate(-50%, -50%)';
+        return;
+    }
 
     if (step.target) {
         const target = document.querySelector(step.target);
@@ -94,7 +103,6 @@ function positionCard(overlay, step, index) {
             `;
             overlay.appendChild(highlight);
 
-            // Position card relative to target
             if (step.position === 'top') {
                 card.style.bottom = `${window.innerHeight - rect.top + 16}px`;
                 card.style.left = '50%';
@@ -124,8 +132,8 @@ function injectStyles() {
     const style = document.createElement('style');
     style.id = 'onboarding-styles';
     style.textContent = `
-        #onboardingOverlay{position:fixed;inset:0;z-index:10000}
-        .onboarding-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5)}
+        #onboardingOverlay{position:fixed;inset:0;z-index:10000;pointer-events:none}
+        .onboarding-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);pointer-events:none}
         .onboarding-card{
             position:fixed;
             background:linear-gradient(145deg,rgba(33,32,26,.98),rgba(24,22,15,.98));
@@ -136,9 +144,8 @@ function injectStyles() {
             min-width:280px;
             box-shadow:0 16px 48px rgba(0,0,0,.5);
             z-index:10002;
-            animation:onboardFadeIn .3s ease
+            pointer-events:auto
         }
-        @keyframes onboardFadeIn{from{opacity:0;transform:translate(-50%,-50%) scale(.95)}to{opacity:1}}
         .onboarding-title{
             font-family:var(--mono);font-size:1rem;color:var(--gold);
             margin:0 0 8px;letter-spacing:.03em
@@ -153,13 +160,13 @@ function injectStyles() {
             background:rgba(201,168,76,.25);transition:background .2s
         }
         .onboarding-dot.active{background:var(--gold)}
-        .onboarding-actions{display:flex;justify-content:space-between;align-items:center}
         .onboarding-skip{
             background:none;border:none;color:var(--text-muted);
             font-size:.8rem;cursor:pointer;padding:6px 10px;
             font-family:var(--mono)
         }
         .onboarding-skip:hover{color:var(--text)}
+        .onboarding-actions{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:10003}
         .onboarding-next{
             background:rgba(201,168,76,.18);border:1px solid var(--gold-dim);
             color:var(--gold);padding:8px 20px;border-radius:6px;
@@ -202,15 +209,15 @@ export function initOnboarding(opts = {}) {
             }, 300);
         }
 
-        overlay.querySelector('.onboarding-next').addEventListener('click', () => {
+        // Global fonksiyonlar — inline onclick ile çağrılır
+        window.__onboardingNext = () => {
             if (currentStep >= STEPS.length - 1) {
                 finish();
             } else {
                 show(currentStep + 1);
             }
-        });
-
-        overlay.querySelector('.onboarding-skip').addEventListener('click', finish);
+        };
+        window.__onboardingSkip = () => finish();
 
         // Escape to dismiss
         const escHandler = (e) => {
