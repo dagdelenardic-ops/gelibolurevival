@@ -31,9 +31,9 @@ function getAdaptiveInterval(phaseIndex) {
 
     const iso = phase.isoStart || '';
 
-    // Sessiz dönemlerde hızlı geç
+    // Sessiz dönemlerde hızlı ama okunabilir geç (fotoğraflar ve bağlam görünsün)
     if (isQuietPeriod(iso)) {
-        return 500;
+        return isMobile ? 1200 : 800;
     }
 
     const major = isMajorPhase(phase);

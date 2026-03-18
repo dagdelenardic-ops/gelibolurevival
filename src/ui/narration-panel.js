@@ -93,8 +93,13 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
 
     if (title) {
         const icon = getNarrationIcon(phase.title || '');
-        let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-        title.innerHTML = `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}`;
+        let displayTitle = (phase.title || '')
+            .replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt|Haftalık Bağ|Haftalık Bağlam)\s*/gi, '')
+            .replace(/\s*\(EPUB[^)]*\)/gi, '')
+            .replace(/\s*EPUB\s*/gi, '')
+            .replace(/\s*Haftalık Bağ\s*/gi, '')
+            .trim();
+        title.innerHTML = `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} <span class="narration-date">— ${phase.date}</span>`;
         // Toggle label güncelle
         const toggleLabel = document.querySelector('.narration-toggle-label');
         if (toggleLabel) toggleLabel.textContent = displayTitle;
@@ -118,10 +123,7 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
         }
     }
 
-    // Haftalık bağlam barını güncelle
-    updateWeeklyBar(phase.isoStart, currentPhaseIndex, weeklyContext);
-
-    // Romantik katman
+    // Romantik katman (mektuplar, alıntılar, Çanakkale ruhu)
     updateRomanticQuote(phase.isoStart || '');
 
     // Mobilde: boş/generic içerikte paneli otomatik kapat, zengin içerikte hint ver
@@ -328,8 +330,13 @@ export function attachNarrationElements(container, phase) {
     nb.setAttribute('role', 'status');
     const icon = getNarrationIcon(phase.title || '');
     const { clean } = parseNarration(phase.narration);
-    let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-    nb.innerHTML = `<button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat"><span class="narration-toggle-icon">▼</span> <span class="narration-toggle-label">${displayTitle}</span></button><div class="narration-content" id="narrationContent"><div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div></div>`;
+    let displayTitle = (phase.title || '')
+        .replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt|Haftalık Bağ|Haftalık Bağlam)\s*/gi, '')
+        .replace(/\s*\(EPUB[^)]*\)/gi, '')
+        .replace(/\s*EPUB\s*/gi, '')
+        .replace(/\s*Haftalık Bağ\s*/gi, '')
+        .trim();
+    nb.innerHTML = `<button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat"><span class="narration-toggle-icon">▼</span> <span class="narration-toggle-label">${displayTitle}</span></button><div class="narration-content" id="narrationContent"><div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} <span class="narration-date">— ${phase.date}</span></div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div></div>`;
     container.appendChild(nb);
 
     // Toggle butonu

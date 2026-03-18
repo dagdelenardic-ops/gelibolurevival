@@ -238,6 +238,11 @@
     opacity: .7;
     filter: brightness(1.05)
 }
+.narration-date {
+    color: var(--text-muted);
+    font-weight: 400;
+    opacity: .7
+}
 
 .narration-text {
     font-size: .88rem;
@@ -255,19 +260,19 @@
     line-height: 1.4
 }
 
-/* ── Tarihsel Olay Görseli ── */
+/* ── Tarihsel Olay Görseli (sinematik crossfade) ── */
 .event-image {
     margin-top: 10px;
     border-radius: 6px;
     overflow: hidden;
     background: rgba(20, 18, 16, .6);
     border: 1px solid rgba(120, 100, 70, .2);
-    animation: eventImageFadeIn .5s ease-out
+    animation: eventImageFadeIn .8s ease-out
 }
 
 @keyframes eventImageFadeIn {
-    from { opacity: 0; transform: translateY(4px) }
-    to { opacity: 1; transform: translateY(0) }
+    from { opacity: 0; transform: scale(1.02) }
+    to { opacity: 1; transform: scale(1) }
 }
 
 .event-image-photo,

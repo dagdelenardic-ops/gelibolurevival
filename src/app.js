@@ -141,18 +141,18 @@ function setActivePhase(i) {
     const currentIso = String(p.isoStart || normalizeDateText(p.date, nextIndex));
     const quiet = isMobile && isQuietPeriod(currentIso);
 
-    // ── MOBİL SESSIZ DÖNEM: Sadece tarih chip güncelle, geri kalanı atla ──
+    // ── MOBİL SESSIZ DÖNEM: Tarih chip + narration güncelle (fotoğraf değiştiğinde) ──
     if (quiet) {
         const ind = document.getElementById('phaseIndicator');
         if (ind) ind.textContent = `${p.title} – ${p.date}`;
         updateMapDateIndicator(p.date);
-        // Narration'ı throttle — her 5 fazda bir güncelle (fotoğraf glitch önleme)
-        if (nextIndex % 5 === 0) {
+        // Her 3 fazda narration güncelle — fotoğraflar da değişebilsin
+        if (nextIndex % 3 === 0) {
             const campaignPhase = resolveCampaignPhase(currentIso);
             const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
             prevCampaignPhaseId = campaignPhase.id;
             if (narrationTimer) clearTimeout(narrationTimer);
-            narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), 200);
+            narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), 150);
         }
         return;
     }
@@ -476,12 +476,22 @@ async function init() {
 
     if (loader) {
         // CSS introAutoHide animasyonu bitince DOM'dan kaldır
-        loader.addEventListener('animationend', () => {
+        // NOT: Child elementlerin animationend'i bubble eder — sadece kendi animasyonunu dinle
+        loader.addEventListener('animationend', (e) => {
+            if (e.target !== loader) return; // Child animasyonlarını yoksay
             loader.remove();
             // Onboarding tutorial — intro bittikten SONRA göster
             const tutorialShown = initOnboarding({ onFinish: startPlay });
             if (!tutorialShown) startPlay();
         });
+        // Fallback: 6 saniye sonra hâlâ kalkmadıysa zorla kaldır (Safari edge case)
+        setTimeout(() => {
+            if (document.getElementById('loadingOverlay')) {
+                loader.remove();
+                const tutorialShown = initOnboarding({ onFinish: startPlay });
+                if (!tutorialShown) startPlay();
+            }
+        }, 6500);
     } else {
         const tutorialShown = initOnboarding({ onFinish: startPlay });
         if (!tutorialShown) startPlay();

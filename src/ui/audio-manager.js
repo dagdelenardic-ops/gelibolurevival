@@ -125,15 +125,19 @@ export function isMusicEnabled() { return musicEnabled; }
 // SES EFEKTLERİ (Web Audio API — %100 ücretsiz, dosya yok)
 // ═══════════════════════════════════════════════════════════
 
-/** Beyaz gürültü buffer oluştur (patlama/top ateşi için temel) */
+/** Beyaz gürültü buffer oluştur (patlama/top ateşi için temel) — yüksek frekans sınırlı */
 function createNoiseBuffer(duration) {
     const ctx = ensureContext();
     const sr = ctx.sampleRate;
     const len = sr * duration;
     const buf = ctx.createBuffer(1, len, sr);
     const data = buf.getChannelData(0);
+    // Pembe gürültüye yakın: yüksek frekansları bastır (tıss/hiss azaltma)
+    let prev = 0;
     for (let i = 0; i < len; i++) {
-        data[i] = Math.random() * 2 - 1;
+        const white = Math.random() * 2 - 1;
+        prev = prev * 0.6 + white * 0.4; // Basit lowpass — tıss sesi kırılır
+        data[i] = prev;
     }
     return buf;
 }
@@ -328,13 +332,13 @@ export function sfxRifleShot() {
         noise.start(t);
         noise.stop(t + 0.1);
 
-        // Mermi çınlaması (vızıltı)
+        // Mermi çınlaması (yumuşatılmış — tıss azaltma)
         const whiz = ctx.createOscillator();
         whiz.type = 'sine';
-        whiz.frequency.setValueAtTime(rp(4000, 800), t + 0.03);
-        whiz.frequency.exponentialRampToValueAtTime(1000, t + 0.12);
+        whiz.frequency.setValueAtTime(rp(2500, 500), t + 0.03);
+        whiz.frequency.exponentialRampToValueAtTime(800, t + 0.12);
         const wg = ctx.createGain();
-        wg.gain.setValueAtTime(0.03, t + 0.03);
+        wg.gain.setValueAtTime(0.015, t + 0.03);
         wg.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
         whiz.connect(wg).connect(sfxGain);
         whiz.start(t + 0.03);
@@ -381,20 +385,19 @@ export function sfxShipHorn() {
     osc1.stop(now + 2.3);
     osc2.stop(now + 2.3);
 
-    // Buhar sızıntı sesi
+    // Buhar sızıntı sesi — düşük seviye, yumuşak lowpass (tıss önleme)
     const steam = ctx.createBufferSource();
     steam.buffer = createNoiseBuffer(1.0);
     const steamG = ctx.createGain();
     steamG.gain.setValueAtTime(0, now + 1.8);
-    steamG.gain.linearRampToValueAtTime(0.04, now + 2.0);
-    steamG.gain.exponentialRampToValueAtTime(0.001, now + 2.8);
+    steamG.gain.linearRampToValueAtTime(0.02, now + 2.0);
+    steamG.gain.exponentialRampToValueAtTime(0.001, now + 2.6);
     const steamLp = ctx.createBiquadFilter();
-    steamLp.type = 'bandpass';
-    steamLp.frequency.value = 4000;
-    steamLp.Q.value = 3;
+    steamLp.type = 'lowpass';
+    steamLp.frequency.value = 1500;
     steam.connect(steamLp).connect(steamG).connect(sfxGain);
     steam.start(now + 1.8);
-    steam.stop(now + 2.8);
+    steam.stop(now + 2.6);
 }
 
 /**
@@ -449,13 +452,13 @@ export function sfxMachineGun() {
         noise.stop(t + 0.05);
     }
 
-    // Mekanizma sesi (arka plan tıkırtısı)
+    // Mekanizma sesi (çok düşük — arka plan dokusu)
     const mech = ctx.createOscillator();
-    mech.type = 'square';
-    mech.frequency.setValueAtTime(120, now);
+    mech.type = 'sine'; // square → sine: daha yumuşak, tıss yok
+    mech.frequency.setValueAtTime(80, now);
     const mechG = ctx.createGain();
-    mechG.gain.setValueAtTime(0.03, now);
-    mechG.gain.setValueAtTime(0.03, now + burstLen * 0.075);
+    mechG.gain.setValueAtTime(0.015, now);
+    mechG.gain.setValueAtTime(0.015, now + burstLen * 0.075);
     mechG.gain.exponentialRampToValueAtTime(0.001, now + burstLen * 0.075 + 0.1);
     mech.connect(mechG).connect(sfxGain);
     mech.start(now);
