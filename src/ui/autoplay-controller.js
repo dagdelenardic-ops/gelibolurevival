@@ -14,11 +14,30 @@ const CHARS_PER_MS = 0.08; // ~80 karakter/saniye okuma hızı → 1 char = 12.5
 let autoplayTimer = null;
 let isAutoPlaying = false;
 
+// Sessiz dönemler — büyük olay olmayan aralıklar hızlı geçer
+const QUIET_PERIODS = [
+    { start: '1914-11-10', end: '1915-02-18' },  // İlk bombardıman sonrası → deniz harekâtı öncesi
+    { start: '1915-08-25', end: '1915-12-06' },  // Anafartalar sonrası → tahliye kararı öncesi
+];
+
+function isQuietPeriod(isoDate) {
+    if (!isoDate) return false;
+    return QUIET_PERIODS.some(p => isoDate >= p.start && isoDate <= p.end);
+}
+
 function getAdaptiveInterval(phaseIndex) {
     const phase = BATTLE_DATA.phases[phaseIndex];
     if (!phase) return MINOR_INTERVAL;
 
-    const base = isMajorPhase(phase) ? MAJOR_INTERVAL : MINOR_INTERVAL;
+    const iso = phase.isoStart || '';
+    const major = isMajorPhase(phase);
+
+    // Sessiz dönemlerde hızlı geç (major olaylar hariç)
+    if (!major && isQuietPeriod(iso)) {
+        return isMobile ? 2000 : 1200;
+    }
+
+    const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;
     const narrationLen = (phase.narration || '').length;
     const readTime = narrationLen / CHARS_PER_MS;
 
