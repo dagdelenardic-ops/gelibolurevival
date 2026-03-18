@@ -105,6 +105,7 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
     updateEventVideo(imageResult.hasImage, campaignPhaseId, animData);
 
     // Narration metni: görsel bağlamı varsa onu göster, yoksa parse edilmiş metni
+    const hasRichContent = !!(imageResult.context || (clean && !clean.includes('savunma-tahkimat döngüsü sürdü')));
     if (text) {
         if (imageResult.context) {
             text.textContent = imageResult.context;
@@ -122,6 +123,9 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
 
     // Romantik katman
     updateRomanticQuote(phase.isoStart || '');
+
+    // Mobilde: boş/generic içerikte paneli otomatik kapat, zengin içerikte hint ver
+    autoCollapseOnEmpty(hasRichContent);
 }
 
 /** Romantik alıntı kutusunu güncelle */
@@ -283,6 +287,30 @@ export function renderTransition(sceneTransition) {
     }
     el.style.display = 'block';
     el.textContent = `Geçiş: ${sceneTransition}`;
+}
+
+/** Mobilde: boş içerikte paneli kapat, zengin içerik gelince ışıldat */
+const isMobileNarration = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+function autoCollapseOnEmpty(hasRichContent) {
+    if (!isMobileNarration) return;
+    const nb = document.getElementById('narrationBox');
+    const toggle = document.getElementById('narrationToggle');
+    if (!nb || !toggle) return;
+
+    if (!hasRichContent) {
+        // Boş/generic içerik — paneli kapat
+        if (!nb.classList.contains('is-collapsed')) {
+            nb.classList.add('is-collapsed');
+            const ic = toggle.querySelector('.narration-toggle-icon');
+            if (ic) ic.textContent = '▲';
+        }
+    } else if (nb.classList.contains('is-collapsed')) {
+        // Zengin içerik geldi ama panel kapalı — ışıldat
+        toggle.classList.remove('has-new-content');
+        void toggle.offsetWidth; // reflow tetikle
+        toggle.classList.add('has-new-content');
+    }
 }
 
 /** Anlatım kutusu DOM elemanlarını oluştur */

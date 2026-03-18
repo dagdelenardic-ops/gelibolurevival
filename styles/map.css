@@ -678,6 +678,21 @@
         text-overflow:ellipsis;
         white-space:nowrap
     }
+    .narration-toggle.has-new-content{
+        animation:togglePulse 2s ease-in-out
+    }
+    .narration-toggle.has-new-content .narration-toggle-icon{
+        animation:toggleGlow 2s ease-in-out
+    }
+    @keyframes togglePulse{
+        0%,100%{background:none}
+        15%,45%{background:rgba(201,168,76,.15)}
+        30%{background:rgba(201,168,76,.25)}
+    }
+    @keyframes toggleGlow{
+        0%,100%{color:#c9a84c}
+        30%{color:#f0d878}
+    }
     .narration-content{
         padding:0 18px 18px;
         max-height:calc(60vh - 44px);
