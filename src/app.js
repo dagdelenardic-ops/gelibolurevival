@@ -243,7 +243,7 @@ function setActivePhase(i) {
     updateMapSceneState(p, animData);
 
     // ── Info card: sahne stabilize olduktan sonra güncelle ──
-    setTimeout(() => updateNarrationPanel(p, nextIndex), 360);
+    setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), 360);
 
     // ── Update global state ──
     prevCampaignPhaseId = campaignPhase.id;

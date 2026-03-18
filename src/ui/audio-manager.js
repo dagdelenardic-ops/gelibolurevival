@@ -343,6 +343,219 @@ export function sfxWarDrum() {
     }
 }
 
+/**
+ * 🔫 Makineli tüfek — seri atış, 5-6 hızlı tıklama
+ * Kullanım: Siper savaşı, yoğun çatışma
+ */
+export function sfxMachineGun() {
+    if (!sfxEnabled) return;
+    const ctx = ensureContext();
+    const now = ctx.currentTime;
+
+    for (let i = 0; i < 6; i++) {
+        const t = now + i * 0.09;
+        const noise = ctx.createBufferSource();
+        noise.buffer = createNoiseBuffer(0.04);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.18, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.035);
+        const hp = ctx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 2500 + Math.random() * 500;
+        noise.connect(hp).connect(g).connect(sfxGain);
+        noise.start(t);
+        noise.stop(t + 0.04);
+    }
+}
+
+/**
+ * ⚓ Gemi topu — derin, yankılı deniz topu
+ * Kullanım: Deniz bombardımanı (sfxCannonFire'dan farklı: daha derin, daha uzun)
+ */
+export function sfxNavalCannon() {
+    if (!sfxEnabled) return;
+    const ctx = ensureContext();
+    const now = ctx.currentTime;
+
+    // Derin patlama gövdesi
+    const noise = ctx.createBufferSource();
+    noise.buffer = createNoiseBuffer(0.8);
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.5, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(600, now);
+    lp.frequency.exponentialRampToValueAtTime(80, now + 0.6);
+    noise.connect(lp).connect(noiseGain).connect(sfxGain);
+    noise.start(now);
+    noise.stop(now + 0.8);
+
+    // Çok derin bas vuruş
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(18, now + 0.6);
+    const oscGain = ctx.createGain();
+    oscGain.gain.setValueAtTime(0.55, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+    osc.connect(oscGain).connect(sfxGain);
+    osc.start(now);
+    osc.stop(now + 0.75);
+
+    // Yankı — gecikmeli gürültü
+    const echo = ctx.createBufferSource();
+    echo.buffer = createNoiseBuffer(0.5);
+    const echoGain = ctx.createGain();
+    echoGain.gain.setValueAtTime(0, now);
+    echoGain.gain.linearRampToValueAtTime(0.12, now + 0.3);
+    echoGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+    const echoLp = ctx.createBiquadFilter();
+    echoLp.type = 'lowpass';
+    echoLp.frequency.value = 300;
+    echo.connect(echoLp).connect(echoGain).connect(sfxGain);
+    echo.start(now + 0.2);
+    echo.stop(now + 1.2);
+}
+
+/**
+ * 💣 Havan mermisi — ıslık + patlama
+ * Kullanım: Kara bombardımanı, topçu ateşi
+ */
+export function sfxMortarWhistle() {
+    if (!sfxEnabled) return;
+    const ctx = ensureContext();
+    const now = ctx.currentTime;
+
+    // Islık sesi (düşen mermi)
+    const whistle = ctx.createOscillator();
+    whistle.type = 'sine';
+    whistle.frequency.setValueAtTime(1200, now);
+    whistle.frequency.exponentialRampToValueAtTime(200, now + 0.6);
+    const wGain = ctx.createGain();
+    wGain.gain.setValueAtTime(0.12, now);
+    wGain.gain.linearRampToValueAtTime(0.2, now + 0.3);
+    wGain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+    whistle.connect(wGain).connect(sfxGain);
+    whistle.start(now);
+    whistle.stop(now + 0.6);
+
+    // Patlama (ıslıktan sonra)
+    const noise = ctx.createBufferSource();
+    noise.buffer = createNoiseBuffer(0.4);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.5, now + 0.55);
+    nGain.gain.exponentialRampToValueAtTime(0.01, now + 0.9);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(1500, now + 0.55);
+    lp.frequency.exponentialRampToValueAtTime(200, now + 0.85);
+    noise.connect(lp).connect(nGain).connect(sfxGain);
+    noise.start(now + 0.5);
+    noise.stop(now + 0.95);
+}
+
+/**
+ * 🌊 Deniz dalgası — ambient döngü
+ * Kullanım: Deniz fazları arka planı
+ */
+export function sfxWaves() {
+    if (!sfxEnabled) return;
+    const ctx = ensureContext();
+    const now = ctx.currentTime;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = createNoiseBuffer(2.5);
+    const nGain = ctx.createGain();
+    // Dalga efekti: yavaş yükselip alçalma
+    nGain.gain.setValueAtTime(0.02, now);
+    nGain.gain.linearRampToValueAtTime(0.08, now + 0.8);
+    nGain.gain.linearRampToValueAtTime(0.03, now + 1.5);
+    nGain.gain.linearRampToValueAtTime(0.07, now + 2.0);
+    nGain.gain.exponentialRampToValueAtTime(0.01, now + 2.4);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 500;
+    noise.connect(lp).connect(nGain).connect(sfxGain);
+    noise.start(now);
+    noise.stop(now + 2.5);
+}
+
+/**
+ * 🎺 Boru sesi — taarruz başlangıcı
+ * Kullanım: Büyük taarruz fazları (davuldan daha keskin)
+ */
+export function sfxBugle() {
+    if (!sfxEnabled) return;
+    const ctx = ensureContext();
+    const now = ctx.currentTime;
+
+    // Ana ton (boru)
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(523, now + 0.3);
+    osc.frequency.setValueAtTime(659, now + 0.6);
+    osc.frequency.setValueAtTime(523, now + 0.9);
+
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.1, now + 0.05);
+    g.gain.setValueAtTime(0.1, now + 1.0);
+    g.gain.exponentialRampToValueAtTime(0.01, now + 1.3);
+
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 800;
+    bp.Q.value = 3;
+
+    osc.connect(bp).connect(g).connect(sfxGain);
+    osc.start(now);
+    osc.stop(now + 1.35);
+}
+
+/**
+ * 🔊 Uzaktan çatışma — düşük, sürekli ambient
+ * Kullanım: Orta yoğunluklu çatışma arka planı
+ */
+export function sfxDistantBattle() {
+    if (!sfxEnabled) return;
+    const ctx = ensureContext();
+    const now = ctx.currentTime;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = createNoiseBuffer(3.0);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.01, now);
+    nGain.gain.linearRampToValueAtTime(0.06, now + 0.5);
+    nGain.gain.setValueAtTime(0.06, now + 2.0);
+    nGain.gain.exponentialRampToValueAtTime(0.01, now + 2.8);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 800;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 100;
+    noise.connect(lp).connect(hp).connect(nGain).connect(sfxGain);
+    noise.start(now);
+    noise.stop(now + 3.0);
+
+    // Aralıklı uzak patlamalar
+    for (let i = 0; i < 3; i++) {
+        const t = now + 0.4 + i * 0.8 + Math.random() * 0.3;
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(50 + Math.random() * 30, t);
+        osc.frequency.exponentialRampToValueAtTime(20, t + 0.2);
+        const og = ctx.createGain();
+        og.gain.setValueAtTime(0.08, t);
+        og.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+        osc.connect(og).connect(sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.3);
+    }
+}
+
 /** SFX aç/kapat */
 export function toggleSfx() {
     sfxEnabled = !sfxEnabled;
@@ -379,43 +592,56 @@ export function triggerPhaseSfx(animData, campaignPhaseId) {
 
     switch (eventType) {
         case 'BOMBARDMENT':
-            if (intensity >= 8 && isNaval) {
-                // Ağır deniz bombardımanı — top + mayın
-                throttled('cannon', 3000, sfxCannonFire);
+            if (isNaval) {
+                // Deniz bombardımanı — gemi topu + dalga
+                throttled('navalCannon', 3000, sfxNavalCannon);
+                setTimeout(() => throttled('waves', 5000, sfxWaves), 600);
                 if (intensity >= 9) {
-                    setTimeout(() => throttled('mine', 5000, sfxMineExplosion), 800);
+                    setTimeout(() => throttled('mine', 5000, sfxMineExplosion), 1200);
                 }
-            } else if (intensity >= 6) {
+            } else {
+                // Kara bombardımanı — kara topu + havan
                 throttled('cannon', 2000, sfxCannonFire);
+                if (intensity >= 7) {
+                    setTimeout(() => throttled('mortar', 3000, sfxMortarWhistle), 800);
+                }
             }
             break;
 
         case 'COMBAT':
             if (intensity >= 8) {
-                // Yoğun çatışma
-                throttled('explosion', 4000, sfxExplosion);
-                setTimeout(() => throttled('cannon', 2500, sfxCannonFire), 500);
-            } else if (intensity >= 6) {
-                throttled('cannon', 3000, sfxCannonFire);
-            } else if (intensity >= 4) {
+                // Yoğun çatışma — makineli + patlama
+                throttled('machineGun', 3000, sfxMachineGun);
+                setTimeout(() => throttled('explosion', 4000, sfxExplosion), 600);
+            } else if (intensity >= 5) {
+                // Orta çatışma — tüfek + uzak çatışma
                 throttled('rifle', 1500, sfxRifleShot);
+                setTimeout(() => throttled('distant', 5000, sfxDistantBattle), 400);
+            } else if (intensity >= 3) {
+                throttled('distant', 4000, sfxDistantBattle);
             }
             break;
 
         case 'NAVAL_PATROL':
+            // Deniz devriyesi — dalga + hafif top
+            throttled('waves', 6000, sfxWaves);
             if (intensity >= 5) {
-                throttled('cannon', 4000, sfxCannonFire);
+                setTimeout(() => throttled('navalCannon', 4000, sfxNavalCannon), 1000);
             }
             break;
 
         case 'LANDING':
+            // Çıkarma — gemi düdüğü + dalga + tüfek
             throttled('horn', 8000, sfxShipHorn);
+            setTimeout(() => throttled('waves', 5000, sfxWaves), 800);
             setTimeout(() => throttled('rifle', 2000, sfxRifleShot), 1500);
             break;
 
         case 'ASSAULT':
-            throttled('drum', 6000, sfxWarDrum);
-            setTimeout(() => throttled('explosion', 4000, sfxExplosion), 1200);
+            // Taarruz — boru + makineli + patlama
+            throttled('bugle', 6000, sfxBugle);
+            setTimeout(() => throttled('machineGun', 3000, sfxMachineGun), 1000);
+            setTimeout(() => throttled('explosion', 4000, sfxExplosion), 1800);
             break;
 
         default:

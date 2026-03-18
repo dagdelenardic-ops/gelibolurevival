@@ -7,6 +7,7 @@ import { getNarrationIcon } from '../data/icon-registry.js';
 import { getRandomRomanticEntry } from '../data/romantic-layer.js';
 import { getWeeklyGuide, getActiveWeekIndex } from '../engine/phase-engine.js';
 import { getEventImage } from '../data/event-images.js';
+import { getEventVideo } from '../data/event-videos.js';
 
 /** Tarih metni → gün/ay/yıl parçaları */
 export function splitDisplayDateParts(dateText) {
@@ -83,7 +84,7 @@ function parseNarration(rawNarration) {
 }
 
 /** Anlatım panelini güncelle */
-export function updateNarrationPanel(phase, currentPhaseIndex) {
+export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, animData) {
     const title = document.getElementById('narrationTitle');
     const text = document.getElementById('narrationText');
 
@@ -111,8 +112,9 @@ export function updateNarrationPanel(phase, currentPhaseIndex) {
     // Haftalık bağlam barını güncelle
     updateWeeklyBar(phase.isoStart, currentPhaseIndex, weeklyContext);
 
-    // Tarihsel olay görseli
-    updateEventImage(phase.isoStart || '');
+    // Tarihsel olay görseli veya gerçek görüntü videosu
+    const hasImage = updateEventImage(phase.isoStart || '');
+    updateEventVideo(hasImage, campaignPhaseId, animData);
 
     // Romantik katman
     updateRomanticQuote(phase.isoStart || '');
@@ -145,21 +147,56 @@ function updateRomanticQuote(isoDate) {
     el.innerHTML = `<div class="romantic-header"><span class="romantic-emoji">${entry.emoji || '📜'}</span><span class="romantic-label">${typeLabels[entry.type] || 'Kayıt'}</span></div><div class="romantic-text">${entry.text}</div><div class="romantic-source">— ${entry.source}</div>`;
 }
 
-/** Tarihsel olay görselini güncelle */
+/** Tarihsel olay görselini güncelle — görsel varsa true döner */
 function updateEventImage(isoDate) {
     let el = document.getElementById('eventImage');
-    if (!el) return;
+    if (!el) return false;
 
     const img = getEventImage(isoDate);
     if (!img) {
         el.style.display = 'none';
         el.innerHTML = '';
-        return;
+        return false;
     }
 
     el.style.display = 'block';
     const posStyle = img.cropFocus ? ` style="object-position:${img.cropFocus}"` : '';
     el.innerHTML = `<img src="${img.url}" alt="${img.caption}" class="event-image-photo" loading="lazy" referrerpolicy="no-referrer"${posStyle} onerror="this.parentElement.style.display='none'"><div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
+    return true;
+}
+
+/** Gerçek görüntü videosunu güncelle */
+function updateEventVideo(hasImage, campaignPhaseId, animData) {
+    let el = document.getElementById('eventVideo');
+    if (!el) return;
+
+    const eventType = animData?.eventType || 'IDLE';
+    const intensity = animData?.intensity ?? 0;
+
+    // Yoğun olaylarda video her zaman göster (fotoğrafı gizle)
+    // Düşük yoğunlukta fotoğraf varsa video gösterme
+    if (hasImage && intensity < 7) {
+        el.style.display = 'none';
+        el.innerHTML = '';
+        return;
+    }
+
+    const clip = getEventVideo(campaignPhaseId, eventType, intensity);
+
+    if (!clip) {
+        el.style.display = 'none';
+        el.innerHTML = '';
+        return;
+    }
+
+    // Yoğun olayda fotoğrafı gizle, video göster
+    if (hasImage) {
+        const imgEl = document.getElementById('eventImage');
+        if (imgEl) { imgEl.style.display = 'none'; imgEl.innerHTML = ''; }
+    }
+
+    el.style.display = 'block';
+    el.innerHTML = `<video class="event-video-player" src="${clip.file}" autoplay muted loop playsinline preload="none"></video><div class="event-image-caption">${clip.desc}</div><div class="event-image-source">Gerçek görüntü — renklendirilmiş arşiv</div>`;
 }
 
 /** Haftalık bağlam progress barını güncelle */
@@ -254,7 +291,7 @@ export function attachNarrationElements(container, phase) {
     const icon = getNarrationIcon(phase.title || '');
     const { clean } = parseNarration(phase.narration);
     let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-    nb.innerHTML = `<div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div>`;
+    nb.innerHTML = `<div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div>`;
     container.appendChild(nb);
 
     // İlk romantik alıntıyı göster
