@@ -34,7 +34,7 @@ function getAdaptiveInterval(phaseIndex) {
 
     // Sessiz dönemlerde hızlı geç (major olaylar hariç)
     if (!major && isQuietPeriod(iso)) {
-        return isMobile ? 2000 : 1200;
+        return isMobile ? 1500 : 800;
     }
 
     const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;

@@ -27,6 +27,61 @@ export const ROMANTIC_ENTRIES = [
         emoji: '🕯️',
     },
 
+    // ─── MESUDIYE ZIRHLISI ───
+    {
+        startDate: '1914-12-01',
+        endDate: '1914-12-14',
+        type: 'witness',
+        faction: 'ottoman',
+        source: 'Enis Şahin, Kronolojik Çanakkale Savaşları Tarihi',
+        text: '13 Aralık 1914: İngiliz denizaltısı B11, Mesudiye zırhlısını torpilledi. Gemi 10 dakikada battı ama sığ suda olduğu için topları su üstünde kaldı ve ateşe devam etti. 37 şehit verildi — Boğaz savunmasının ilk büyük kaybıydı.',
+        emoji: '⚓',
+    },
+
+    // ─── SAVUNMA RUHUNUN DOĞUŞU ───
+    {
+        startDate: '1914-11-15',
+        endDate: '1914-12-31',
+        type: 'spirit',
+        faction: 'ottoman',
+        source: 'Cevat Paşa, Müstahkem Mevki Komutanlığı emirleri',
+        text: 'Cevat Paşa emretti: "Her tabyada son top, son mermi kalıncaya kadar ateşe devam edilecektir." Boğaz savunmasının ruhu bu emirle şekillenmeye başladı — teslim olmak yoktu.',
+        emoji: '🔥',
+    },
+
+    // ─── ALMAN ASKERÎ HEYETİ ───
+    {
+        startDate: '1914-11-20',
+        endDate: '1914-12-20',
+        type: 'anecdote',
+        faction: 'ottoman',
+        source: 'Amiral Usedom, Boğaz savunma raporları',
+        text: 'Alman Amiral Usedom, Boğaz savunmasını incelediğinde şaşırdı: Osmanlı topçuları eski toplarla İngiliz donanmasını durdurmuştu. "Bu askerlerle modern silahlar birleşirse, Boğaz geçilemez" diye rapor yazdı.',
+        emoji: '🎖️',
+    },
+
+    // ─── HALKTAN DESTEK ───
+    {
+        startDate: '1914-12-20',
+        endDate: '1915-01-15',
+        type: 'spirit',
+        faction: 'ottoman',
+        source: 'Nevin Yazıcı, Halk ve Cephe',
+        text: 'İstanbul ve Anadolu\'dan cepheye hediye akışı başladı. Kadınlar çorap, eldiven ve battaniye ördü. Çocuklar sigara ve şekerleme topladı. Bir kadın mektubunda yazdı: "Oğullarımız orada, biz burada — ama kalplerimiz aynı siperde."',
+        emoji: '🧶',
+    },
+
+    // ─── BOĞAZ'IN STRATEJİK ÖNEMİ ───
+    {
+        startDate: '1914-11-05',
+        endDate: '1914-11-15',
+        type: 'quote',
+        faction: 'allied',
+        source: 'Winston Churchill, Savaş Kabinesi, Kasım 1914',
+        text: '"Türkler\'i savaştan çıkarmanın ve Rusya\'ya buğday yolu açmanın tek yolu Çanakkale Boğazı\'dır. Boğaz düşerse, İstanbul düşer. İstanbul düşerse, savaş biter."',
+        emoji: '🗺️',
+    },
+
     // ─── MUSTAFA KEMAL'İN ATANMASI ───
     {
         startDate: '1915-01-18',
