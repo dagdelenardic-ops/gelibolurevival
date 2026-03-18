@@ -177,9 +177,9 @@
         transform:translateY(0)
     }
     .panel-close{
-        width:44px;
-        height:44px;
-        font-size:1.2rem
+        width:48px;
+        height:48px;
+        font-size:1.4rem
     }
     .portrait-img{
         max-width:120px;

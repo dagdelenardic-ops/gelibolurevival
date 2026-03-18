@@ -376,10 +376,10 @@ function initPinchZoom() {
             lastTouchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             lastTouchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
         } else if (e.touches.length === 1 && scale > 1.05) {
-            // Tek parmak pan (sadece zoom'dayken)
-            isPanning = true;
-            panStartX = e.touches[0].clientX - translateX;
-            panStartY = e.touches[0].clientY - translateY;
+            // Tek parmak pan (sadece zoom'dayken) — hareket eşiğiyle
+            isPanning = false; // Eşik aşılana kadar pan başlamaz
+            panStartX = e.touches[0].clientX;
+            panStartY = e.touches[0].clientY;
         }
     }, { passive: false });
 
@@ -406,12 +406,21 @@ function initPinchZoom() {
             lastDist = dist;
             lastTouchX = midX;
             lastTouchY = midY;
-        } else if (e.touches.length === 1 && isPanning && scale > 1.05) {
-            // Tek parmak pan
-            e.preventDefault();
-            translateX = e.touches[0].clientX - panStartX;
-            translateY = e.touches[0].clientY - panStartY;
-            applyTransform();
+        } else if (e.touches.length === 1 && scale > 1.05) {
+            // Tek parmak pan — 15px eşik (tap ile karışmasın)
+            const dx = e.touches[0].clientX - panStartX;
+            const dy = e.touches[0].clientY - panStartY;
+            if (!isPanning && Math.hypot(dx, dy) > 15) {
+                isPanning = true;
+                panStartX = e.touches[0].clientX - translateX;
+                panStartY = e.touches[0].clientY - translateY;
+            }
+            if (isPanning) {
+                e.preventDefault();
+                translateX = e.touches[0].clientX - panStartX;
+                translateY = e.touches[0].clientY - panStartY;
+                applyTransform();
+            }
         }
     }, { passive: false });
 

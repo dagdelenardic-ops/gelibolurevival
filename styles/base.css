@@ -48,38 +48,40 @@ body{
 @media(max-width:768px){
   body{overflow:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
   .topbar{
-    flex-wrap:wrap;
-    padding:6px 10px;
+    flex-wrap:nowrap;
+    padding:4px 8px;
     gap:4px;
     backdrop-filter:none;
-    background:rgba(16,16,20,.97)
+    background:rgba(16,16,20,.97);
+    max-height:44px;
+    overflow:hidden
   }
   .topbar-title{
-    font-size:.82rem;
+    font-size:.78rem;
     flex:1;
-    min-width:0
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis
   }
   .phase-indicator{
-    order:1;
-    width:100%;
-    max-width:100%;
-    font-size:.68rem;
-    padding:2px 8px
+    display:none
   }
   .legend{
-    gap:6px;
-    flex-wrap:wrap
+    gap:4px;
+    flex-wrap:nowrap
   }
   .legend-item{
-    font-size:.65rem
+    display:none
   }
   .stats-btn{
     padding:6px 10px;
-    min-height:44px
+    min-height:48px;
+    font-size:.75rem
   }
   .audio-btn{
-    width:44px;
-    height:44px
+    width:48px;
+    height:48px
   }
   .stats-panel{backdrop-filter:none;background:rgba(0,0,0,.85)}
 }
