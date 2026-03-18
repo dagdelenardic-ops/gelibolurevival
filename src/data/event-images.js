@@ -30,6 +30,60 @@ export const EVENT_IMAGES = [
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center 20%',
     },
+    // ── 2a. Enver Paşa — Savaş kararı ──
+    {
+        startIso: '1914-11-17',
+        endIso:   '1914-11-30',
+        url:      `${P}/enver-pasha.jpg`,
+        caption:  'Enver Paşa — Harbiye Nazırı, savaş kararının mimarı',
+        source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 20%',
+    },
+    // ── 2b. Kilitbahir Kalesi — Boğaz savunmasının kalbi ──
+    {
+        startIso: '1914-12-01',
+        endIso:   '1914-12-20',
+        url:      `${P}/kilitbahir-castle.jpg`,
+        caption:  'Kilitbahir Kalesi — Boğaz savunmasının merkezi',
+        source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center',
+    },
+    // ── 2c. Cevat Paşa — Müstahkem Mevki Komutanı ──
+    {
+        startIso: '1914-12-21',
+        endIso:   '1915-01-07',
+        url:      `${P}/cevat-pasha.jpg`,
+        caption:  'Cevat Paşa (Çobanlı) — Çanakkale Müstahkem Mevki Komutanı',
+        source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 20%',
+    },
+    // ── 2d. Churchill — Gelibolu harekâtının politik mimarı ──
+    {
+        startIso: '1915-01-08',
+        endIso:   '1915-01-25',
+        url:      `${P}/churchill-1914.jpg`,
+        caption:  'Winston Churchill — Bahriye Nazırı, Çanakkale harekâtının mimarı',
+        source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center 25%',
+    },
+    // ── 2e. Osmanlı siperleri — Boğaz savunma tahkimatı ──
+    {
+        startIso: '1915-01-26',
+        endIso:   '1915-02-08',
+        url:      `${P}/ottoman-soldiers-trench.jpg`,
+        caption:  'Osmanlı askerleri siperde — Çanakkale savunma hattı',
+        source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center',
+    },
+    // ── 2f. Boğaz savunma haritası — tahkimat düzeni ──
+    {
+        startIso: '1915-02-09',
+        endIso:   '1915-02-18',
+        url:      `${P}/dardanelles-map-1915.jpg`,
+        caption:  'Çanakkale Boğazı savunma düzeni — 1915 haritası',
+        source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center',
+    },
     // ── 3. Deniz Harekâtı Başlangıcı / Bombardıman Dönemi ──
     {
         startIso: '1915-02-19',
