@@ -287,16 +287,15 @@ export function renderTransition(sceneTransition) {
 
 /** Anlatım kutusu DOM elemanlarını oluştur */
 export function attachNarrationElements(container, phase) {
-    const isMobileNarr = window.innerWidth <= 768;
     const nb = document.createElement('div');
-    nb.className = 'narration-box' + (isMobileNarr ? ' is-collapsed' : '');
+    nb.className = 'narration-box';
     nb.id = 'narrationBox';
     nb.setAttribute('aria-live', 'polite');
     nb.setAttribute('role', 'status');
     const icon = getNarrationIcon(phase.title || '');
     const { clean } = parseNarration(phase.narration);
     let displayTitle = (phase.title || '').replace(/\s*[·–-]\s*(Günlük Akış|Resmi Günlük Kayıt)\s*/gi, '').trim();
-    nb.innerHTML = `<button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat"><span class="narration-toggle-icon">▲</span> <span class="narration-toggle-label">${displayTitle}</span></button><div class="narration-content" id="narrationContent"><div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div></div>`;
+    nb.innerHTML = `<button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat"><span class="narration-toggle-icon">▼</span> <span class="narration-toggle-label">${displayTitle}</span></button><div class="narration-content" id="narrationContent"><div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} – ${phase.date}</div><div class="narration-text" id="narrationText">${clean || ''}</div><div class="event-image" id="eventImage" style="display:none"></div><div class="event-image" id="eventVideo" style="display:none"></div><div class="weekly-bar" id="weeklyBar" style="display:none"></div><div class="romantic-quote" id="romanticQuote" style="display:none"></div></div>`;
     container.appendChild(nb);
 
     // Toggle butonu
@@ -304,8 +303,8 @@ export function attachNarrationElements(container, phase) {
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
             nb.classList.toggle('is-collapsed');
-            const icon = toggleBtn.querySelector('.narration-toggle-icon');
-            if (icon) icon.textContent = nb.classList.contains('is-collapsed') ? '▲' : '▼';
+            const ic = toggleBtn.querySelector('.narration-toggle-icon');
+            if (ic) ic.textContent = nb.classList.contains('is-collapsed') ? '▲' : '▼';
         });
     }
 
