@@ -3,3 +3,13 @@
 node_modules/
 .env
 .vercel
+/.claude/worktrees/
+/.playwright-mcp/
+/tmp/
+/andre/
+/gelibolu-*.png
+/local-run*.png
+/map-check-*.png
+/verification-overlay*.png
+/test-results/
+/playwright-report/

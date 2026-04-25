@@ -4,7 +4,7 @@
     {
       "name": "canakkale",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["http-server", "-p", "8915", "-c-1"],
+      "runtimeArgs": ["serve", "-l", "8915", "--no-clipboard"],
       "port": 8915
     }
   ]
