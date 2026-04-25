@@ -3,24 +3,27 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from './data/battle-data.js';
+import { BATTLE_DATA } from './data/battle-data.js?v=20260407-manual-r1';
 import { ENTITY_TYPES } from './data/entity-types.js';
-import { getTerrainAtPoint, clampToAllowedTerrain } from './data/terrain-zones.js';
+import { waitForTerrainSampler } from './data/terrain-zones.js';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from './data/coordinate-map.js';
 import { isUnitDestroyed } from './data/canonical-positions.js';
 import { normalizeDateText, normalizeValue } from './engine/date-utils.js';
-import { hydrateTimelineData, getUnitEntryPhaseIndex } from './engine/phase-engine.js';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260407-manual-r1';
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
-import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation, getClusterOffset } from './engine/position-engine.js';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js';
+import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation, getClusterOffset, getTerrainSafePointForUnit } from './engine/position-engine.js?v=20260407-manual-r1';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260407-manual-r1';
 import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js';
 import { renderBattleEffects } from './render/effects-renderer.js';
 import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js';
 import { animateCamera } from './render/camera.js';
+import { initTouchZoom } from "./engine/touch-zoom.js?v=20260407-manual-r1";
+
 import { orchestrateAnimations } from './render/animation-orchestrator.js';
 import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition } from './ui/narration-panel.js';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js';
 import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js';
-import { startAutoPlay, stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton } from './ui/autoplay-controller.js';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton } from './ui/autoplay-controller.js';
 import { initOnboarding } from './ui/onboarding.js';
 import { toggleStatsPanel } from './ui/stats-panel.js';
 import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js';
@@ -29,6 +32,8 @@ import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './
 let currentPhaseIndex = 0;
 const currentPositions = {};
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+let richTimelineHydrationStarted = false;
+let terrainRefreshVersion = 0;
 
 // ── Mobile DOM Patching: innerHTML yerine mevcut token'ları güncelle ──
 function patchTokens(tg, pid, prevPositions, nextPositions, phaseIndex, prevPhaseIndex, isoDate, animData) {
@@ -50,8 +55,9 @@ function patchTokens(tg, pid, prevPositions, nextPositions, phaseIndex, prevPhas
         const phaseData = u.phases[pid];
         const visible = phaseData ? 1 : 0.55;
         const offset = getClusterOffset({}, targetBase.x, targetBase.y, u, phaseIndex);
-        const tx = normalizeValue(Math.round(targetBase.x + offset.x), 45, 680);
-        const ty = normalizeValue(Math.round(targetBase.y + offset.y), 18, 548);
+        const targetPoint = getTerrainSafePointForUnit(targetBase.x + offset.x, targetBase.y + offset.y, u);
+        const tx = normalizeValue(Math.round(targetPoint.x), VP_MIN_X, VP_MAX_X);
+        const ty = normalizeValue(Math.round(targetPoint.y), VP_MIN_Y, VP_MAX_Y);
 
         activeUnitIds.add(u.id);
 
@@ -82,12 +88,90 @@ function patchTokens(tg, pid, prevPositions, nextPositions, phaseIndex, prevPhas
 }
 
 function getCurrentPhaseIndex() { return currentPhaseIndex; }
-async function waitForAnimationEvents() {
-    try {
-        await Promise.resolve(window.ANIMATION_EVENTS_READY);
-    } catch (err) {
-        console.warn('Animasyon verileri hazır olamadı:', err);
+
+function scheduleIdleTask(callback) {
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(callback, { timeout: 2200 });
+        return;
     }
+    setTimeout(callback, 800);
+}
+
+function loadAnimationEventsInBackground() {
+    const loader = typeof window.loadAnimationEvents === 'function'
+        ? window.loadAnimationEvents
+        : () => Promise.resolve(window.ANIMATION_EVENTS_READY);
+
+    Promise.resolve()
+        .then(() => loader())
+        .then(() => setActivePhase(currentPhaseIndex))
+        .catch((err) => console.warn('Animasyon verileri hazır olamadı:', err));
+}
+
+async function hydrateRichTimelineInBackground() {
+    if (richTimelineHydrationStarted) return;
+    richTimelineHydrationStarted = true;
+
+    const activePhase = BATTLE_DATA.phases[currentPhaseIndex];
+    const activeIso = activePhase?.isoStart || normalizeDateText(activePhase?.date, currentPhaseIndex);
+    const previousMobileMode = getMobileViewMode();
+
+    try {
+        await hydrateTimelineData({ loadBook: true, expandDaily: true });
+        currentPhaseIndex = getPhaseIndexByIso(activeIso);
+        for (const key in currentPositions) delete currentPositions[key];
+        expandUnitTrails();
+        initPositions();
+
+        renderTopBar();
+        renderMap(currentPhaseIndex, currentPositions, getStoryHandlers());
+        renderTimeline(setActivePhase, handleToggleAutoPlay);
+
+        const closePanelBtn = document.getElementById('closeUnitPanelBtn');
+        if (closePanelBtn) closePanelBtn.addEventListener('click', hideUnitPanel);
+        attachUnitClicks(getCurrentPhaseIndex);
+        const statsBtn = document.getElementById('statsBtn');
+        if (statsBtn) statsBtn.addEventListener('click', toggleStatsPanel);
+        renderAudioControls();
+        initPinchZoom();
+        await initMapEditorIfRequested();
+
+        if (isMobile && previousMobileMode !== 'desktop') {
+            setMobileViewMode(previousMobileMode, { silent: true });
+        }
+
+        setActivePhase(currentPhaseIndex);
+        refreshAutoPlayButton();
+        await refreshTerrainSafeTrails();
+    } catch (err) {
+        console.warn('Zengin zaman çizelgesi arka planda yüklenemedi:', err);
+    }
+}
+
+async function refreshTerrainSafeTrails() {
+    const version = ++terrainRefreshVersion;
+    const terrainReady = await waitForTerrainSampler();
+    if (!terrainReady || version !== terrainRefreshVersion) return;
+
+    expandUnitTrails();
+    setActivePhase(currentPhaseIndex);
+    await refreshMapDoctorIfRequested();
+}
+
+function cleanPhaseTitle(title) {
+    return String(title || '')
+        .replace(/\s*\(EPUB[^)]*\)/gi, '')
+        .replace(/(?:EPUB|Resmi Günlük Kayıt|Günlük Akış|Haftalık Bağlam|Haftalık Bağ|Kayd[ıi])\s*:?/gi, '')
+        .replace(/\s*[·–-]\s*(?=[·–-]|$)/g, '')
+        .replace(/^[\s·–-]+|[\s·–-]+$/g, '')
+        .replace(/\s*·\s*/g, ' · ')
+        .replace(/\s{2,}/g, ' ')
+        .trim() || 'Cephe Günü';
+}
+
+function formatPhaseIndicator(phase) {
+    if (!phase) return '';
+    return `${cleanPhaseTitle(phase.title)} – ${phase.date}`;
 }
 
 // ── Başlangıç Konumları ──
@@ -105,7 +189,7 @@ function renderTopBar() {
     const p = BATTLE_DATA.phases[currentPhaseIndex];
     document.querySelector('.topbar').innerHTML = `
     <div class="topbar-title">Çanakkale Savaşı <span>1914-1916</span></div>
-    <div class="phase-indicator" id="phaseIndicator">${p.title} – ${p.date}</div>
+    <div class="phase-indicator" id="phaseIndicator">${formatPhaseIndicator(p)}</div>
     <div class="legend">
       <button class="stats-btn" id="statsBtn" type="button"><img src="assets/icons/medal.png" width="14" height="14" alt=""> Kayıplar</button>
       ${Object.values(BATTLE_DATA.factions).map(f => `
@@ -126,6 +210,79 @@ function isQuietPeriod(iso) {
 }
 let narrationTimer = null;
 
+function focusStoryMapForPhase(phase) {
+    if (!isMobile || !phase?.mapFocus || !window.GELIBOLU_VIEWPORT) return;
+    const focus = phase.mapFocus;
+    window.GELIBOLU_VIEWPORT.focusOnPoint(
+        focus.x + focus.w / 2,
+        focus.y + focus.h / 2,
+        focus.w
+    );
+}
+
+function getStoryHandlers() {
+    const getAdjacentStoryIndex = (direction) => {
+        if (!isMobile) return currentPhaseIndex + direction;
+        const currentIso = String(BATTLE_DATA.phases[currentPhaseIndex]?.isoStart || '');
+        let nextIndex = currentPhaseIndex + direction;
+        while (
+            nextIndex > 0 &&
+            nextIndex < BATTLE_DATA.phases.length - 1 &&
+            String(BATTLE_DATA.phases[nextIndex]?.isoStart || '') === currentIso
+        ) {
+            nextIndex += direction;
+        }
+        return nextIndex;
+    };
+
+    return {
+        onPrev: () => {
+            stopAutoPlay();
+            setActivePhase(getAdjacentStoryIndex(-1));
+        },
+        onNext: () => {
+            stopAutoPlay();
+            setActivePhase(getAdjacentStoryIndex(1));
+        },
+        onTogglePlay: () => handleToggleAutoPlay(),
+        onJumpToChapter: (startIso) => {
+            stopAutoPlay();
+            setActivePhase(getPhaseIndexByIso(startIso));
+        },
+        onModeChange: (mode) => {
+            if (mode !== 'story') focusStoryMapForPhase(BATTLE_DATA.phases[currentPhaseIndex]);
+        }
+    };
+}
+
+async function initMapEditorIfRequested() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('editor') !== '1') {
+        document.body.dataset.mapEditor = 'disabled';
+        return;
+    }
+
+    const { initMapEditor } = await import('./ui/map-editor.js?v=20260407-manual-r1');
+    initMapEditor();
+}
+
+async function initMapDoctorIfRequested() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('doctor') !== '1') return;
+    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260407-manual-r1');
+    initMapDoctorPanel();
+}
+
+async function refreshMapDoctorIfRequested() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('doctor') !== '1') return;
+    if (window.GELIBOLU_MAP_DOCTOR?.rerun) {
+        await window.GELIBOLU_MAP_DOCTOR.rerun();
+        return;
+    }
+    await initMapDoctorIfRequested();
+}
+
 // ── Phase Geçişi ──
 function setActivePhase(i) {
     const len = BATTLE_DATA.phases.length;
@@ -144,8 +301,9 @@ function setActivePhase(i) {
     // ── MOBİL SESSIZ DÖNEM: Tarih chip + narration güncelle (fotoğraf değiştiğinde) ──
     if (quiet) {
         const ind = document.getElementById('phaseIndicator');
-        if (ind) ind.textContent = `${p.title} – ${p.date}`;
+        if (ind) ind.textContent = formatPhaseIndicator(p);
         updateMapDateIndicator(p.date);
+        if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p);
         // Her 3 fazda narration güncelle — fotoğraflar da değişebilsin
         if (nextIndex % 3 === 0) {
             const campaignPhase = resolveCampaignPhase(currentIso);
@@ -159,7 +317,7 @@ function setActivePhase(i) {
 
     const ind = document.getElementById('phaseIndicator');
     if (ind) {
-        ind.textContent = `${p.title} – ${p.date}`;
+        ind.textContent = formatPhaseIndicator(p);
     }
     updateTimelineActiveState(nextIndex);
     focusActiveTimelineMarker();
@@ -204,15 +362,7 @@ function setActivePhase(i) {
         const pd = phaseData || (!isDestroyedPhaseData(phaseData) ? getNarrativeNavalPosition(u, nextIndex) : null);
         if (!pd) return;
 
-        // ── TERRAIN GATE: Pozisyon entity tipine uygun terrain'de mi? ──
-        if (typeDef) {
-            const terrain = getTerrainAtPoint(pd.x, pd.y);
-            if (!typeDef.allowedTerrain.includes(terrain)) {
-                const clamped = clampToAllowedTerrain(pd.x, pd.y, typeDef.allowedTerrain);
-                nextPositions[u.id] = { x: clamped.x, y: clamped.y };
-                return;
-            }
-        }
+        // Terrain clamping zaten expandUnitTrails()'de uygulanıyor — burada tekrar yapma
 
         // ── CORRIDOR SEPARATION: karşı taraflarla örtüşmeyi engelle ──
         const separated = enforceCorridorSeparation(pd.x, pd.y, u, campaignPhase.id);
@@ -239,6 +389,7 @@ function setActivePhase(i) {
         }
         if (animData) triggerPhaseSfx(animData, campaignPhase.id);
         updateMapSceneState(p, animData);
+        if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p);
     } else {
         renderBattleEffects(nextIndex);
         renderFrontlines(campaignPhase, currentIso);
@@ -270,7 +421,7 @@ function setActivePhase(i) {
 
     // ── Info card ──
     if (narrationTimer) clearTimeout(narrationTimer);
-    narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), isMobile ? 800 : 360);
+    narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), isMobile ? 180 : 360);
 
     // ── Update global state ──
     prevCampaignPhaseId = campaignPhase.id;
@@ -311,150 +462,16 @@ function initKeyboardNav() {
 
 // ── Pinch-to-Zoom + Pan (mobile) ──
 function initPinchZoom() {
-    const ctr = document.querySelector('.map-container');
-    const svg = document.getElementById('battleMap');
-    if (!ctr || !svg) return;
-
-    let scale = 1;
-    let lastDist = 0;
-    let translateX = 0, translateY = 0;
-    let lastTouchX = 0, lastTouchY = 0;
-    let isPanning = false;
-    let panStartX = 0, panStartY = 0;
-
-    function getTouchDist(touches) {
-        const dx = touches[0].clientX - touches[1].clientX;
-        const dy = touches[0].clientY - touches[1].clientY;
-        return Math.hypot(dx, dy);
-    }
-
-    svg.style.willChange = 'transform';
-    let rafPending = false;
-    function applyTransform() {
-        if (rafPending) return;
-        rafPending = true;
-        requestAnimationFrame(() => {
-            svg.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
-            svg.style.transformOrigin = 'center center';
-            rafPending = false;
-        });
-    }
-
-    function resetZoom() {
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        applyTransform();
-        updateResetBtn();
-    }
-
-    // Reset butonu
-    function updateResetBtn() {
-        let btn = document.getElementById('mapResetBtn');
-        if (scale > 1.05) {
-            if (!btn) {
-                btn = document.createElement('button');
-                btn.id = 'mapResetBtn';
-                btn.className = 'map-reset-btn';
-                btn.type = 'button';
-                btn.textContent = '⟲';
-                btn.title = 'Haritayı sıfırla';
-                btn.addEventListener('click', resetZoom);
-                ctr.appendChild(btn);
-            }
-            btn.style.display = 'flex';
-        } else if (btn) {
-            btn.style.display = 'none';
-        }
-    }
-
-    ctr.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            isPanning = false;
-            lastDist = getTouchDist(e.touches);
-            lastTouchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            lastTouchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        } else if (e.touches.length === 1 && scale > 1.05) {
-            // Tek parmak pan (sadece zoom'dayken) — hareket eşiğiyle
-            isPanning = false; // Eşik aşılana kadar pan başlamaz
-            panStartX = e.touches[0].clientX;
-            panStartY = e.touches[0].clientY;
-        }
-    }, { passive: false });
-
-    ctr.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            isPanning = false;
-            const dist = getTouchDist(e.touches);
-            const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-
-            if (lastDist > 0) {
-                const delta = dist / lastDist;
-                scale = Math.min(3, Math.max(1, scale * delta));
-                if (scale > 1) {
-                    translateX += midX - lastTouchX;
-                    translateY += midY - lastTouchY;
-                } else {
-                    translateX = 0;
-                    translateY = 0;
-                }
-                applyTransform();
-            }
-            lastDist = dist;
-            lastTouchX = midX;
-            lastTouchY = midY;
-        } else if (e.touches.length === 1 && scale > 1.05) {
-            // Tek parmak pan — 15px eşik (tap ile karışmasın)
-            const dx = e.touches[0].clientX - panStartX;
-            const dy = e.touches[0].clientY - panStartY;
-            if (!isPanning && Math.hypot(dx, dy) > 15) {
-                isPanning = true;
-                panStartX = e.touches[0].clientX - translateX;
-                panStartY = e.touches[0].clientY - translateY;
-            }
-            if (isPanning) {
-                e.preventDefault();
-                translateX = e.touches[0].clientX - panStartX;
-                translateY = e.touches[0].clientY - panStartY;
-                applyTransform();
-            }
-        }
-    }, { passive: false });
-
-    ctr.addEventListener('touchend', (e) => {
-        if (e.touches.length === 0) {
-            lastDist = 0;
-            isPanning = false;
-            if (scale <= 1.05) {
-                resetZoom();
-            }
-            updateResetBtn();
-        }
-    });
-
-    // Çift dokunma ile zoom sıfırla
-    let lastTap = 0;
-    ctr.addEventListener('touchend', (e) => {
-        if (e.touches.length > 0) return;
-        const now = Date.now();
-        if (now - lastTap < 300 && scale > 1.05) {
-            resetZoom();
-        }
-        lastTap = now;
-    });
+    initTouchZoom('battleMap');
 }
 
 // ── Ana Başlatma ──
 async function init() {
-    await hydrateTimelineData();
+    await hydrateTimelineData({ loadBook: false, expandDaily: false });
     expandUnitTrails();
     initPositions();
-    await waitForAnimationEvents();
     renderTopBar();
-    renderMap(currentPhaseIndex, currentPositions);
+    renderMap(currentPhaseIndex, currentPositions, getStoryHandlers());
     renderTimeline(setActivePhase, handleToggleAutoPlay);
     const closePanelBtn = document.getElementById('closeUnitPanelBtn');
     if (closePanelBtn) closePanelBtn.addEventListener('click', hideUnitPanel);
@@ -463,8 +480,15 @@ async function init() {
     if (statsBtn) statsBtn.addEventListener('click', toggleStatsPanel);
     initKeyboardNav();
     initPinchZoom();
+    initMapEditorIfRequested();
+    initMapDoctorIfRequested();
     setActivePhase(0);
     refreshAutoPlayButton();
+    refreshTerrainSafeTrails();
+    loadAnimationEventsInBackground();
+    scheduleIdleTask(() => {
+        hydrateRichTimelineInBackground();
+    });
 
     // Ses kontrolleri ve müzik
     renderAudioControls();
@@ -472,7 +496,6 @@ async function init() {
 
     // Sinematik giriş — CSS animasyonla 5.5s sonra otomatik kaybolur
     const loader = document.getElementById('loadingOverlay');
-    const startPlay = () => startAutoPlay(setActivePhase, getCurrentPhaseIndex);
 
     if (loader) {
         // CSS introAutoHide animasyonu bitince DOM'dan kaldır
@@ -480,21 +503,18 @@ async function init() {
         loader.addEventListener('animationend', (e) => {
             if (e.target !== loader) return; // Child animasyonlarını yoksay
             loader.remove();
-            // Onboarding tutorial — intro bittikten SONRA göster
-            const tutorialShown = initOnboarding({ onFinish: startPlay });
-            if (!tutorialShown) startPlay();
+            // Onboarding tutorial — kullanıcı başlatmadan autoplay başlamaz
+            initOnboarding();
         });
         // Fallback: 6 saniye sonra hâlâ kalkmadıysa zorla kaldır (Safari edge case)
         setTimeout(() => {
             if (document.getElementById('loadingOverlay')) {
                 loader.remove();
-                const tutorialShown = initOnboarding({ onFinish: startPlay });
-                if (!tutorialShown) startPlay();
+                initOnboarding();
             }
         }, 6500);
     } else {
-        const tutorialShown = initOnboarding({ onFinish: startPlay });
-        if (!tutorialShown) startPlay();
+        initOnboarding();
     }
 }
 

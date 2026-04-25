@@ -36,6 +36,10 @@ function createPanel() {
     const el = document.createElement('div');
     el.id = 'statsPanel';
     el.className = 'stats-panel';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-hidden', 'true');
+    el.setAttribute('inert', '');
     el.innerHTML = `
         <div class="stats-panel-inner">
             <div class="stats-header">
@@ -73,6 +77,12 @@ function createPanel() {
     return el;
 }
 
+function setStatsPanelA11yState(open) {
+    if (!panelEl) return;
+    panelEl.toggleAttribute('inert', !open);
+    panelEl.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
 function renderSide(side) {
     return `
         <div class="stats-side">
@@ -92,11 +102,18 @@ function renderSide(side) {
 
 export function showStatsPanel() {
     if (!panelEl) panelEl = createPanel();
+    setStatsPanelA11yState(true);
     panelEl.classList.add('open');
+    requestAnimationFrame(() => panelEl?.querySelector('.stats-close')?.focus());
 }
 
 export function hideStatsPanel() {
-    if (panelEl) panelEl.classList.remove('open');
+    if (!panelEl) return;
+    if (panelEl.contains(document.activeElement)) {
+        document.getElementById('statsBtn')?.focus?.();
+    }
+    panelEl.classList.remove('open');
+    setStatsPanelA11yState(false);
 }
 
 export function toggleStatsPanel() {

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Gelibolu — Harita Kalibrasyon Stüdyosu</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace;
+    overflow: hidden;
+  }
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    height: 100vh;
+  }
+  #canvas-wrap {
+    position: relative;
+    overflow: auto;
+    background: #0a0a0a;
+  }
+  #canvas-wrap.grab { cursor: grab; }
+  #canvas-wrap.grabbing { cursor: grabbing; }
+  #stage {
+    position: relative;
+    display: inline-block;
+    transform-origin: 0 0;
+  }
+  #map {
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+  #overlay {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+  }
+
+  #panel {
+    background: #222;
+    border-left: 1px solid #333;
+    overflow-y: auto;
+    padding: 12px;
+  }
+  h1 { font-size: 14px; margin: 0 0 8px; color: #f0c070; }
+  h2 { font-size: 12px; margin: 16px 0 6px; color: #8ab4d9; text-transform: uppercase; letter-spacing: .08em; }
+
+  .hud {
+    position: fixed;
+    top: 10px; left: 10px;
+    background: rgba(0,0,0,0.85);
+    color: #0f0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    z-index: 100;
+    pointer-events: none;
+    font-size: 12px;
+  }
+  .hud b { color: #f0c070; }
+
+  .controls {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle input { margin: 0; }
+
+  button {
+    background: #2a4a6a;
+    color: #e0e0e0;
+    border: 1px solid #3a5a7a;
+    padding: 6px 10px;
+    border-radius: 3px;
+    font: inherit;
+    cursor: pointer;
+  }
+  button:hover { background: #3a5a7a; }
+  button.primary { background: #5a7a3a; border-color: #6a8a4a; }
+  button.primary:hover { background: #6a8a4a; }
+
+  .report {
+    background: #111;
+    border: 1px solid #333;
+    padding: 8px;
+    font-size: 11px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .report table { width: 100%; border-collapse: collapse; }
+  .report th { text-align: left; color: #8ab4d9; font-weight: normal; padding: 2px 4px; }
+  .report td { padding: 2px 4px; border-top: 1px solid #222; }
+  .report td.dist-ok { color: #7fbf7f; }
+  .report td.dist-warn { color: #e0c070; }
+  .report td.dist-bad { color: #e07070; }
+
+  .loc-list {
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    background: #111;
+    font-size: 11px;
+  }
+  .loc-list .loc {
+    padding: 4px 8px;
+    border-bottom: 1px solid #222;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+  }
+  .loc-list .loc:hover { background: #1a2a3a; }
+  .loc-list .loc.anchor { color: #f0c070; }
+  .loc-list .loc.projected { color: #8ab4d9; }
+  .loc-list .loc .tag {
+    font-size: 9px;
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    background: #111;
+    color: #e0e0e0;
+    border: 1px solid #333;
+    font: 11px/1.4 ui-monospace, monospace;
+    padding: 6px;
+    border-radius: 3px;
+    resize: vertical;
+  }
+
+  .legend {
+    display: grid;
+    gap: 4px;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .legend .row { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 1px solid #fff;
+  }
+  .rms {
+    font-size: 12px;
+    padding: 6px 8px;
+    background: #111;
+    border: 1px solid #333;
+    margin-bottom: 8px;
+  }
+  .rms .val { color: #f0c070; font-weight: bold; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="canvas-wrap">
+    <div id="stage">
+      <img id="map" src="gallipoli-map.png" alt="Gelibolu haritası">
+      <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="panel">
+    <h1>🗺️ Kalibrasyon Stüdyosu</h1>
+
+    <div class="legend">
+      <div class="row"><span class="swatch" style="background:#f0c070"></span> Anchor (ground truth)</div>
+      <div class="row"><span class="swatch" style="background:#5a9af0"></span> Projekte edilmiş (lat/lon → x,y)</div>
+      <div class="row"><span class="swatch" style="background:#ff5a5a"></span> Hata vektörü (manuel → projekte)</div>
+    </div>
+
+    <div class="rms" id="rms">Anchor RMS: <span class="val">—</span> px</div>
+
+    <h2>Görünürlük</h2>
+    <div class="controls">
+      <label class="toggle"><input type="checkbox" id="show-anchors" checked> Anchor noktalarını göster</label>
+      <label class="toggle"><input type="checkbox" id="show-projected" checked> Projekte edilmiş noktaları göster</label>
+      <label class="toggle"><input type="checkbox" id="show-forts" checked> Tabyaları göster</label>
+      <label class="toggle"><input type="checkbox" id="show-labels" checked> Etiketleri göster</label>
+      <label class="toggle"><input type="checkbox" id="show-residual"> Manuel-vs-projekte hata oku</label>
+    </div>
+
+    <h2>Zoom</h2>
+    <div class="controls">
+      <div style="display:flex;gap:6px">
+        <button onclick="setZoom(0.25)">25%</button>
+        <button onclick="setZoom(0.5)">50%</button>
+        <button onclick="setZoom(1)">100%</button>
+        <button onclick="setZoom(2)">200%</button>
+      </div>
+    </div>
+
+    <h2>Tıklama İmleci</h2>
+    <div id="click-info" class="report">Haritaya tıkla: SVG (x,y) ve (lat,lon) okunsun.</div>
+
+    <h2>Anchor Raporu</h2>
+    <div id="anchor-report" class="report">Yükleniyor…</div>
+
+    <h2>Lokasyonlar (<span id="loc-count">—</span>)</h2>
+    <div id="loc-list" class="loc-list"></div>
+
+    <h2>Yeni Anchor Ekle</h2>
+    <div class="controls">
+      <small style="color:#888">Bir lokasyonu "anchor" haline getirmek için listeden seç, haritada doğru yere tıkla, "Anchor yap" dedikten sonra kopya metnini dosyaya yapıştır.</small>
+      <div id="selected-loc" style="padding:6px;background:#111;border:1px solid #333;">Seçili: yok</div>
+      <button id="make-anchor" class="primary">Tıklanan konumu anchor yap</button>
+    </div>
+
+    <h2>Export</h2>
+    <textarea id="export-out" readonly></textarea>
+    <button onclick="copyExport()" style="margin-top:6px">📋 Panoya kopyala</button>
+  </div>
+</div>
+
+<div class="hud" id="hud">Hover: —</div>
+
+<script type="module">
+import {
+  GEO_LOCATIONS,
+  MAP_FORTS,
+  GROUND_TRUTH_ANCHORS,
+  AFFINE_TRANSFORM,
+  projectLatLon,
+  unprojectXY,
+  calibrationReport
+} from '../src/data/geo-calibration.js?v=20260416-affine';
+import { MAP_WIDTH, MAP_HEIGHT } from '../src/data/coordinate-map.js?v=20260407-manual-r1';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const img = document.getElementById('map');
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+const hud = document.getElementById('hud');
+const wrap = document.getElementById('canvas-wrap');
+
+let zoom = 0.5;
+let selectedLoc = null;
+let lastClickSvg = null;
+
+function setZoom(z) {
+  zoom = z;
+  stage.style.transform = `scale(${z})`;
+  overlay.setAttribute('viewBox', `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
+  overlay.setAttribute('width', img.naturalWidth || MAP_WIDTH);
+  overlay.setAttribute('height', img.naturalHeight || MAP_HEIGHT);
+}
+window.setZoom = setZoom;
+
+function drawOverlay() {
+  overlay.innerHTML = '';
+  const showAnchors = document.getElementById('show-anchors').checked;
+  const showProjected = document.getElementById('show-projected').checked;
+  const showForts = document.getElementById('show-forts').checked;
+  const showLabels = document.getElementById('show-labels').checked;
+  const showResidual = document.getElementById('show-residual').checked;
+
+  // Draw locations
+  GEO_LOCATIONS.forEach((loc) => {
+    if (loc.hiddenOnMap) return;
+    const isAnchor = loc.source === 'anchor';
+    if (isAnchor && !showAnchors) return;
+    if (!isAnchor && !showProjected) return;
+
+    const color = isAnchor ? '#f0c070' : '#5a9af0';
+    const r = isAnchor ? 10 : 7;
+
+    const dot = document.createElementNS(SVG_NS, 'circle');
+    dot.setAttribute('cx', loc.x);
+    dot.setAttribute('cy', loc.y);
+    dot.setAttribute('r', r);
+    dot.setAttribute('fill', color);
+    dot.setAttribute('stroke', '#fff');
+    dot.setAttribute('stroke-width', 2);
+    dot.setAttribute('opacity', 0.9);
+    dot.style.pointerEvents = 'auto';
+    dot.style.cursor = 'pointer';
+    dot.dataset.id = loc.id;
+    dot.addEventListener('click', (e) => { e.stopPropagation(); selectLoc(loc.id); });
+    overlay.appendChild(dot);
+
+    if (showLabels) {
+      const label = document.createElementNS(SVG_NS, 'text');
+      label.setAttribute('x', loc.x + 14);
+      label.setAttribute('y', loc.y + 5);
+      label.setAttribute('fill', color);
+      label.setAttribute('font-size', 16);
+      label.setAttribute('font-family', 'monospace');
+      label.setAttribute('stroke', '#000');
+      label.setAttribute('stroke-width', 3);
+      label.setAttribute('paint-order', 'stroke fill');
+      label.textContent = loc.name;
+      overlay.appendChild(label);
+    }
+
+    // Residual arrow: if anchor, compare projected vs manual
+    if (showResidual && isAnchor && loc.lat != null && loc.lon != null) {
+      const p = projectLatLon(loc.lat, loc.lon);
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', loc.x);
+      line.setAttribute('y1', loc.y);
+      line.setAttribute('x2', p.x);
+      line.setAttribute('y2', p.y);
+      line.setAttribute('stroke', '#ff5a5a');
+      line.setAttribute('stroke-width', 2);
+      overlay.appendChild(line);
+    }
+  });
+
+  if (showForts) {
+    MAP_FORTS.forEach((f) => {
+      const sq = document.createElementNS(SVG_NS, 'rect');
+      sq.setAttribute('x', f.x - 5);
+      sq.setAttribute('y', f.y - 5);
+      sq.setAttribute('width', 10);
+      sq.setAttribute('height', 10);
+      sq.setAttribute('fill', '#b07030');
+      sq.setAttribute('stroke', '#fff');
+      sq.setAttribute('stroke-width', 1.5);
+      sq.setAttribute('opacity', 0.85);
+      overlay.appendChild(sq);
+      if (showLabels) {
+        const lab = document.createElementNS(SVG_NS, 'text');
+        lab.setAttribute('x', f.x + 8);
+        lab.setAttribute('y', f.y + 3);
+        lab.setAttribute('fill', '#d09060');
+        lab.setAttribute('font-size', 12);
+        lab.setAttribute('font-family', 'monospace');
+        lab.setAttribute('stroke', '#000');
+        lab.setAttribute('stroke-width', 2);
+        lab.setAttribute('paint-order', 'stroke fill');
+        lab.textContent = f.name;
+        overlay.appendChild(lab);
+      }
+    });
+  }
+}
+
+function renderReport() {
+  const report = calibrationReport();
+  const rmsEl = document.getElementById('rms');
+  rmsEl.innerHTML = `Anchor RMS: <span class="val">${report.rms}</span> px  (${report.rows.length} anchor)`;
+
+  const tbl = document.getElementById('anchor-report');
+  const tf = (v) => Math.round(v * 1000) / 1000;
+  let html = '<table><thead><tr><th>ID</th><th>beklenen</th><th>projekte</th><th>Δ</th></tr></thead><tbody>';
+  for (const r of report.rows) {
+    const cls = r.residual.dist < 10 ? 'dist-ok' : r.residual.dist < 30 ? 'dist-warn' : 'dist-bad';
+    html += `<tr>
+      <td>${r.id}</td>
+      <td>(${r.expected.x},${r.expected.y})</td>
+      <td>(${r.projected.x},${r.projected.y})</td>
+      <td class="${cls}">${r.residual.dist}px</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  html += `<div style="margin-top:6px;font-size:10px;color:#888">a=${tf(report.transform.a)} b=${tf(report.transform.b)} c=${tf(report.transform.c)}<br>d=${tf(report.transform.d)} e=${tf(report.transform.e)} f=${tf(report.transform.f)}</div>`;
+  tbl.innerHTML = html;
+}
+
+function renderLocList() {
+  const list = document.getElementById('loc-list');
+  const items = GEO_LOCATIONS.filter(l => !l.hiddenOnMap);
+  document.getElementById('loc-count').textContent = items.length;
+  list.innerHTML = items.map(l => `
+    <div class="loc ${l.source}" data-id="${l.id}">
+      <span>${l.name}</span>
+      <span class="tag">${l.source === 'anchor' ? 'ANCHOR' : 'proj'}</span>
+    </div>
+  `).join('');
+  list.querySelectorAll('.loc').forEach(el => {
+    el.addEventListener('click', () => selectLoc(el.dataset.id));
+  });
+}
+
+function selectLoc(id) {
+  selectedLoc = GEO_LOCATIONS.find(l => l.id === id);
+  document.getElementById('selected-loc').textContent = selectedLoc
+    ? `Seçili: ${selectedLoc.name} (${selectedLoc.id}) — şu an (${selectedLoc.x},${selectedLoc.y})`
+    : 'Seçili: yok';
+}
+
+function renderExport() {
+  const ta = document.getElementById('export-out');
+  const rows = GROUND_TRUTH_ANCHORS.map(a =>
+    `    { id: '${a.id}', lat: ${a.lat}, lon: ${a.lon}, cropX: ${a.cropX}, cropY: ${a.cropY} }`
+  ).join(',\n');
+  ta.value = `// Kopyala ve geo-calibration.js içindeki GROUND_TRUTH_ANCHORS'a yapıştır:\nexport const GROUND_TRUTH_ANCHORS = [\n${rows}\n];`;
+}
+window.copyExport = function() {
+  const ta = document.getElementById('export-out');
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(() => {
+    alert('Panoya kopyalandı.');
+  });
+};
+
+// Click → coord
+img.parentElement.addEventListener('click', (e) => {
+  if (e.target === overlay || e.target.tagName === 'circle') return;
+  const rect = img.getBoundingClientRect();
+  const svgX = Math.round((e.clientX - rect.left) / zoom);
+  const svgY = Math.round((e.clientY - rect.top) / zoom);
+  if (svgX < 0 || svgY < 0 || svgX > MAP_WIDTH || svgY > MAP_HEIGHT) return;
+  const { lat, lon } = unprojectXY(svgX, svgY);
+  lastClickSvg = { x: svgX, y: svgY, lat, lon };
+  const info = document.getElementById('click-info');
+  info.innerHTML = `
+    <div><b>SVG:</b> (${svgX}, ${svgY})</div>
+    <div><b>Ters-proj:</b> lat=${lat.toFixed(6)}, lon=${lon.toFixed(6)}</div>
+    <div><b>cropX:</b> ${svgX}  <b>cropY:</b> ${svgY - 780}</div>
+  `;
+
+  // Draw temp marker
+  const existing = overlay.querySelector('.click-marker');
+  if (existing) existing.remove();
+  const m = document.createElementNS(SVG_NS, 'circle');
+  m.setAttribute('cx', svgX);
+  m.setAttribute('cy', svgY);
+  m.setAttribute('r', 8);
+  m.setAttribute('fill', '#ff00ff');
+  m.setAttribute('stroke', '#fff');
+  m.setAttribute('stroke-width', 2);
+  m.setAttribute('class', 'click-marker');
+  overlay.appendChild(m);
+});
+
+// Hover HUD
+img.parentElement.addEventListener('mousemove', (e) => {
+  const rect = img.getBoundingClientRect();
+  const svgX = Math.round((e.clientX - rect.left) / zoom);
+  const svgY = Math.round((e.clientY - rect.top) / zoom);
+  if (svgX < 0 || svgY < 0 || svgX > MAP_WIDTH || svgY > MAP_HEIGHT) {
+    hud.textContent = 'Hover: —';
+    return;
+  }
+  const { lat, lon } = unprojectXY(svgX, svgY);
+  hud.innerHTML = `<b>SVG:</b> (${svgX}, ${svgY}) &nbsp; <b>LatLon:</b> ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+});
+
+// "Make anchor" button
+document.getElementById('make-anchor').addEventListener('click', () => {
+  if (!selectedLoc) { alert('Önce bir lokasyon seç.'); return; }
+  if (!lastClickSvg) { alert('Önce haritada doğru yere tıkla.'); return; }
+  const newAnchor = {
+    id: selectedLoc.id,
+    lat: selectedLoc.lat,
+    lon: selectedLoc.lon,
+    cropX: lastClickSvg.x,
+    cropY: lastClickSvg.y - 780
+  };
+  const snippet = `    { id: '${newAnchor.id}', lat: ${newAnchor.lat}, lon: ${newAnchor.lon}, isAnchor: true, cropX: ${newAnchor.cropX}, cropY: ${newAnchor.cropY} }`;
+  const gt = `    { id: '${newAnchor.id}', lat: ${newAnchor.lat}, lon: ${newAnchor.lon}, cropX: ${newAnchor.cropX}, cropY: ${newAnchor.cropY} }`;
+  navigator.clipboard.writeText(
+    `// RAW_LOCATIONS satırı:\n${snippet}\n\n// GROUND_TRUTH_ANCHORS satırı:\n${gt}`
+  );
+  alert('İki snippet panoya kopyalandı. Kodda ilgili yerlere yapıştır, sayfayı yenile, yeni RMS degerini gor.');
+});
+
+// Toggles
+['show-anchors','show-projected','show-forts','show-labels','show-residual'].forEach(id => {
+  document.getElementById(id).addEventListener('change', drawOverlay);
+});
+
+// Init
+img.addEventListener('load', () => {
+  overlay.setAttribute('viewBox', `0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`);
+  overlay.setAttribute('width', img.naturalWidth);
+  overlay.setAttribute('height', img.naturalHeight);
+  setZoom(0.5);
+  drawOverlay();
+  renderReport();
+  renderLocList();
+  renderExport();
+});
+if (img.complete) img.dispatchEvent(new Event('load'));
+</script>
+</body>
+</html>

@@ -3,6 +3,8 @@
 // ViewBox animasyonu ile bölgesel odaklanma
 // ══════════════════════════════════════════════════════════════
 
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
+
 let cameraAnimFrame = null;
 
 /**
@@ -18,10 +20,10 @@ export function animateCamera(svg, target, duration = 600) {
     const vb = svg.viewBox.baseVal;
     const start = { x: vb.x, y: vb.y, w: vb.width, h: vb.height };
     // Clamp target to valid viewport bounds
-    const tx = Math.max(0, Math.min(720 - target.w, target.x));
-    const ty = Math.max(0, Math.min(560 - target.h, target.y));
-    const tw = Math.max(200, Math.min(720, target.w));
-    const th = Math.max(160, Math.min(560, target.h));
+    const tx = Math.max(0, Math.min(MAP_WIDTH - target.w, target.x));
+    const ty = Math.max(MAP_CROP_TOP, Math.min(MAP_HEIGHT - target.h, target.y));
+    const tw = Math.max(600, Math.min(MAP_WIDTH, target.w));
+    const th = Math.max(500, Math.min(MAP_VIEW_HEIGHT, target.h));
 
     const startTime = performance.now();
 
@@ -50,5 +52,5 @@ export function animateCamera(svg, target, duration = 600) {
 
 /** Kamerayı varsayılan tam görünüme sıfırla */
 export function resetCamera(svg, duration = 400) {
-    animateCamera(svg, { x: 0, y: 0, w: 720, h: 560 }, duration);
+    animateCamera(svg, { x: 0, y: MAP_CROP_TOP, w: MAP_WIDTH, h: MAP_VIEW_HEIGHT }, duration);
 }

@@ -86,11 +86,18 @@ export const CANONICAL_POSITIONS = {
         { start: '1914-11-03', end: '1916-01-09', location: 'kilitbahir', note: 'Çanakkale Müstahkem Mevki Komutanlığı' },
     ],
 
+    '7-tumen': [
+        // Remzi Bey komutasında, Seddülbahir güney savunması
+        { start: '1914-11-03', end: '1915-04-24', location: 'seddulbahir', note: 'Güney yarımada kıyı savunması' },
+        { start: '1915-04-25', end: '1915-06-30', location: 'seddulbahir', note: 'Seddülbahir V Beach savunması' },
+        { start: '1915-07-01', end: '1916-01-09', location: 'alcitepe', note: 'Helles cephesi, Alçıtepe hattı savunması' },
+    ],
+
     'nusret': [
         // Kolağası Nazmi Bey komutasında mayın gemisi
-        { start: '1914-11-03', end: '1915-03-07', location: 'bogaz', note: 'Mayın döşeme operasyonları' },
-        { start: '1915-03-08', end: '1915-03-18', location: 'bogaz', note: '7-8 Mart gecesi Erenköy koyu hattına 26 mayın' },
-        { start: '1915-03-19', end: '1916-01-09', location: 'bogaz', note: 'Boğaz savunmasına devam' },
+        { start: '1914-11-03', end: '1915-03-07', location: 'erenkoyu', note: 'Erenköy Koyu civarında mayın döşeme operasyonları' },
+        { start: '1915-03-08', end: '1915-03-18', location: 'erenkoyu', note: '7-8 Mart gecesi Erenköy koyu hattına 26 mayın — kritik operasyon' },
+        { start: '1915-03-19', end: '1916-01-09', location: 'erenkoyu', note: 'Boğaz mayın savunmasına devam' },
     ],
 
     // ═══════════════════════════════════════════════
@@ -107,28 +114,29 @@ export const CANONICAL_POSITIONS = {
     'hms-irresistible': [
         // Captain Douglas Dent (Albay) komutasında
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
-        { start: '1915-03-18', end: '1915-03-18', location: 'bogaz', note: '18 Mart — mayına çarptı' },
+        { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Erenköy dönüş havzasında mayına çarptı' },
         { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı' },
     ],
 
     'hms-ocean': [
         // Captain (Albay) Hayes-Sadler komutasında
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
-        { start: '1915-03-18', end: '1915-03-18', location: 'bogaz', note: '18 Mart — Irresistible\'ı kurtarmaya çalışırken mayına çarptı' },
+        { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Irresistible\'ı kurtarmaya çalışırken Erenköy mayın hattında mayına çarptı' },
         { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı' },
     ],
 
     'bouvet': [
         // Fransız donanması
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
-        { start: '1915-03-18', end: '1915-03-18', location: 'bogaz', note: '18 Mart — Nusret mayınına çarptı, 2 dakikada battı' },
+        { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Erenköy Koyu dönüşünde Nusret mayınına çarptı, 2 dakikada battı' },
         { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı, ~640 şehit' },
     ],
 
     'suffren': [
         // Fransız donanması
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
-        { start: '1915-03-18', end: '1915-04-24', location: 'bogaz', note: '18 Mart\'ta ağır hasar, tamir edildi' },
+        { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart\'ta Erenköy dönüş bölgesinde ağır hasar aldı' },
+        { start: '1915-03-19', end: '1915-04-24', location: 'bogaz', note: 'Ağır hasarlı halde Boğaz dışına çekildi, tamir edildi' },
         { start: '1915-04-25', end: '1916-01-09', location: 'destroyed', note: 'Çanakkale\'den çekildi' },
     ],
 

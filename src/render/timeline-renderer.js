@@ -3,12 +3,24 @@
 // Timeline UI oluşturma, aktif marker yönetimi
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { normalizeDateText } from '../engine/date-utils.js';
-import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso } from '../engine/phase-engine.js';
+import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter } from '../engine/phase-engine.js?v=20260407-manual-r1';
+
+const isMobileTimeline = typeof window !== 'undefined' && window.innerWidth <= 768;
 
 /** Timeline DOM'unu oluştur */
 export function renderTimeline(setActivePhase, toggleAutoPlay) {
+    cachedPhaseMarkers = null;
+    lastActiveWeekIndex = -1;
+    lastActiveChapterId = '';
+
+    if (isMobileTimeline) {
+        const timeline = document.querySelector('.timeline');
+        if (timeline) timeline.innerHTML = '';
+        return;
+    }
+
     const WEEKLY_GUIDE = getWeeklyGuide();
     const guideEntries = WEEKLY_GUIDE.length
         ? WEEKLY_GUIDE
@@ -44,8 +56,21 @@ export function renderTimeline(setActivePhase, toggleAutoPlay) {
 /** Aktif timeline marker'ını güncelle */
 let cachedPhaseMarkers = null;
 let lastActiveWeekIndex = -1;
+let lastActiveChapterId = '';
 
 export function updateTimelineActiveState(currentPhaseIndex) {
+    if (isMobileTimeline) {
+        const phase = BATTLE_DATA.phases[currentPhaseIndex];
+        const chapter = getMobileStoryChapter(phase?.isoStart);
+        if (!chapter || chapter.id === lastActiveChapterId) return;
+        lastActiveChapterId = chapter.id;
+        cachedPhaseMarkers = [...document.querySelectorAll('.story-chapter-marker')];
+        cachedPhaseMarkers.forEach((el) => {
+            el.classList.toggle('active', el.dataset.chapterId === chapter.id);
+        });
+        return;
+    }
+
     const activeWeekIndex = getActiveWeekIndex(currentPhaseIndex);
     // Aynı hafta indeksiyse DOM dokunma
     if (activeWeekIndex === lastActiveWeekIndex) return;
@@ -59,7 +84,7 @@ export function updateTimelineActiveState(currentPhaseIndex) {
 
 /** Aktif marker'ı görünür alana kaydır */
 export function focusActiveTimelineMarker() {
-    const marker = document.querySelector('.phase-marker.active');
+    const marker = document.querySelector('.phase-marker.active, .story-chapter-marker.active');
     if (!marker || typeof marker.scrollIntoView !== 'function') return;
     marker.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }

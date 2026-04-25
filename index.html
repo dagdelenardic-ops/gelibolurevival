@@ -31,12 +31,13 @@
 
 <!-- Mobile & PWA -->
 <meta name="theme-color" content="#0e1014">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Çanakkale 1915">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="assets/icons/cannon.png">
-<link rel="apple-touch-icon" href="assets/icons/cannon.png">
+<link rel="apple-touch-icon" href="assets/icons/cannon-192.png">
 
 <!-- Language -->
 <link rel="alternate" hreflang="tr" href="https://gelibolu.app/">
@@ -79,38 +80,38 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <!-- Styles -->
-<link rel="stylesheet" href="styles/base.css">
-<link rel="stylesheet" href="styles/map.css">
-<link rel="stylesheet" href="styles/timeline.css">
-<link rel="stylesheet" href="styles/panel.css">
-<!-- Icon preloads: sadece desktop (mobilde gereksiz bant genişliği) -->
+<link rel="stylesheet" href="styles/base.css?v=20260321-story-shell-r2">
+<link rel="stylesheet" href="styles/map.css?v=20260403-editor-r5">
+<link rel="stylesheet" href="styles/timeline.css?v=20260321-story-shell-r2">
+<link rel="stylesheet" href="styles/panel.css?v=20260321-map-intent-r1">
 <script>
-if(window.innerWidth>768){
-  ['soldier-man','cannon','battleship','naval-mine','army-star','wwi-tommy-helmet','french-poilu-helmet','old-war-bunker'].forEach(n=>{
-    const l=document.createElement('link');l.rel='preload';l.as='image';l.href='assets/icons/'+n+'.png';document.head.appendChild(l);
-  });
+  window.loadAnimationEvents = function loadAnimationEvents(){
+    if(window.ANIMATION_EVENTS_READY) return window.ANIMATION_EVENTS_READY;
+    window.ANIMATION_EVENTS_READY = fetch('book/animation-events.json')
+      .then(res => res.json())
+      .then(data => {
+        window.ANIMATION_EVENTS = data;
+        window.ANIMATION_EVENTS_BY_DATE = Object.fromEntries(
+          data.map(e => [e.date, e])
+        );
+        return data;
+      })
+      .catch(err => {
+        console.warn('Animasyon verileri yüklenemedi:', err);
+        window.ANIMATION_EVENTS = [];
+        window.ANIMATION_EVENTS_BY_DATE = {};
+        return null;
+      });
+    return window.ANIMATION_EVENTS_READY;
+  };
+</script>
+<script type="module" src="src/app.js?v=20260407-manual-r1"></script>
+<!-- Vercel Analytics -->
+<script>
+if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
+  const s=document.createElement('script');s.defer=true;s.src='/_vercel/insights/script.js';document.head.appendChild(s);
 }
 </script>
-<script>
-  window.ANIMATION_EVENTS_READY = fetch('book/animation-events.json')
-    .then(res => res.json())
-    .then(data => {
-      window.ANIMATION_EVENTS = data;
-      window.ANIMATION_EVENTS_BY_DATE = Object.fromEntries(
-        data.map(e => [e.date, e])
-      );
-      return data;
-    })
-    .catch(err => {
-      console.warn('Animasyon verileri yüklenemedi:', err);
-      window.ANIMATION_EVENTS = [];
-      window.ANIMATION_EVENTS_BY_DATE = {};
-      return null;
-    });
-</script>
-<script type="module" src="src/app.js"></script>
-<!-- Vercel Analytics -->
-<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <noscript>
@@ -132,7 +133,7 @@ if(window.innerWidth>768){
 <header class="topbar"></header>
 <main class="map-container"></main>
 <footer class="timeline"></footer>
-<aside id="unitPanel" class="unit-panel" aria-label="Birim detay paneli">
+<aside id="unitPanel" class="unit-panel" aria-label="Birim detay paneli" aria-hidden="true" inert>
   <div id="panelBanner" class="panel-banner"></div>
   <div id="panelPortrait" class="panel-portrait" style="display:none"></div>
   <div class="unit-panel-title">
@@ -143,9 +144,13 @@ if(window.innerWidth>768){
     <dt><img src="assets/icons/flag.png" width="14" height="14" alt=""> İsim</dt><dd id="panelUnitName">-</dd>
     <dt><img src="assets/icons/medal.png" width="14" height="14" alt=""> Komutan</dt><dd id="panelUnitCommander">-</dd>
     <dt><img src="assets/icons/soldier-man.png" width="14" height="14" alt=""> Kuvvet</dt><dd id="panelUnitStrength">-</dd>
-    <dt><img src="assets/icons/sword.png" width="14" height="14" alt=""> Durum</dt><dd id="panelUnitStatus">-</dd>
-    <dt><img src="assets/icons/binoculars.png" width="14" height="14" alt=""> Hedef</dt><dd id="panelUnitObjective">-</dd>
-    <dt><img src="assets/icons/army-star.png" width="14" height="14" alt=""> Sonuç</dt><dd id="panelUnitOutcome">-</dd>
+    <dt><img src="assets/icons/sword.png" width="14" height="14" alt=""> Eylem</dt><dd id="panelUnitAction">-</dd>
+    <dt><img src="assets/icons/compass.png" width="14" height="14" alt=""> Konum</dt><dd id="panelUnitLocation">-</dd>
+    <dt><img src="assets/icons/binoculars.png" width="14" height="14" alt=""> Harita Odağı</dt><dd id="panelUnitTarget">-</dd>
+    <dt><img src="assets/icons/army-star.png" width="14" height="14" alt=""> Temas</dt><dd id="panelUnitContact">-</dd>
+    <dt><img src="assets/icons/sword.png" width="14" height="14" alt=""> Durum Özeti</dt><dd id="panelUnitStatus">-</dd>
+    <dt><img src="assets/icons/binoculars.png" width="14" height="14" alt=""> Emir / Hedef</dt><dd id="panelUnitObjective">-</dd>
+    <dt><img src="assets/icons/army-star.png" width="14" height="14" alt=""> Faz Sonucu</dt><dd id="panelUnitOutcome">-</dd>
     <dt><img src="assets/icons/compass.png" width="14" height="14" alt=""> Açıklama</dt><dd id="panelUnitDescription">-</dd>
   </dl>
 </aside>

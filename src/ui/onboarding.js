@@ -10,20 +10,20 @@ const isMobileSteps = typeof window !== 'undefined' && window.innerWidth <= 768;
 const STEPS = isMobileSteps ? [
     {
         target: null,
-        title: 'Çanakkale Savaşı Haritası',
-        text: '433 günlük savaşı gün gün izleyin.\nBirlik simgelerine dokunarak detay görün.',
+        title: 'Savaş Hikayesi',
+        text: 'Mobilde ana deneyim artık hikâye kartları.\nHer kart size o andaki olayı hızlıca anlatır.',
         position: 'center'
     },
     {
         target: null,
-        title: 'Harita Kontrolleri',
-        text: 'İki parmakla yakınlaştırın.\nYakınken tek parmakla kaydırın.\nÇift dokunarak sıfırlayın.\n⟲ butonu ile tam görünüme dönün.',
+        title: 'Haritayı Aşağı Aç',
+        text: 'Kartın üstündeki kulpu aşağı çekerek haritayı daha fazla görün.\nHaritada Gör ile odak sahneyi açabilirsiniz.',
         position: 'center'
     },
     {
         target: null,
-        title: 'Zaman Çizelgesi & Anlatım',
-        text: 'Alt çubuktan herhangi bir haftaya dokunun.\n▼ butonu ile anlatım panelini açıp kapatın.\n▶ Başlat ile otomatik oynatın.',
+        title: 'Akışı Yönet',
+        text: 'Geri / İleri ile kartlar arasında gezin.\nBaşlat ile akışı otomatik oynatın.\nBölüm çiplerinden doğrudan büyük olaylara atlayın.',
         position: 'center'
     },
 ] : [
@@ -201,7 +201,7 @@ function injectStyles() {
 
 /**
  * @param {object} opts
- * @param {Function} opts.onFinish — tutorial bitince çağrılır (autoplay başlatmak için)
+ * @param {Function} opts.onFinish — tutorial bitince opsiyonel olarak çağrılır
  * @returns {boolean} tutorial gösterildi mi
  */
 export function initOnboarding(opts = {}) {
@@ -224,7 +224,7 @@ export function initOnboarding(opts = {}) {
             overlay.style.transition = 'opacity .3s';
             setTimeout(() => {
                 overlay.remove();
-                // Tutorial bitti — autoplay başlatılabilir
+                // Tutorial bitti; autoplay yalnızca kullanıcı Başlat dediğinde çalışır.
                 if (typeof opts.onFinish === 'function') opts.onFinish();
             }, 300);
         }

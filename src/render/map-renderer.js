@@ -3,7 +3,9 @@
 // Historically grounded military cartography with modern UI clarity
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260407-manual-r1';
 import { renderTokens } from './token-renderer.js';
 import { renderBattleEffects } from './effects-renderer.js';
 import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js';
@@ -90,6 +92,123 @@ function fort(x, y, name) {
     paint-order="stroke" stroke="rgba(30,28,24,.7)" stroke-width="1.2">${name}</text></g>`;
 }
 
+const RASTER_MAP_URL = 'assets/gallipoli-map.png';
+
+function escapeSvgText(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function resetMapSceneCache() {
+    cachedLocationGroups = null;
+    cachedAnnotationGroups = null;
+    cachedMinefields = null;
+    cachedForts = null;
+    cachedFortifications = null;
+    lastSceneKey = null;
+}
+
+function renderEditableLocation(location) {
+    const primary = ['canakkale', 'eceabat', 'conkbayiri', 'anafartalar'].includes(location.id);
+    const secondary = ['ariburnu', 'seddulbahir', 'kabatepe', 'kirte', 'kirectepe', 'kumkale', 'bigali', 'suvla', 'kilitbahir'].includes(location.id);
+    const fontSize = primary ? 30 : secondary ? 24 : 20;
+    const fontWeight = primary ? 800 : secondary ? 700 : 600;
+    const dotR = primary ? 9 : secondary ? 7 : 5;
+    const opacity = primary ? .92 : secondary ? .78 : .64;
+    const fillColor = primary ? '#efe3bc' : secondary ? '#d8c49a' : '#bca77f';
+    const strokeW = primary ? 7 : secondary ? 5 : 4;
+
+    return `<g class="location-group map-overlay-item" data-location-id="${escapeSvgText(location.id)}" data-overlay-key="location:${escapeSvgText(location.id)}">
+      <circle cx="${location.x}" cy="${location.y}" r="${dotR}" class="location-dot" fill="#d8c49a" stroke="#2b261e" stroke-width="2" opacity="${opacity}"/>
+      <text x="${location.x + dotR + 8}" y="${location.y + dotR}" class="location-label" fill="${fillColor}" font-size="${fontSize}" font-weight="${fontWeight}" opacity="${opacity}"
+        paint-order="stroke" stroke="rgba(18,15,12,.86)" stroke-width="${strokeW}" font-family="var(--mono)">${escapeSvgText(location.name)}</text>
+    </g>`;
+}
+
+function renderEditableFort(item) {
+    const id = escapeSvgText(item.id);
+    const name = escapeSvgText(item.name);
+    const x = item.x;
+    const y = item.y;
+
+    return `<g class="fort-group map-overlay-item" data-fort-id="${id}" data-overlay-key="fort:${id}">
+      <rect x="${x - 10}" y="${y - 10}" width="20" height="20" fill="rgba(36, 25, 18, .72)" stroke="#f0c8a8" stroke-width="2.2" opacity=".88" transform="rotate(45,${x},${y})"/>
+      <circle cx="${x}" cy="${y}" r="4.2" fill="#f0c8a8" opacity=".9"/>
+      <text x="${x + 18}" y="${y + 7}" fill="#f3d6bb" font-family="var(--mono)" font-size="18" opacity=".88" font-weight="700"
+        paint-order="stroke" stroke="rgba(22,16,12,.86)" stroke-width="4">${name}</text>
+    </g>`;
+}
+
+function renderSceneAnnotations() {
+    return ['naval', 'anzac', 'helles'].map((sceneGroup) => {
+        const labels = MAP_SCENE_LABELS
+            .filter((label) => label.sceneGroup === sceneGroup)
+            .map((label) => `<text x="${label.x}" y="${label.y}" class="scene-label${label.subLabel ? ' scene-label-sub' : ''} map-overlay-item"
+              data-scene-label-id="${escapeSvgText(label.id)}" data-overlay-key="scene-label:${escapeSvgText(label.id)}"
+              fill="${label.fill || '#d8c49a'}" font-size="${label.fontSize || 18}" opacity="${label.opacity ?? .55}"
+              paint-order="stroke" stroke="rgba(18,15,12,.78)" stroke-width="${label.strokeWidth || 2}"
+              font-family="var(--mono)" font-weight="${label.subLabel ? 600 : 800}">${escapeSvgText(label.text)}</text>`)
+            .join('');
+
+        return `<g class="scene-annotation-group" data-scene-group="${sceneGroup}">${labels}</g>`;
+    }).join('');
+}
+
+function getOrnament(id) {
+    return MAP_ORNAMENTS.find((item) => item.id === id) || { id, name: id, x: 0, y: MAP_CROP_TOP, kind: 'text' };
+}
+
+function renderCompass() {
+    const item = getOrnament('compass');
+    const x = item.x;
+    const y = item.y;
+
+    return `<g class="map-overlay-item map-ornament map-ornament-compass" data-ornament-id="${item.id}" data-overlay-key="ornament:${item.id}" opacity=".72">
+      <circle cx="${x}" cy="${y}" r="56" fill="rgba(18,15,12,.5)" stroke="#d8c49a" stroke-width="2"/>
+      <circle cx="${x}" cy="${y}" r="38" fill="none" stroke="#d8c49a" stroke-width="1"/>
+      <line x1="${x}" y1="${y - 48}" x2="${x}" y2="${y + 48}" stroke="#d8c49a" stroke-width="1"/>
+      <line x1="${x - 48}" y1="${y}" x2="${x + 48}" y2="${y}" stroke="#d8c49a" stroke-width="1"/>
+      <polygon points="${x},${y - 48} ${x - 8},${y - 14} ${x + 8},${y - 14}" fill="#d8735d"/>
+      <polygon points="${x},${y + 48} ${x - 8},${y + 14} ${x + 8},${y + 14}" fill="#d8c49a" opacity=".45"/>
+      <circle cx="${x}" cy="${y}" r="4" fill="#f0dfb2"/>
+      <text x="${x}" y="${y - 64}" text-anchor="middle" fill="#f0dfb2" font-family="var(--mono)" font-size="18" font-weight="800">N</text>
+      <text x="${x + 64}" y="${y + 6}" text-anchor="middle" fill="#d8c49a" font-family="var(--mono)" font-size="13">E</text>
+      <text x="${x}" y="${y + 76}" text-anchor="middle" fill="#d8c49a" font-family="var(--mono)" font-size="13">S</text>
+      <text x="${x - 64}" y="${y + 6}" text-anchor="middle" fill="#d8c49a" font-family="var(--mono)" font-size="13">W</text>
+    </g>`;
+}
+
+function renderScale() {
+    const item = getOrnament('scale');
+    const x = item.x;
+    const y = item.y;
+
+    return `<g class="map-overlay-item map-ornament map-ornament-scale" data-ornament-id="${item.id}" data-overlay-key="ornament:${item.id}" opacity=".64">
+      <line x1="${x}" y1="${y}" x2="${x + 110}" y2="${y}" stroke="#f0dfb2" stroke-width="4"/>
+      <line x1="${x + 110}" y1="${y}" x2="${x + 220}" y2="${y}" stroke="#d8c49a" stroke-width="4"/>
+      <line x1="${x}" y1="${y - 10}" x2="${x}" y2="${y + 10}" stroke="#f0dfb2" stroke-width="3"/>
+      <line x1="${x + 110}" y1="${y - 10}" x2="${x + 110}" y2="${y + 10}" stroke="#d8c49a" stroke-width="3"/>
+      <line x1="${x + 220}" y1="${y - 10}" x2="${x + 220}" y2="${y + 10}" stroke="#d8c49a" stroke-width="3"/>
+      <text x="${x + 55}" y="${y - 18}" text-anchor="middle" fill="#f0dfb2" font-family="var(--mono)" font-size="15">5 km</text>
+      <text x="${x + 165}" y="${y - 18}" text-anchor="middle" fill="#d8c49a" font-family="var(--mono)" font-size="15">10 km</text>
+    </g>`;
+}
+
+function renderFooterOrnaments() {
+    const title = getOrnament('footer-title');
+    const credit = getOrnament('footer-credit');
+
+    return `<text class="map-overlay-item map-ornament" data-ornament-id="${title.id}" data-overlay-key="ornament:${title.id}"
+        x="${title.x}" y="${title.y}" fill="#d8c49a" font-family="var(--mono)" font-size="18" opacity=".55"
+        paint-order="stroke" stroke="rgba(18,15,12,.55)" stroke-width="3">Canakkale 1915</text>
+      <text class="map-overlay-item map-ornament" data-ornament-id="${credit.id}" data-overlay-key="ornament:${credit.id}"
+        x="${credit.x}" y="${credit.y}" text-anchor="end" fill="#d8c49a" font-family="var(--mono)" font-size="12" opacity=".45">Icons by Icons8</text>`;
+}
+
 // ── Yarımada kıyı hattı path'leri (daha gerçekçi, daha fazla kontrol noktası) ──
 const PENINSULA_PATH = `
     M 525 18
@@ -154,10 +273,90 @@ const ASIA_PATH = `
 const isMobileMap = typeof window !== 'undefined' && window.innerWidth <= 768;
 
 /** Ana SVG harita oluştur ve DOM'a ekle */
-export function renderMap(currentPhaseIndex, currentPositions) {
+export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers = {}) {
     const ctr = document.querySelector('.map-container');
     const phase = BATTLE_DATA.phases[currentPhaseIndex];
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    {
+    const locations = BATTLE_DATA.locations.filter((location) => !location.hiddenOnMap);
+
+    resetMapSceneCache();
+    svg.setAttribute('viewBox', `0 ${MAP_CROP_TOP} ${MAP_WIDTH} ${MAP_VIEW_HEIGHT}`);
+    svg.setAttribute('id', 'battleMap');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Gelibolu Revival yerleştirme haritası');
+    svg.innerHTML = `
+  <defs>
+    <clipPath id="mapClip"><rect x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}"/></clipPath>
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+    <linearGradient id="editorVignetteG" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#000" stop-opacity=".24"/>
+      <stop offset="18%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="82%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity=".22"/>
+    </linearGradient>
+    <radialGradient id="editorVignetteR" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity=".18"/>
+    </radialGradient>
+  </defs>
+
+  <g id="layer-terrain" clip-path="url(#mapClip)">
+    <image href="${RASTER_MAP_URL}" x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" preserveAspectRatio="none"/>
+    <rect x="0" y="${MAP_CROP_TOP}" width="${MAP_WIDTH}" height="${MAP_VIEW_HEIGHT}" fill="url(#editorVignetteG)" pointer-events="none"/>
+    <rect x="0" y="${MAP_CROP_TOP}" width="${MAP_WIDTH}" height="${MAP_VIEW_HEIGHT}" fill="url(#editorVignetteR)" pointer-events="none"/>
+  </g>
+
+  <g id="layer-fortifications"></g>
+
+  <g id="layer-sea">
+    <g id="minefields" opacity=".7"></g>
+    <g id="forts" opacity=".92">
+      ${MAP_FORTS.map(renderEditableFort).join('')}
+    </g>
+  </g>
+
+  <g id="layer-zones"></g>
+  <g id="layer-routes"></g>
+
+  <g id="layer-labels">
+    <g id="locations">
+      ${locations.map(renderEditableLocation).join('')}
+    </g>
+    ${renderSceneAnnotations()}
+  </g>
+
+  <g id="unitTokens" class="units-layer">${renderTokens(phase.id, currentPositions, currentPositions, currentPhaseIndex, currentPhaseIndex, phase.isoStart || '')}</g>
+
+  <g id="layer-combat-fx">
+    <g id="battleEffects" class="battle-effects"></g>
+  </g>
+
+  <g id="layer-ornaments">
+    ${renderCompass()}
+    ${renderScale()}
+    ${renderFooterOrnaments()}
+  </g>
+  `;
+
+    ctr.innerHTML = '';
+    ctr.appendChild(svg);
+
+    const dateChip = document.createElement('div');
+    dateChip.className = 'map-date-chip';
+    dateChip.id = 'mapDateChip';
+    dateChip.innerHTML = `<span class="map-date-day" id="mapDateDay">—</span><span class="map-date-month" id="mapDateMonth">Tarih</span><span class="map-date-year" id="mapDateYear"></span>`;
+    ctr.appendChild(dateChip);
+
+    attachNarrationElements(ctr, phase, narrationHandlers);
+    updateMapDateIndicator(phase.date);
+    renderBattleEffects(currentPhaseIndex);
+    return;
+    }
+
     svg.setAttribute('viewBox', '0 0 720 560');
     svg.setAttribute('id', 'battleMap');
     svg.innerHTML = `
@@ -254,7 +453,7 @@ export function renderMap(currentPhaseIndex, currentPositions) {
     </pattern>
 
     <pattern id="contourFill" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(10)">
-      <line x1="0" y1="0" x2="0" y2="12" stroke="#6a6850" stroke-width=".3" opacity=".08"/>
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#6a6850" stroke-width=".5" opacity=".25"/>
     </pattern>
 
     <clipPath id="mapClip"><rect width="720" height="560" rx="4"/></clipPath>
@@ -597,39 +796,39 @@ export function renderMap(currentPhaseIndex, currentPositions) {
     <!-- Naval sahne anotasyonları -->
     <g class="scene-annotation-group" data-scene-group="naval">
       <path class="scene-focus-line" d="M470 335 L500 300 L530 250" />
-      <text x="505" y="286" class="scene-label">DARDANELLES NARROWS</text>
-      <text x="500" y="402" class="scene-label scene-label-sub">MINEFIELD</text>
+      <text x="505" y="286" class="scene-label">ÇANAKKALE BOĞAZI</text>
+      <text x="500" y="402" class="scene-label scene-label-sub">MAYIN HATTI</text>
     </g>
 
     <!-- ANZAC sahne anotasyonları -->
     <g class="scene-annotation-group" data-scene-group="anzac">
       <path class="scene-ridge" d="M248 112 C270 150 285 188 300 220 C315 250 330 282 345 320" />
       <path class="scene-ridge" d="M275 92 C298 132 314 172 328 212" />
-      <text x="188" y="232" class="scene-label">ANZAC COVE</text>
-      <text x="334" y="176" class="scene-label">SARI BAIR</text>
-      <text x="386" y="326" class="scene-label scene-label-sub">KILITBAHIR HEIGHTS</text>
+      <text x="188" y="232" class="scene-label">ARIBURNU KOYU</text>
+      <text x="334" y="176" class="scene-label">SARI BAYIR</text>
+      <text x="386" y="326" class="scene-label scene-label-sub">KİLİTBAHİR SIRTLARI</text>
 
       <!-- Taktik mevziler -->
       <g class="tactical-posts" opacity=".6">
         <g transform="translate(252,232)"><rect x="-1.5" y="-1.5" width="3" height="3" fill="none" stroke="#8a8068" stroke-width=".5" transform="rotate(45)"/>
-          <text x="4" y="2" fill="#8a8068" font-family="var(--mono)" font-size="3" opacity=".7">The Nek</text></g>
+          <text x="4" y="2" fill="#8a8068" font-family="var(--mono)" font-size="3" opacity=".7">Cesarettepe</text></g>
         <g transform="translate(242,258)"><rect x="-1.5" y="-1.5" width="3" height="3" fill="none" stroke="#8a8068" stroke-width=".5" transform="rotate(45)"/>
-          <text x="4" y="2" fill="#8a8068" font-family="var(--mono)" font-size="3" opacity=".7">Lone Pine</text></g>
+          <text x="4" y="2" fill="#8a8068" font-family="var(--mono)" font-size="3" opacity=".7">Kanlısırt</text></g>
         <g transform="translate(248,244)"><rect x="-1.5" y="-1.5" width="3" height="3" fill="none" stroke="#8a8068" stroke-width=".5" transform="rotate(45)"/>
-          <text x="4" y="2" fill="#8a8068" font-family="var(--mono)" font-size="3" opacity=".6">Quinn's Post</text></g>
+          <text x="4" y="2" fill="#8a8068" font-family="var(--mono)" font-size="3" opacity=".6">Bombasırtı</text></g>
       </g>
     </g>
 
     <!-- Helles sahne anotasyonları -->
     <g class="scene-annotation-group" data-scene-group="helles">
-      <text x="338" y="506" class="scene-label">V BEACH</text>
-      <text x="298" y="520" class="scene-label">W BEACH</text>
-      <text x="250" y="486" class="scene-label scene-label-sub">X BEACH</text>
-      <text x="218" y="458" class="scene-label scene-label-sub">Y BEACH</text>
-      <text x="364" y="450" class="scene-label scene-label-sub">S BEACH</text>
+      <text x="338" y="506" class="scene-label">V PLAJI</text>
+      <text x="298" y="520" class="scene-label">W PLAJI</text>
+      <text x="250" y="486" class="scene-label scene-label-sub">X PLAJI</text>
+      <text x="218" y="458" class="scene-label scene-label-sub">Y PLAJI</text>
+      <text x="364" y="450" class="scene-label scene-label-sub">S PLAJI</text>
       <path class="scene-focus-line" d="M320 490 L302 448 L290 426" />
-      <text x="246" y="418" class="scene-label scene-label-sub">KRITHIA</text>
-      <text x="278" y="392" class="scene-label scene-label-sub">ACHI BABA</text>
+      <text x="246" y="418" class="scene-label scene-label-sub">KİRTE</text>
+      <text x="278" y="392" class="scene-label scene-label-sub">ALÇITEPE</text>
 
       <!-- Çıkarma sahili göstergeleri — yarı saydam iniş şeridi -->
       <g class="beach-indicators" opacity=".3">
@@ -694,7 +893,7 @@ export function renderMap(currentPhaseIndex, currentPositions) {
     dateChip.innerHTML = `<span class="map-date-day" id="mapDateDay">—</span><span class="map-date-month" id="mapDateMonth">Tarih</span><span class="map-date-year" id="mapDateYear"></span>`;
     ctr.appendChild(dateChip);
 
-    attachNarrationElements(ctr, phase);
+    attachNarrationElements(ctr, phase, narrationHandlers);
     updateMapDateIndicator(phase.date);
     renderBattleEffects(currentPhaseIndex);
 }

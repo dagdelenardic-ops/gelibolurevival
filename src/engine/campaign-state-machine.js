@@ -16,7 +16,7 @@ export const CAMPAIGN_PHASES = [
         start: '1914-11-03',
         end: '1915-04-24',
         scene: 'naval',
-        camera: { x: 350, y: 250, w: 360, h: 280 },
+        camera: { x: 900, y: 1000, w: 1500, h: 1000 },
     },
     {
         id: 'landing',
@@ -24,7 +24,7 @@ export const CAMPAIGN_PHASES = [
         start: '1915-04-25',
         end: '1915-05-18',
         scene: 'general',
-        camera: { x: 150, y: 150, w: 500, h: 400 },
+        camera: { x: 300, y: 600, w: 1700, h: 1400 },
     },
     {
         id: 'inland_combat',
@@ -32,7 +32,7 @@ export const CAMPAIGN_PHASES = [
         start: '1915-05-19',
         end: '1915-08-05',
         scene: 'general',
-        camera: { x: 0, y: 0, w: 720, h: 560 },
+        camera: { x: 100, y: 100, w: 2200, h: 2800 },
     },
     {
         id: 'stalemate',
@@ -40,7 +40,7 @@ export const CAMPAIGN_PHASES = [
         start: '1915-08-06',
         end: '1915-12-06',
         scene: 'general',
-        camera: { x: 0, y: 0, w: 720, h: 560 },
+        camera: { x: 100, y: 100, w: 2200, h: 2800 },
     },
     {
         id: 'evacuation',
@@ -48,7 +48,7 @@ export const CAMPAIGN_PHASES = [
         start: '1915-12-07',
         end: '1916-01-09',
         scene: 'general',
-        camera: { x: 100, y: 100, w: 550, h: 420 },
+        camera: { x: 200, y: 400, w: 1800, h: 1500 },
     },
 ];
 

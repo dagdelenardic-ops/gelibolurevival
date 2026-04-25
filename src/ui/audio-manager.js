@@ -13,9 +13,10 @@ let musicGain = null;
 let sfxGain = null;
 let currentTrackIndex = 0;
 let currentAudio = null;
-let musicEnabled = true;
+let musicEnabled = false;
 let sfxEnabled = true;
 let isPlaying = false;
+let audioUnlocked = false;
 
 /** Lazy AudioContext — kullanıcı etkileşimi gerektirir */
 function ensureContext() {
@@ -41,6 +42,7 @@ function ensureContext() {
 /** Müzik çalmaya başla — iki parça arası crossfade loop */
 export function startMusic() {
     if (isPlaying || !musicEnabled) return;
+    audioUnlocked = true;
     ensureContext();
     isPlaying = true;
     playTrack(currentTrackIndex);
@@ -109,6 +111,7 @@ export function pauseMusic() {
 
 /** Müziği aç/kapat */
 export function toggleMusic() {
+    audioUnlocked = true;
     musicEnabled = !musicEnabled;
     if (musicEnabled) {
         startMusic();
@@ -670,6 +673,7 @@ export function sfxDistantBattle() {
 
 /** SFX aç/kapat */
 export function toggleSfx() {
+    audioUnlocked = true;
     sfxEnabled = !sfxEnabled;
     return sfxEnabled;
 }
@@ -695,12 +699,21 @@ function throttled(key, minIntervalMs, fn) {
  * @param {string} campaignPhaseId - 'naval-ops' | 'land-campaign' vs.
  */
 export function triggerPhaseSfx(animData, campaignPhaseId) {
-    if (!sfxEnabled || !animData) return;
+    if (!audioUnlocked || !sfxEnabled || !animData) return;
 
-    const eventType = animData.eventType || 'IDLE';
+    let eventType = animData.eventType || 'IDLE';
     const intensity = animData.intensity ?? 0;
     const fronts = animData.fronts || [];
-    const isNaval = fronts.includes('Deniz');
+    let isNaval = fronts.includes('Deniz');
+    const dateStr = animData.date || "";
+
+    // 18 Mart'a/Nisana kadar sadece deniz ve kıyı harbi (kara siper savaşı yok)
+    if (dateStr && dateStr < "1915-04-25") {
+        isNaval = true; // Deniz bombardımanı
+        if (eventType === 'COMBAT') {
+            eventType = 'BOMBARDMENT'; // Siper tüfeğini iptal et, top atışı yap
+        }
+    }
 
     switch (eventType) {
         case 'BOMBARDMENT':
@@ -774,30 +787,39 @@ export function renderAudioControls() {
     const wrapper = document.createElement('div');
     wrapper.className = 'audio-controls';
     wrapper.innerHTML = `
-        <button class="audio-btn" id="musicToggle" type="button" title="Müzik Aç/Kapat">
-            <span class="audio-icon">🎵</span>
+        <button class="audio-btn" id="musicToggle" type="button" title="Müzik Aç/Kapat" aria-label="Müziği aç">
+            <span class="audio-icon" aria-hidden="true">♪</span><span class="audio-label">Müzik</span>
         </button>
-        <button class="audio-btn" id="sfxToggle" type="button" title="Ses Efektleri Aç/Kapat">
-            <span class="audio-icon">🔊</span>
+        <button class="audio-btn" id="sfxToggle" type="button" title="Ses Efektleri Aç/Kapat" aria-label="Ses efektlerini kapat">
+            <span class="audio-icon" aria-hidden="true">•</span><span class="audio-label">Efekt</span>
         </button>
     `;
     legend.prepend(wrapper);
 
     document.getElementById('musicToggle').addEventListener('click', () => {
         const on = toggleMusic();
-        document.getElementById('musicToggle').querySelector('.audio-icon').textContent = on ? '🎵' : '🔇';
+        const button = document.getElementById('musicToggle');
+        button.querySelector('.audio-icon').textContent = on ? '♪' : '×';
+        button.setAttribute('aria-label', on ? 'Müziği kapat' : 'Müziği aç');
+        button.classList.toggle('is-on', on);
     });
 
     document.getElementById('sfxToggle').addEventListener('click', () => {
         const on = toggleSfx();
-        document.getElementById('sfxToggle').querySelector('.audio-icon').textContent = on ? '🔊' : '🔈';
+        const button = document.getElementById('sfxToggle');
+        button.querySelector('.audio-icon').textContent = on ? '•' : '×';
+        button.setAttribute('aria-label', on ? 'Ses efektlerini kapat' : 'Ses efektlerini aç');
+        button.classList.toggle('is-on', on);
     });
+
+    document.getElementById('sfxToggle').classList.toggle('is-on', sfxEnabled);
 }
 
-/** Kullanıcı ilk etkileşimde müziği başlat */
+/** Kullanıcı ilk etkileşiminden sonra mevcut context'i sessizce uyandır */
 export function initAudioOnInteraction() {
     const handler = () => {
-        startMusic();
+        audioUnlocked = true;
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         document.removeEventListener('click', handler);
         document.removeEventListener('keydown', handler);
     };

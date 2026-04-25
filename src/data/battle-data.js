@@ -3,6 +3,8 @@
 // Faksiyonlar, askeri birimler, savaş fazları, konum bilgileri
 // ══════════════════════════════════════════════════════════════
 
+import { GEO_LOCATIONS } from './geo-calibration.js?v=20260407-manual-r1';
+
 export const BATTLE_DATA = {
     factions: {
         ottoman: { id: "ottoman", name: "Osmanlı", color: "#8b3a3a", colorLight: "#c4645a", shape: "star" },
@@ -16,142 +18,165 @@ export const BATTLE_DATA = {
     //   > 9. Tümen (Halil Sami), 7. Tümen (Remzi Bey)
     //   Müstahkem Mevki: Cevat Paşa (kıyı bataryaları)
     units: [
-        // ── OSMANLI ──
+        // ══════════════════════════════════════════════════════════
+        // BİRİM POZİSYONLARI — naval-assault fazı (18 Mart 1915)
+        //
+        // Tarihsel dağılım:
+        //   ● Osmanlı kara: yarımada boyunca savunma hatlarında
+        //   ● Nusret: Erenköy Koyu (Asya yakası)
+        //   ● İtilaf donanması: Boğaz girişinden Narrows'a hat halinde
+        //   ● İtilaf kara: henüz çıkarmamış (Ege/Limni'de hazırlık)
+        //
+        // Gemiler Boğaz suyunda (peninsula-asia arası), kara birlikleri
+        // peninsula polygon İÇİNDE veya Asya polygon içinde olmalı.
+        // ══════════════════════════════════════════════════════════
+
+        // ── OSMANLI KARA KUVVETLERİ ──
         {
             id: "5-ordu", name: "5. Ordu Karargâhı", faction: "ottoman", type: "ordu",
             entityType: "infantry_unit", unitClass: "army_hq", side: "ottoman", anchorRegion: "gelibolu",
             commander: "Mareşal Liman von Sanders", strength: 84000,
-            description: "Çanakkale savunmasının genel komutanlığı. Alman Mareşal von Sanders Mart 1915'te komutayı devraldı.",
-            phases: { "naval-assault": { x: 475, y: 55, status: "savunma", objective: "Tüm yarımada savunmasını yönet", outcome: "Deniz harekâtını başarıyla püskürttü" } }
+            description: "Çanakkale Yarımadası'nın tüm savunmasını yöneten karargâh. Alman Mareşal Liman von Sanders Mart 1915'te Falkenhayn'ın emriyle komutayı devraldı ve savunma planını kökten yeniden örgütledi: büyük yedek kuvvetler oluşturdu, yarımada içi ulaşımı güçlendirdi, İtilaf'ın olası çıkarma noktalarını tahmin etmeye çalıştı. Bağlı kuvvetler: 3. Kolordu (Esat Paşa, 25.000), Çanakkale Müstahkem Mevki (Cevat Paşa, 20.000). Gelibolu kasabasında karargâh kurdu; tüm kara ve deniz savunması buradan koordine edildi. Von Sanders, 25 Nisan'da ANZAC'ın Arıburnu'na çıkacağını önceden tahmin edemedi — bu büyük eleştiri konusu oldu.",
+            phases: { "naval-assault": { x: 1095, y: 1785, status: "savunma", objective: "Tüm yarımada savunmasını yönet", outcome: "Deniz harekâtını başarıyla püskürttü" } }
         },
         {
             id: "3-kolordu", name: "3. Kolordu", faction: "ottoman", type: "kolordu",
             entityType: "infantry_unit", unitClass: "corps", side: "ottoman", anchorRegion: "conkbayiri",
             commander: "Tümg. Esat Paşa", strength: 25000,
-            description: "Gelibolu savunmasının ana kuvveti. Yarımadanın kuzey ve orta kesimlerini savundu.",
-            phases: { "naval-assault": { x: 390, y: 155, status: "savunma", objective: "Yarımada genelini savun", outcome: "Deniz saldırısını püskürttü" } }
+            description: "Gelibolu Yarımadası'nın kuzey ve orta sektörlerini savunan ana kara kuvveti. Tümgeneral Esat Paşa komutasında Bigalı'da karargâh kurdu. 19. Tümen'i (Mustafa Kemal) ve birden fazla müstakil alayı bünyesinde barındırdı. Arıburnu-Conkbayırı cephesinin tüm savunma koordinasyonu Esat Paşa'nın elindeydi. En kritik kararı: 25 Nisan sabahı Mustafa Kemal'e müstakil hareket yetkisi tanımak — bu karar Arıburnu'ndaki zaferin temelini attı. Tüm kampanya boyunca Bigalı karargâhından hem Arıburnu hem Conkbayırı cepheleri koordine edildi.",
+            phases: { "naval-assault": { x: 1015, y: 1800, status: "savunma", objective: "Bigalı'da yarımada genelini savun", outcome: "Deniz saldırısını püskürttü" } }
         },
         {
             id: "19-tumen", name: "19. Tümen", faction: "ottoman", type: "tümen",
             entityType: "infantry_unit", unitClass: "division", side: "ottoman", anchorRegion: "ariburnu",
             commander: "Yrb. Mustafa Kemal", strength: 9000,
-            description: "Ariburnu bölgesinin savunma tümeni. Mustafa Kemal'in komutasında Çanakkale'nin kaderini değiştirdi.",
-            phases: { "naval-assault": { x: 380, y: 190, status: "hazır", objective: "Bigalı'da yedek kuvvet olarak bekle", outcome: "Karaya çıkışa karşı hazır bekledi" } }
+            description: "Gelibolu'nun kaderini değiştiren efsanevi tümen. Kasım 1914'ten Nisan 1915'e Bigalı'da yedek olarak bekledi; 25 Nisan sabahı çıkarma haberi üzerine Mustafa Kemal derhal 57. Alayı öne sürdü. 'Size taarruzu değil, ölmeyi emrediyorum' emriyle başlayan karşı taarruz Conkbayırı'nı saatlerce tuttu. İlk günde tüm cephane tükennce Kemal 'süngü tak, yere yat' emrini verdi. 19 Mayıs 1915 Osmanlı genel taarruzunda ağır kayıplar vererek tümen yeniden yapılandı. Ağustos 1915'te Kemal Anafartalar Grup Komutanı olarak terfi etti. Kampanya boyunca üç kez yeniden yapılandırılan 19. Tümen, Gelibolu'nun en yıpratıcı muharebe birliğidir.",
+            phases: { "naval-assault": { x: 1045, y: 1845, status: "hazır", objective: "Bigalı'da yedek kuvvet olarak bekle", outcome: "Karaya çıkışa karşı hazır bekledi" } }
         },
         {
             id: "57-alay", name: "57. Alay", faction: "ottoman", type: "piyade",
             entityType: "infantry_unit", unitClass: "regiment", side: "ottoman", anchorRegion: "ariburnu",
             commander: "Yrb. Hüseyin Avni Bey", strength: 3000,
-            description: "\"Ben size taarruzu emretmiyorum, ölmeyi emrediyorum!\" 19. Tümen'e bağlı efsanevi alay.",
-            phases: { "naval-assault": { x: 360, y: 215, status: "hazır", objective: "Bigalı'da emir bekle", outcome: "25 Nisan taarruzu için hazır" } }
+            description: "\"Ben size taarruzu emretmiyorum, ölmeyi emrediyorum!\" — Yarbay Hüseyin Avni Bey'in 25 Nisan 1915 sabahı 57. Alaya verdiği bu emir, Türk askeri tarihinin en ünlü sözüdür. 19. Tümen'in öncü alayı olarak Conkbayırı'na koşturdu; ilk günde tüm subay kadrosunun büyük bölümü şehit düştü, Hüseyin Avni Bey de muharebeyi hayatta tamamlayamadı. Alay yüksek kayıplara rağmen ANZAC'ı günün sonuna kadar durdurdu. Şehitlerine saygı olarak 57. Alay'ın numarası sonraki Osmanlı ve Türk ordularında bir daha verilmedi — bu gelenek bugün Türk Silahlı Kuvvetleri'nde sürmektedir.",
+            phases: { "naval-assault": { x: 990, y: 1850, status: "hazır", objective: "Bigalı'da emir bekle", outcome: "25 Nisan taarruzu için hazır" } }
         },
         {
             id: "27-alay", name: "27. Alay", faction: "ottoman", type: "piyade",
             entityType: "infantry_unit", unitClass: "regiment", side: "ottoman", anchorRegion: "ariburnu",
             commander: "Yrb. Şefik Aker", strength: 3000,
-            description: "19. Tümen'e bağlı, Ariburnu'nda ilk karşılamayı yapan alay.",
-            phases: { "naval-assault": { x: 285, y: 250, status: "hazır", objective: "Ariburnu kıyı savunması", outcome: "Çıkarmaya karşı hazır konumda" } }
+            description: "19. Tümen'in diğer ana alayı, Arıburnu çıkarmasında Osmanlı savunmasının ilk temas noktasıydı. 25 Nisan'da ANZAC kuvvetleri kıyıya ayak basmadan önce sahil gözcüleri alarma geçirdi ve 27. Alay Yarbay Şefik Aker komutasında bölgeye süratle yönlendirildi. Üstün ANZAC ateş gücüne rağmen alay, kıyı şeridinde tutunmayı uzun süre engelledi. Kampanya boyunca Arıburnu-Conkbayırı sektöründe görev yaptı. Ağustos 1915 Conkbayırı taarruzunda da cephe savunmasında kritik mevzileri savundu.",
+            phases: { "naval-assault": { x: 1080, y: 2040, status: "hazır", objective: "Eceabat bölgesinde savunma", outcome: "Çıkarmaya karşı hazır konumda" } }
         },
         {
             id: "mustahkem-mevki", name: "Çanakkale Müstahkem Mevki Komutanlığı", faction: "ottoman", type: "kolordu",
             entityType: "artillery_battery", unitClass: "battery", side: "ottoman", anchorRegion: "kilitbahir",
             commander: "Tümg. Cevat Paşa (Çobanlı)", strength: 20000,
             description: "Çanakkale Boğazı'nın kıyı savunmasından sorumlu komutanlık. Cevat Paşa, 18 Mart deniz savaşında kıyı bataryalarını yöneterek İtilaf donanmasını püskürten asıl komutandır. 17 Aralık 1914'te Usedom ve Merten Paşalarla birlikte Nusret'in ilk mayın döşeme operasyonuna bizzat katıldı. Emrindeki topçu bataryaları: Hamidiye, Mecidiye, Namazgâh, Rumeli ve Anadolu tabyaları.",
-            phases: { "naval-assault": { x: 430, y: 310, status: "savunma", objective: "Boğaz kıyı savunmasını yönet", outcome: "230+ topla donanmayı durdurdu" } }
+            phases: { "naval-assault": { x: 1427, y: 2086, status: "savunma", objective: "Boğaz kıyı savunmasını yönet", outcome: "230+ topla donanmayı durdurdu" } }
         },
         {
             id: "7-tumen", name: "7. Tümen", faction: "ottoman", type: "tümen",
             entityType: "infantry_unit", unitClass: "division", side: "ottoman", anchorRegion: "seddulbahir",
             commander: "Alb. Remzi Bey", strength: 10000,
-            description: "Seddülbahir bölgesinin savunmasında kritik rol oynayan tümen. 9. Tümen ile birlikte güney cephesinin ana savunma kuvvetiydi.",
-            phases: { "naval-assault": { x: 350, y: 380, status: "savunma", objective: "Güney sahillerini savun", outcome: "Kıyı savunma hattını korudu" } }
+            description: "Seddülbahir ve güney sahillerinin birincil savunma tümeni. Albay Remzi Bey komutasında 9. Tümen ve 5. Tümen ile birlikte Helles cephesini savundu. 25 Nisan 1915'te V Beach ve W Beach çıkarmalarına karşı ağır direniş gösterdi; V Beach'te SS River Clyde'dan sahile çıkmaya çalışan İngiliz askerlerini makineli tüfek ateşiyle durdurdu. Kirte (Krithia) muharebelerinde İngiliz ve Fransız kuvvetlerine karşı dört ay boyunca mevzileri tuttu. Tahliyeye kadar güney cephesinin omurgasını oluşturdu.",
+            phases: { "naval-assault": { x: 1019, y: 2365, status: "savunma", objective: "Seddülbahir bölgesinde güney sahillerini savun", outcome: "Kıyı savunma hattını korudu" } }
         },
         {
             id: "9-tumen", name: "9. Tümen", faction: "ottoman", type: "tümen",
             entityType: "infantry_unit", unitClass: "division", side: "ottoman", anchorRegion: "seddulbahir",
             commander: "Alb. Halil Sami", strength: 10000,
-            description: "Seddülbahir ve güney bölgesini savunan ana kuvvet.",
-            phases: { "naval-assault": { x: 330, y: 415, status: "savunma", objective: "Güney sahillerini savun", outcome: "Kıyı tahkimatlarını korudu" } }
+            description: "Kilitbahir'den Seddülbahir'e güney kesimin savunma gücü. Albay Halil Sami Bey komutasında 7. Tümen ile koordineli çalıştı. Boğaz kıyısındaki tahkimatları tutarak 18 Mart deniz savaşında kıyı bataryalarına destek sağladı. 25 Nisan'da güney çıkarmasını göğüsleyen birinci hat birliklerinden biriydi. Kampanya boyunca Helles cephesinde İngiliz ve Fransız taarruzlarına karşı siper savaşı yürüttü.",
+            phases: { "naval-assault": { x: 1375, y: 2135, status: "savunma", objective: "Kilitbahir hattında Boğaz savunması", outcome: "Kıyı tahkimatlarını korudu" } }
         },
         {
             id: "5-tumen", name: "5. Tümen", faction: "ottoman", type: "tümen",
             entityType: "infantry_unit", unitClass: "division", side: "ottoman", anchorRegion: "seddulbahir",
             commander: "Alb. Hasan Askeri Bey", strength: 10000,
-            description: "Seddülbahir bölgesinde 7. ve 9. Tümenlerle birlikte güney cephesinin savunmasında kritik rol oynayan tümen. Kirte muharebelerinde ağır kayıplar verdi.",
-            phases: { "naval-assault": { x: 310, y: 395, status: "savunma", objective: "Güney kıyı savunması", outcome: "Kıyı savunma hattını destekledi" } }
+            description: "Eceabat-Maydos bölgesinden başlayıp güney cephesine uzanan savunma hattında 7. ve 9. Tümenlerle birlikte görev yaptı. Albay Hasan Askeri Bey komutasında Kirte (Krithia) bölgesinde İngiliz ve Fransız kuvvetlerine karşı üç büyük Kirte taarruzunu durdurdu (Nisan-Haziran 1915). Bu muharebeler tümenin en ağır kayıplarını verdiği dönem oldu. Güney cephesinin tamamen siper savaşına dönüştüğü süreçte Hasan Askeri Bey'in savunma hattı düzeni bölgenin tutulmasında belirleyici rol oynadı.",
+            phases: { "naval-assault": { x: 1120, y: 2065, status: "savunma", objective: "Eceabat-Maydos bölgesinde savunma", outcome: "Kıyı savunma hattını destekledi" } }
         },
+
+        // ── OSMANLI DENİZ ──
         {
             id: "nusret", name: "Nusret Mayın Gemisi", faction: "ottoman", type: "deniz",
             entityType: "ship", unitClass: "mine_layer", side: "ottoman", anchorRegion: "bogaz",
             commander: "Kolağası Nazmi Bey (Korvet Kaptanı Yeniköylü İbrahim oğlu Hafız Nazmi Efendi)", strength: 76,
             description: "Nusret, Kasım 1914'ten itibaren Boğaz'da çok sayıda mayın döşeme seferi gerçekleştirdi. Kritik operasyonu 7/8 Mart 1915 gecesi saat 05:30'da Erenköy Koyu'na paralel 26 karbonik mayın döşemesiydi — 100-150 m aralıklarla, 4,5 m derinliğe. İtilaf keşif uçuşlarının göremediği bu hat, 18 Mart'ta Bouvet, Irresistible ve Ocean'ı batırdı. 6 Nisan 1915 itibariyle Boğaz'da toplam 422 mayın bulunuyordu (53 Alman, 362 karbonik, 7 Rus). İtilaf'ın 45 mayın tarama girişimi başarısızlıkla sonuçlandı. Komutanı Nazmi Bey, 19 Temmuz 1915'te Binbaşılığa terfi etti.",
-            phases: { "naval-assault": { x: 455, y: 370, status: "savunma", objective: "Boğaz'a mayın döşe — düşmanı geçirmemek", outcome: "Döşediği mayınlar 3 gemiyi batırdı, 3'ünü savaş dışı bıraktı" } }
+            phases: { "naval-assault": { x: 1310, y: 2340, status: "savunma", objective: "Erenköy Koyu'na mayın döşe — düşmanı geçirmemek", outcome: "Döşediği mayınlar 3 gemiyi batırdı, 3'ünü savaş dışı bıraktı" } }
         },
-        // ── İNGİLİZ ──
+
+        // ── İTİLAF DONANMASI ──
+        // 18 Mart taarruz formasyonu: Hat halinde güneybatıdan kuzeydoğuya.
+        // Boğaz suyu ortası: doğrulanmış Kilitbahir/Çanakkale/Erenköy
+        // anchor'ları arasında, gemiler hat formasyonunda tutulur.
         {
             id: "hms-queen-elizabeth", name: "HMS Queen Elizabeth", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Amiral de Robeck (Donanma Komutanı)", strength: 950,
-            description: "İtilaf donanmasının amiral gemisi, 15 inçlik toplarıyla en güçlü savaş gemisi. Amiral de Robeck donanma komutanıdır; geminin kaptanı ayrıdır.",
-            phases: { "naval-assault": { x: 560, y: 360, status: "taarruz", objective: "Boğaz savunmalarını yok et", outcome: "Tabyaları bombaladı ama geçemedi" } }
+            description: "İtilaf donanmasının amiral gemisi ve dönemin en modern savaş gemisi. 15 inçlik sekiz ana tobu, 24.000 ton deplasmanı ve 24 düğüm hızıyla filodan farklı sınıftaydı. Amiral de Robeck gemi kaptanı değil, genel filo komutanıydı — geminin ayrı bir kaptanı vardı. 18 Mart 1915'te Osmanlı kıyı bataryalarını susturmaya çalıştı ancak Nusret'in döşediği mayın hattı nedeniyle hareket alanı kısıtlandı. De Robeck bu gemiden verdiği 'geri çekilin' emriyle Boğaz geçme planını fiilen sonlandırdı. 13 Mayıs 1915'te denizaltı tehdidi artınca Ege'ye geri döndü.",
+            phases: { "naval-assault": { x: 1405, y: 2170, status: "taarruz", objective: "Boğaz savunmalarını yok et", outcome: "Tabyaları bombaladı ama geçemedi" } }
         },
         {
             id: "hms-irresistible", name: "HMS Irresistible", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Albay Douglas Dent", strength: 780,
-            description: "18 Mart 1915'te saat 16:14 civarında Nusret'in Erenköy mayın hattına çarparak ağır hasar alan İngiliz zırhlısı. Kıyı bataryalarının yoğun ateşi altında yardım da gönderilemedi. Mürettebatın büyük kısmı kurtarıldı, gemi akşam saatlerinde battı.",
-            phases: { "naval-assault": { x: 500, y: 390, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Nusret'in döşediği mayına çarparak battı" } }
+            description: "18 Mart 1915'te saat 16:14 civarında Nusret'in Erenköy mayın hattına çarparak ağır hasar alan İngiliz zırhlısı. Makineleri devre dışı kaldı; kıyı bataryalarının yoğun ateşi altında hiçbir kurtarma gemisi yaklaşamadı. Albay Douglas Dent mürettebatını terk etme emri verdi; küçük teknelerle transfer sürüyor, gemi sürtünce battı. Nazmi Bey günlüğünde şöyle yazdı: 'İngiliz zırhlısı Irresistible de limana dönemedi.' Mürettebatın büyük bölümü kurtarıldı.",
+            phases: { "naval-assault": { x: 1365, y: 2245, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Nusret'in döşediği mayına çarparak battı" } }
         },
         {
             id: "hms-ocean", name: "HMS Ocean", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Albay Hayes-Sadler", strength: 750,
-            description: "18 Mart 1915'te Irresistible'ı kurtarmaya giderken kendisi de Erenköy mayın hattına çarpan İngiliz zırhlısı. Saat 18:05'te terk edildi ve gece boyunca battı. Nazmi Bey: 'Akşam karanlığında Ocean da yan yattı.'",
-            phases: { "naval-assault": { x: 520, y: 415, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Mayına çarparak battı" } }
+            description: "18 Mart 1915'te hasarlı Irresistible'ı yedeğe almaya çalışırken kendisi de Erenköy mayın hattına çarpan İngiliz zırhlısı. Albay Hayes-Sadler'ın Ocean'ı kurtarma girişimi mahkûm bir görevdi; gemi saat 18:05'te terk edildi. Nazmi Bey günlüğüne şöyle yazdı: 'Akşam karanlığında Ocean da yan yattı.' Mürettebatın büyük çoğunluğu küçük teknelerle kurtarıldı. Her iki İngiliz zırhlısının batışı, 18 Mart'ın Osmanlı zaferini pekiştiren son sahneydi.",
+            phases: { "naval-assault": { x: 1325, y: 2315, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Mayına çarparak battı" } }
         },
+
+        // ── İNGİLİZ KARA ──
         {
             id: "29-div", name: "29. Tümen", faction: "british", type: "tümen",
             entityType: "infantry_unit", unitClass: "division", side: "allied", anchorRegion: "seddulbahir",
             commander: "Tümg. Hunter-Weston", strength: 17000,
-            description: "Seddülbahir çıkarmasının ana İngiliz kuvveti. V ve W sahillerine çıktı.",
-            phases: { "naval-assault": { x: 640, y: 320, status: "hazır", objective: "Seddülbahir çıkarması planlaması", outcome: "Nisan çıkarması için hazırlandı" } }
+            description: "Seddülbahir (Cape Helles) çıkarmasının ana İngiliz kuvveti. Tümgeneral Hunter-Weston komutasında 25 Nisan 1915'te V, W, X ve Y sahillerinden eşzamanlı çıkarma yaptı. En ağır kayıplar V Beach'te: SS River Clyde sahile oturtularak askerler teknenin yanlarındaki kapılardan çıkmaya çalışırken Osmanlı makineli tüfek ateşiyle biçildi. Üç Kirte (Krithia) taarruzu (28 Nisan, 6-8 Mayıs, 4-6 Haziran 1915) kanlı başarısızlıklarla sonuçlandı. Helles cephesinde aylarca siper savaşı yürüttükten sonra 1-9 Ocak 1916'da son tahliyeyi gerçekleştirdi.",
+            phases: { "naval-assault": { x: 960, y: 2390, status: "hazır", objective: "Seddülbahir çıkarması planlaması", outcome: "Nisan çıkarması için hazırlandı" } }
         },
+
         // ── ANZAC ──
         {
             id: "anzac-1div", name: "1. Avustralya Tümeni", faction: "anzac", type: "tümen",
             entityType: "infantry_unit", unitClass: "division", side: "allied", anchorRegion: "ariburnu",
             commander: "Tümg. Bridges", strength: 12000,
-            description: "Ariburnu çıkarmasının ana kuvveti. ANZAC efsanesinin başlangıcı.",
-            phases: { "naval-assault": { x: 110, y: 260, status: "hazır", objective: "Mısır'da çıkarma için eğitim", outcome: "Nisan çıkarması için hazırlandı" } }
+            description: "Avustralya tarihinin dönüm noktası. 25 Nisan 1915 saat 04:30'da Arıburnu'na — asıl hedefin yaklaşık 1.5 km kuzeyine — ayak bastı. Dar koyda düzen sağlamak zorlaştı; Osmanlı 27. Alayı'nın beklenmedik hızlı tepkisi çıkarmayı başından güçleştirdi. Tümgeneral Bridges ilk gün tümenin geri çekilmesini talep etti; öneri reddedildi. Bridges 15 Mayıs'ta bir keskin nişancı tarafından vurulan yarasından hayatını kaybetti. ANZAC Koyu, 8 ay boyunca yaklaşık 3 km²'lik bir alanda 8.000 Avustralyalının şehit düştüğü bir kıyı çıkmazına dönüştü. Bu çıkarma, Avustralya ulusal kimliğinin kurucu anısı haline geldi.",
+            phases: { "naval-assault": { x: 820, y: 1815, status: "hazır", objective: "Mısır'da çıkarma için eğitim", outcome: "Nisan çıkarması için hazırlandı" } }
         },
         {
             id: "nz-inf", name: "Yeni Zelanda Tugayı", faction: "anzac", type: "tugay",
             entityType: "infantry_unit", unitClass: "brigade", side: "allied", anchorRegion: "conkbayiri",
             commander: "Alb. Johnston", strength: 4000,
-            description: "Conkbayırı savaşlarında kritik rol oynayan Yeni Zelanda birliği.",
-            phases: { "naval-assault": { x: 110, y: 300, status: "hazır", objective: "Mısır'da eğitim", outcome: "Çıkarma planlaması devam etti" } }
+            description: "Yeni Zelanda'nın Çanakkale'deki en dramatik anının kahramanları. Ağustos 1915 Taarruzu'nda Conkbayırı zirvesine tırmanışıyla tarihe geçti. 8-9 Ağustos 1915 gecesi Albay Johnston komutasında 4.000 kişi büyük kayıplar vererek Gelibolu Yarımadası'nın en stratejik tepesine, Conkbayırı sırtına ulaştı. Zirveyi bir gece boyunca tuttu. Ancak 10 Ağustos sabahı Mustafa Kemal'in Anafartalar Grup Komutanı olarak yönettiği karşı taarruz tugayı geri sürdü. Bu an Türk tarafınca 'Türkiye'yi kurtaran taarruz' olarak anılır. Tugay yaklaşık 2.500 kayıp verdi; Albay Johnston muharebenin ardından sağlığını kaybetti.",
+            phases: { "naval-assault": { x: 950, y: 1760, status: "hazır", objective: "Mısır'da eğitim", outcome: "Çıkarma planlaması devam etti" } }
         },
+
         // ── FRANSIZ ──
         {
             id: "bouvet", name: "Bouvet", faction: "french", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Kaptan Rageot de la Touche", strength: 721,
             description: "18 Mart 1915 saat 13:58'de Nusret'in Erenköy hattındaki mayına çarparak yaklaşık 2 dakikada batan Fransız zırhlısı. 721 mürettebattan sadece 66'sı kurtuldu (Nazmi Bey günlüğü). Bouvet'in batışı, o günkü İtilaf kayıplarının en ağırıydı.",
-            phases: { "naval-assault": { x: 490, y: 435, status: "taarruz", objective: "Osmanlı tabyalarını sustur", outcome: "Mayına çarparak battı – 655 kayıp" } }
+            phases: { "naval-assault": { x: 1285, y: 2295, status: "taarruz", objective: "Osmanlı tabyalarını sustur", outcome: "Mayına çarparak battı – 655 kayıp" } }
         },
         {
             id: "suffren", name: "Suffren", faction: "french", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Kaptan Guépratte", strength: 700,
-            description: "Ağır hasar almasına rağmen çatışmaya devam eden Fransız zırhlısı.",
-            phases: { "naval-assault": { x: 470, y: 460, status: "taarruz", objective: "Kıyı bataryalarını bombalama", outcome: "Ağır hasar aldı ama sağ kaldı" } }
+            description: "Fransız Donanması'nın 18 Mart 1915 muharebelerindeki simge gemisi. Kaptan Guépratte komutasında Osmanlı kıyı bataryalarıyla yoğun ateş alışverişi yürüttü; ağır hasar aldı ama batmadı. Amiral de Robeck'in 'geri çekilin' emrini Guépratte bir süre geciktirerek çatışmayı sürdürdü — bu cesaret Fransız anlatısında kahraman motifi oldu. Bouvet'in batışından kısa süre sonra hâlâ sahada olan Suffren, nihayetinde ciddi yapısal hasarla geri döndü. Onarım için ayrıldıktan sonra Çanakkale harekâtına dönmedi.",
+            phases: { "naval-assault": { x: 1245, y: 2360, status: "taarruz", objective: "Kıyı bataryalarını bombalama", outcome: "Ağır hasar aldı ama sağ kaldı" } }
         },
         {
             id: "fr-corps", name: "Fransız Sefer Kuvveti", faction: "french", type: "kolordu",
             entityType: "infantry_unit", unitClass: "corps", side: "allied", anchorRegion: "kumkale",
             commander: "General d'Amade", strength: 18000,
-            description: "Kumkale çıkarmasını gerçekleştiren ve Seddülbahir'de savaşan Fransız kara kuvveti.",
-            phases: { "naval-assault": { x: 620, y: 470, status: "hazır", objective: "Kumkale hedefi için hazırlık", outcome: "Deniz harekâtını destekledi" } }
+            description: "General d'Amade komutasında 18.000 kişilik Fransız Sefer Kuvveti, kampanyanın ilk gününden son tahliyeye kadar İtilaf'ın vazgeçilmez cephe ortağıydı. 25 Nisan 1915'te Kumkale'ye (Asya yakasına) 3.000 kişilik aldatma çıkarması yaparak Osmanlı dikkatini güneye çekti; 27 Nisan'da Seddülbahir'e transfer edildi. Helles cephesinde İngiliz 29. Tümen'in sağ kanadını oluşturdu; Kirte muharebelerinde ve Alçitepe savaşlarında ağır kayıplar verdi. 1-9 Ocak 1916'da İngilizlerle birlikte Seddülbahir'den son tahliyeyi gerçekleştirdi.",
+            phases: { "naval-assault": { x: 1320, y: 2526, status: "hazır", objective: "Kumkale hedefi için hazırlık", outcome: "Deniz harekâtını destekledi" } }
         }
     ],
 
@@ -188,33 +213,28 @@ export const BATTLE_DATA = {
         }
     ],
 
-    locations: [
-        { id: "gelibolu", name: "Gelibolu", x: 478, y: 48 },
-        { id: "suvla", name: "Suvla Koyu", x: 238, y: 128 },
-        { id: "tuzgolu", name: "Tuz Gölü", x: 268, y: 120 },
-        { id: "kirectepe", name: "Kireçtepe", x: 265, y: 88 },
-        { id: "anafartalar", name: "Anafartalar", x: 345, y: 148 },
-        { id: "bigali", name: "Bigalı", x: 395, y: 185 },
-        { id: "conkbayiri", name: "Conkbayırı", x: 320, y: 225 },
-        { id: "ariburnu", name: "Arıburnu (ANZAC Koyu)", x: 222, y: 248 },
-        { id: "kabatepe", name: "Kabatepe", x: 215, y: 305 },
-        { id: "eceabat", name: "Eceabat", x: 418, y: 285 },
-        { id: "kilitbahir", name: "Kilitbahir", x: 408, y: 348 },
-        { id: "bogaz", name: "Boğaz (Narrows)", x: 445, y: 338 },
-        { id: "canakkale", name: "Çanakkale", x: 495, y: 348 },
-        { id: "alcitepe", name: "Alçıtepe (Achi Baba)", x: 305, y: 408 },
-        { id: "kirte", name: "Kirte (Krithia)", x: 280, y: 428 },
-        { id: "seddulbahir", name: "Seddülbahir", x: 320, y: 488 },
-        { id: "morto-koyu", name: "Morto Koyu", x: 365, y: 468 },
-        { id: "kumkale", name: "Kumkale", x: 440, y: 510 }
-    ]
+    locations: GEO_LOCATIONS
 };
 
 /** Location ID → konum objesi look-up tablosu */
 export const LOCATION_BY_ID = BATTLE_DATA.locations.reduce((acc, l) => { acc[l.id] = l; return acc; }, {});
 
+/** Harita üzerinde kullanılacak vekil konumu çözümle */
+export function getMapLocationById(locationId) {
+    if (!locationId) return null;
+    const raw = LOCATION_BY_ID[locationId];
+    if (!raw) return null;
+    return raw.mapProxyId ? (LOCATION_BY_ID[raw.mapProxyId] || raw) : raw;
+}
+
+/** Harita üzerinde kullanılacak vekil ID */
+export function getMapLocationId(locationId) {
+    const point = getMapLocationById(locationId);
+    return point ? point.id : locationId;
+}
+
 /** Temel faz ID'si (birim başlangıç konumları bu fazdan okunur) */
 export const BASE_PHASE_ID = "naval-assault";
 
 /** Token'lar arasındaki minimum mesafe (cluster spread) */
-export const PHASE_TOKEN_SPREAD = 18;
+export const PHASE_TOKEN_SPREAD = 60;

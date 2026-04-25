@@ -207,26 +207,26 @@
         gap:4px
     }
     .phase-marker{
-        width:20px;
-        min-width:20px;
+        width:28px;
+        min-width:28px;
         height:44px;
-        padding:0 4px
+        padding:0;
     }
     .phase-marker:hover{transform:none}
     .phase-dot{
-        width:8px;
-        height:8px;
+        width:12px;
+        height:12px;
         transition:none
     }
     .phase-marker.major .phase-dot{
-        width:14px;
-        height:14px
+        width:18px;
+        height:18px
     }
     .phase-marker:not(.major){
-        display:none
+        /* Removed display:none so all markers are visible and scrollable */
     }
     .phase-marker.active:not(.major){
         display:flex
     }
-    .phase-tooltip{display:none!important}
+    .phase-tooltip{display:block; transform:translate(-50%, -10px) scale(0.9);}
 }

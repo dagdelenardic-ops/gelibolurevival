@@ -10,7 +10,7 @@
  */
 export const ENTITY_TYPES = {
     ship: {
-        allowedTerrain: ['sea'],
+        allowedTerrain: ['sea', 'coast'],
         allowedPhases: ['naval', 'landing', 'evacuation'],
     },
     artillery_battery: {

@@ -1,72 +1,117 @@
 // ══════════════════════════════════════════════════════════════
 // Gelibolu Revival — Terrain Zone System
-// SVG path'lerden türetilmiş polygon verileri + point-in-polygon
-// Harita viewport: 720×560
+// Raster harita (2451×3467) için polygon verileri + point-in-polygon
+// Harita viewport: 2451×3467
 // ══════════════════════════════════════════════════════════════
+
+import { COAST_BUFFER, MAP_WIDTH, MAP_HEIGHT } from './coordinate-map.js?v=20260407-manual-r1';
 
 /**
  * Gelibolu Yarımadası land polygon.
- * map-renderer.js satır 111-122'deki SVG path'ten türetildi.
- * Cubic bezier'ler yaklaşık kontrol noktalarına basitleştirildi.
+ * Affine transform ile 720×560 → 2451×3467 dönüştürüldü.
  */
 export const PENINSULA_POLYGON = [
-    { x: 525, y: 18 },
-    { x: 485, y: 38 }, { x: 450, y: 58 }, { x: 435, y: 95 },
-    { x: 432, y: 110 }, { x: 430, y: 130 }, { x: 426, y: 150 },
-    { x: 422, y: 170 }, { x: 418, y: 185 }, { x: 416, y: 200 },
-    { x: 415, y: 220 }, { x: 416, y: 240 }, { x: 420, y: 260 },
-    { x: 422, y: 280 }, { x: 422, y: 300 }, { x: 416, y: 318 },
-    { x: 410, y: 335 }, { x: 402, y: 352 }, { x: 396, y: 370 },
-    { x: 390, y: 388 }, { x: 382, y: 408 }, { x: 372, y: 428 },
-    { x: 362, y: 448 }, { x: 350, y: 465 }, { x: 340, y: 480 },
-    { x: 335, y: 492 }, { x: 325, y: 502 }, { x: 312, y: 508 },
-    { x: 300, y: 512 }, { x: 290, y: 506 }, { x: 282, y: 496 },
-    { x: 274, y: 480 }, { x: 266, y: 458 }, { x: 258, y: 436 },
-    { x: 250, y: 414 }, { x: 244, y: 394 }, { x: 238, y: 374 },
-    { x: 232, y: 354 }, { x: 228, y: 336 }, { x: 224, y: 318 },
-    { x: 220, y: 300 }, { x: 218, y: 284 }, { x: 216, y: 268 },
-    { x: 214, y: 252 }, { x: 215, y: 238 }, { x: 220, y: 226 },
-    { x: 224, y: 216 }, { x: 226, y: 206 }, { x: 224, y: 196 },
-    { x: 222, y: 186 }, { x: 222, y: 176 }, { x: 226, y: 166 },
-    { x: 230, y: 156 }, { x: 234, y: 146 }, { x: 238, y: 136 },
-    { x: 242, y: 126 }, { x: 246, y: 116 }, { x: 248, y: 106 },
-    { x: 250, y: 92 }, { x: 255, y: 80 }, { x: 265, y: 70 },
-    { x: 280, y: 56 }, { x: 300, y: 44 }, { x: 330, y: 32 },
-    { x: 370, y: 20 }, { x: 420, y: 16 }, { x: 480, y: 14 },
-    { x: 525, y: 18 },
+    { x: 2343, y: 30 }, { x: 2134, y: 87 }, { x: 1946, y: 206 }, { x: 1820, y: 392 },
+    { x: 1782, y: 465 }, { x: 1741, y: 561 }, { x: 1691, y: 659 },
+    { x: 1641, y: 757 }, { x: 1599, y: 831 }, { x: 1566, y: 903 },
+    { x: 1529, y: 999 }, { x: 1501, y: 1093 }, { x: 1487, y: 1186 },
+    { x: 1463, y: 1279 }, { x: 1431, y: 1374 }, { x: 1375, y: 1464 },
+    { x: 1321, y: 1548 }, { x: 1258, y: 1635 }, { x: 1202, y: 1724 },
+    { x: 1147, y: 1814 }, { x: 1079, y: 1914 }, { x: 1002, y: 2016 },
+    { x: 925, y: 2118 }, { x: 845, y: 2207 }, { x: 776, y: 2285 },
+    { x: 735, y: 2345 }, { x: 674, y: 2400 }, { x: 607, y: 2437 },
+    { x: 547, y: 2464 }, { x: 512, y: 2443 }, { x: 493, y: 2401 },
+    { x: 484, y: 2330 }, { x: 484, y: 2232 }, { x: 484, y: 2133 },
+    { x: 484, y: 2034 }, { x: 490, y: 1943 }, { x: 495, y: 1852 },
+    { x: 501, y: 1761 }, { x: 513, y: 1678 }, { x: 524, y: 1596 },
+    { x: 535, y: 1513 }, { x: 552, y: 1438 }, { x: 569, y: 1364 },
+    { x: 586, y: 1289 }, { x: 614, y: 1222 }, { x: 655, y: 1162 },
+    { x: 689, y: 1112 }, { x: 714, y: 1063 }, { x: 721, y: 1017 },
+    { x: 729, y: 970 }, { x: 745, y: 923 }, { x: 779, y: 873 },
+    { x: 813, y: 823 }, { x: 847, y: 772 }, { x: 880, y: 722 },
+    { x: 914, y: 672 }, { x: 948, y: 622 }, { x: 973, y: 573 },
+    { x: 1005, y: 505 }, { x: 1046, y: 445 }, { x: 1107, y: 390 },
+    { x: 1196, y: 313 }, { x: 1304, y: 243 }, { x: 1456, y: 165 },
+    { x: 1653, y: 81 }, { x: 1881, y: 30 }, { x: 2150, y: 30 },
+    { x: 2343, y: 30 },
 ];
 
-/**
- * Trakya (kuzey kara kütlesi) polygon.
- * map-renderer.js satır 100-102.
- */
+/** Trakya (kuzey kara kütlesi) polygon */
 export const THRACE_POLYGON = [
-    { x: 0, y: 0 }, { x: 530, y: 0 }, { x: 525, y: 18 },
-    { x: 400, y: 15 }, { x: 280, y: 20 }, { x: 175, y: 40 },
-    { x: 80, y: 65 }, { x: 35, y: 72 }, { x: 0, y: 82 }, { x: 0, y: 0 },
+    { x: 0, y: 0 }, { x: 2451, y: 0 }, { x: 2343, y: 30 },
+    { x: 1794, y: 36 }, { x: 1254, y: 142 }, { x: 756, y: 310 },
+    { x: 295, y: 494 }, { x: 84, y: 558 }, { x: 0, y: 630 }, { x: 0, y: 0 },
 ];
 
-/**
- * Asya Yakası polygon.
- * map-renderer.js satır 211-223.
- */
+/** Asya Yakası polygon */
 export const ASIA_POLYGON = [
-    { x: 530, y: 190 }, { x: 522, y: 255 }, { x: 515, y: 280 },
-    { x: 498, y: 340 }, { x: 495, y: 365 }, { x: 488, y: 418 },
-    { x: 485, y: 440 }, { x: 460, y: 492 }, { x: 448, y: 525 },
-    { x: 510, y: 542 }, { x: 720, y: 540 }, { x: 720, y: 560 },
-    { x: 440, y: 560 }, { x: 430, y: 520 }, { x: 450, y: 478 },
-    { x: 465, y: 425 }, { x: 470, y: 400 }, { x: 480, y: 338 },
-    { x: 482, y: 310 }, { x: 500, y: 250 }, { x: 510, y: 225 },
-    { x: 530, y: 190 },
+    { x: 2087, y: 778 }, { x: 1947, y: 1092 }, { x: 1875, y: 1215 },
+    { x: 1703, y: 1512 }, { x: 1649, y: 1632 }, { x: 1532, y: 1889 },
+    { x: 1484, y: 1995 }, { x: 1289, y: 2259 }, { x: 1182, y: 2424 },
+    { x: 1429, y: 2462 }, { x: 2451, y: 2308 }, { x: 2451, y: 2403 },
+    { x: 1090, y: 2596 }, { x: 1110, y: 2413 }, { x: 1267, y: 2200 },
+    { x: 1419, y: 1938 }, { x: 1482, y: 1816 }, { x: 1626, y: 1515 },
+    { x: 1681, y: 1380 }, { x: 1857, y: 1083 }, { x: 1942, y: 957 },
+    { x: 2087, y: 778 },
 ];
 
-/** Gökçeada polygon (basit elips yaklaşımı) */
-export const GOKCEADA_POLYGON = [
-    { x: 50, y: 285 }, { x: 75, y: 270 }, { x: 105, y: 272 },
-    { x: 132, y: 285 }, { x: 132, y: 296 }, { x: 108, y: 312 },
-    { x: 88, y: 310 }, { x: 50, y: 298 }, { x: 50, y: 285 },
-];
+/** Gökçeada — harita dışında, boş polygon */
+export const GOKCEADA_POLYGON = [];
+
+const RASTER_MAP_URL = 'assets/gallipoli-map.png';
+const RASTER_COAST_RADIUS = 18;
+const CLAMP_SEARCH_RADIUS = 260;
+const CLAMP_SEARCH_STEP = 6;
+const TERRAIN_RECT_OVERRIDES = [];
+
+let rasterReady = false;
+let rasterData = null;
+let rasterWidth = MAP_WIDTH;
+let rasterHeight = MAP_HEIGHT;
+let rasterReadyPromise = Promise.resolve(false);
+
+function primeTerrainSampler() {
+    if (typeof window === 'undefined' || typeof Image === 'undefined') return Promise.resolve(false);
+    if (rasterReady) return Promise.resolve(true);
+    if (primeTerrainSampler._started) return rasterReadyPromise;
+
+    primeTerrainSampler._started = true;
+    rasterReadyPromise = new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth || MAP_WIDTH;
+                canvas.height = img.naturalHeight || MAP_HEIGHT;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                if (!ctx) throw new Error('2D context yok');
+                ctx.drawImage(img, 0, 0);
+                rasterWidth = canvas.width;
+                rasterHeight = canvas.height;
+                rasterData = ctx.getImageData(0, 0, rasterWidth, rasterHeight).data;
+                rasterReady = true;
+                resolve(true);
+            } catch (err) {
+                console.warn('Terrain sampler yüklenemedi, polygon fallback kullanılacak:', err);
+                resolve(false);
+            }
+        };
+        img.onerror = () => {
+            console.warn('Terrain sampler görseli yüklenemedi, polygon fallback kullanılacak.');
+            resolve(false);
+        };
+        img.src = RASTER_MAP_URL;
+    });
+
+    return rasterReadyPromise;
+}
+
+primeTerrainSampler();
+
+export function waitForTerrainSampler() {
+    return rasterReadyPromise;
+}
 
 // ── Ray Casting Point-in-Polygon ──
 
@@ -86,14 +131,78 @@ function pointInPolygon(x, y, polygon) {
 // Tüm kara polygon'ları
 const LAND_POLYGONS = [PENINSULA_POLYGON, THRACE_POLYGON, ASIA_POLYGON, GOKCEADA_POLYGON];
 
-// Kıyı şeridi genişliği (SVG units)
-const COAST_BUFFER = 18;
+// Kıyı şeridi genişliği (SVG units) — coordinate-map.js'den import edildi
+// const COAST_BUFFER artık import ediliyor
+
+function clampPointToRaster(x, y) {
+    return {
+        x: Math.max(0, Math.min(rasterWidth - 1, Math.round(x))),
+        y: Math.max(0, Math.min(rasterHeight - 1, Math.round(y))),
+    };
+}
+
+function readRasterPixel(x, y) {
+    if (!rasterReady || !rasterData) return null;
+    const pt = clampPointToRaster(x, y);
+    const idx = (pt.y * rasterWidth + pt.x) * 4;
+    return {
+        r: rasterData[idx],
+        g: rasterData[idx + 1],
+        b: rasterData[idx + 2],
+        a: rasterData[idx + 3],
+    };
+}
+
+function isSeaPixel(pixel) {
+    if (!pixel) return false;
+    return pixel.r < 205 && pixel.g > 185 && pixel.b > 185;
+}
+
+function getRasterBaseTerrain(x, y) {
+    const pixel = readRasterPixel(x, y);
+    if (!pixel) return null;
+    return isSeaPixel(pixel) ? 'sea' : 'land';
+}
+
+function isRasterCoast(x, y, baseTerrain = null) {
+    if (!rasterReady || !rasterData) return false;
+    const center = baseTerrain || getRasterBaseTerrain(x, y);
+    if (!center) return false;
+
+    for (let r = CLAMP_SEARCH_STEP; r <= RASTER_COAST_RADIUS; r += CLAMP_SEARCH_STEP) {
+        const steps = Math.max(12, Math.round((Math.PI * 2 * r) / 8));
+        for (let i = 0; i < steps; i++) {
+            const angle = (i / steps) * Math.PI * 2;
+            const neighbor = getRasterBaseTerrain(x + Math.cos(angle) * r, y + Math.sin(angle) * r);
+            if (neighbor && neighbor !== center) return true;
+        }
+    }
+
+    return false;
+}
+
+function getOverrideTerrain(x, y) {
+    for (const zone of TERRAIN_RECT_OVERRIDES) {
+        if (x >= zone.x1 && x <= zone.x2 && y >= zone.y1 && y <= zone.y2) {
+            return zone.terrain;
+        }
+    }
+    return null;
+}
 
 /**
  * Verilen noktanın terrain tipini belirle.
  * @returns {'sea' | 'coast' | 'land'}
  */
 export function getTerrainAtPoint(x, y) {
+    const overrideTerrain = getOverrideTerrain(x, y);
+    if (overrideTerrain) return overrideTerrain;
+
+    const rasterTerrain = getRasterBaseTerrain(x, y);
+    if (rasterTerrain) {
+        return isRasterCoast(x, y, rasterTerrain) ? 'coast' : rasterTerrain;
+    }
+
     // Herhangi bir kara polygon'unda mı?
     let inLand = false;
     for (const poly of LAND_POLYGONS) {
@@ -152,6 +261,33 @@ function pointToSegmentDist(px, py, ax, ay, bx, by) {
  * @returns {{x: number, y: number}}
  */
 export function clampToAllowedTerrain(x, y, allowedTerrains) {
+    if (rasterReady) {
+        const currentTerrain = getTerrainAtPoint(x, y);
+        if (allowedTerrains.includes(currentTerrain)) return { x, y };
+
+        const normalized = allowedTerrains.includes('land') && allowedTerrains.includes('coast')
+            ? new Set(['land', 'coast'])
+            : new Set(allowedTerrains);
+
+        for (let r = 0; r <= CLAMP_SEARCH_RADIUS; r += CLAMP_SEARCH_STEP) {
+            const steps = r === 0 ? 1 : Math.max(16, Math.round((Math.PI * 2 * r) / 10));
+            for (let i = 0; i < steps; i++) {
+                const angle = steps === 1 ? 0 : (i / steps) * Math.PI * 2;
+                const nx = x + Math.cos(angle) * r;
+                const ny = y + Math.sin(angle) * r;
+                const terrain = getTerrainAtPoint(nx, ny);
+                if (normalized.has(terrain)) {
+                    const candidate = clampPointToRaster(nx, ny);
+                    if (normalized.has(getTerrainAtPoint(candidate.x, candidate.y))) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+
+        return clampPointToRaster(x, y);
+    }
+
     const current = getTerrainAtPoint(x, y);
     if (allowedTerrains.includes(current)) return { x, y };
 
@@ -178,11 +314,11 @@ function pushToSea(x, y) {
             const d = Math.hypot(pt.x - x, pt.y - y);
             if (d < bestDist) {
                 bestDist = d;
-                // Push 5px outside the polygon edge
+                // Push 35px outside the polygon edge — gemiler kıyıdan net uzakta görünsün
                 const nx = pt.x - x;
                 const ny = pt.y - y;
                 const len = Math.hypot(nx, ny) || 1;
-                bestPt = { x: Math.round(pt.x + (nx / len) * 5), y: Math.round(pt.y + (ny / len) * 5) };
+                bestPt = { x: Math.round(pt.x + (nx / len) * 35), y: Math.round(pt.y + (ny / len) * 35) };
             }
         }
     }

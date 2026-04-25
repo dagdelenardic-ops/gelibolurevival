@@ -3,18 +3,23 @@
 // Birim konumlandırma, trail hesaplama, cluster yönetimi
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, LOCATION_BY_ID, BASE_PHASE_ID, PHASE_TOKEN_SPREAD } from '../data/battle-data.js';
+import { BATTLE_DATA, BASE_PHASE_ID, PHASE_TOKEN_SPREAD, getMapLocationById } from '../data/battle-data.js?v=20260407-manual-r1';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { ENTITY_TYPES } from '../data/entity-types.js';
-import { FRONTLINES } from '../data/frontlines.js';
+import { FRONTLINES } from '../data/frontlines.js?v=20260407-manual-r1';
+import { MAP_FORTS } from '../data/geo-calibration.js?v=20260407-manual-r1';
 import { getTerrainAtPoint, clampToAllowedTerrain } from '../data/terrain-zones.js';
+import { getHistoricalPlacementForUnit } from '../data/historical-map-data.js?v=20260407-manual-r1';
 import { normalizeValue } from './date-utils.js';
 import {
     getUnitEntryPhaseIndex, isMajorPhase,
     isNavalEraPhaseIndex, getNavalEraProgress,
     getMinimumStartIsoForUnit, getFirstPhaseIndexForIso
-} from './phase-engine.js';
+} from './phase-engine.js?v=20260407-manual-r1';
 
 const BASE_PHASE_DESTRUCTION_ISO = '1915-03-18';
+const COLLISION_SAFE_DISTANCE = 92;
+const COLLISION_RELAX_PASSES = 6;
 
 // ── Utility ──
 
@@ -29,30 +34,30 @@ export function unitSeed(id) {
 export function phaseDirectionByUnit(unit) {
     const f = BATTLE_DATA.factions[unit.faction];
     if (unit.type === 'deniz') return f.id === 'british' ? { x: -0.4, y: -0.15 } : { x: 0.45, y: -0.35 };
-    if (f.id === 'ottoman') return { x: -0.35, y: -0.22 };
-    if (f.id === 'british') return { x: 0.7, y: 0.25 };
-    if (f.id === 'anzac') return { x: 0.9, y: 0.18 };
-    return { x: 0.3, y: 0.22 };
+    if (f.id === 'ottoman') return { x: -0.15, y: 0.10 };
+    if (f.id === 'british') return { x: 0.3, y: 0.12 };
+    if (f.id === 'anzac') return { x: 0.35, y: 0.10 };
+    return { x: 0.2, y: 0.12 };
 }
 
 /** Location ID → koordinat çözümle (jitter ile) */
 export function resolveLocationPoint(candidate, unit, phaseIndex) {
     const ids = Array.isArray(candidate) ? candidate : [candidate];
-    const seed = unitSeed(unit.id) + phaseIndex;
+    const seed = unitSeed(unit.id);
     const unique = ids.filter(Boolean).map((id) => String(id).trim().toLowerCase());
 
-    const validLocs = unique.map(id => LOCATION_BY_ID[id]).filter(Boolean);
+    const validLocs = unique.map(id => getMapLocationById(id)).filter(Boolean);
     if (validLocs.length > 0) {
         // Birim ID'sine (seed) göre farklı hedeflere dağıt
         const locIndex = unitSeed(unit.id) % validLocs.length;
         const loc = validLocs[locIndex];
         const jitter = {
-            x: Math.round(Math.sin(seed + locIndex) * 3),
-            y: Math.round(Math.cos(seed * 1.2 + locIndex) * 3)
+            x: Math.round(Math.sin(seed + locIndex) * 10),
+            y: Math.round(Math.cos(seed * 1.2 + locIndex) * 10)
         };
         return {
-            x: normalizeValue(Math.round(loc.x + jitter.x), 45, 680),
-            y: normalizeValue(Math.round(loc.y + jitter.y), 18, 548),
+            x: normalizeValue(Math.round(loc.x + jitter.x), VP_MIN_X, VP_MAX_X),
+            y: normalizeValue(Math.round(loc.y + jitter.y), VP_MIN_Y, VP_MAX_Y),
             source: unique[locIndex]
         };
     }
@@ -70,6 +75,107 @@ export function resolvePhaseLocation(phase, unit, phaseIndex) {
     return null;
 }
 
+export function getTerrainSafePointForUnit(x, y, unit) {
+    const typeDef = ENTITY_TYPES[unit.entityType];
+    const base = {
+        x: normalizeValue(Math.round(x), VP_MIN_X, VP_MAX_X),
+        y: normalizeValue(Math.round(y), VP_MIN_Y, VP_MAX_Y)
+    };
+
+    if (!typeDef) return base;
+
+    const terrain = getTerrainAtPoint(base.x, base.y);
+    if (typeDef.allowedTerrain.includes(terrain)) return base;
+
+    const clamped = clampToAllowedTerrain(base.x, base.y, typeDef.allowedTerrain);
+    return {
+        x: normalizeValue(Math.round(clamped.x), VP_MIN_X, VP_MAX_X),
+        y: normalizeValue(Math.round(clamped.y), VP_MIN_Y, VP_MAX_Y)
+    };
+}
+
+function hasCanonicalPhaseHint(phase, unit) {
+    return !!(phase && phase.locationByUnit && phase.locationByUnit[unit.id]);
+}
+
+function hasUsablePoint(point) {
+    return point && Number.isFinite(point.x) && Number.isFinite(point.y);
+}
+
+function getHistoricalPlacementForPhase(unit, phaseIndex) {
+    const iso = String(BATTLE_DATA.phases[phaseIndex]?.isoStart || '');
+    const placement = getHistoricalPlacementForUnit(unit, iso);
+    if (!placement || !hasUsablePoint(placement.point)) return null;
+    return placement;
+}
+
+function pointFromHistoricalPlacement(placement) {
+    return placement && hasUsablePoint(placement.point)
+        ? { x: placement.point.x, y: placement.point.y }
+        : null;
+}
+
+function withHistoricalMeta(phaseData, placement) {
+    if (!placement) return phaseData;
+    return {
+        ...phaseData,
+        historicalEvidence: placement.kind,
+        historicalConfidence: placement.confidence,
+        historicalSourceIds: placement.sourceIds,
+        historicalReferenceId: placement.routeId || placement.anchorId || placement.id,
+        historicalNote: placement.note
+    };
+}
+
+function separateUnitTrails(phaseIds) {
+    for (let phaseIndex = 0; phaseIndex < phaseIds.length; phaseIndex++) {
+        const pid = phaseIds[phaseIndex];
+        const entries = BATTLE_DATA.units
+            .filter((unit) => unit.type !== 'deniz')
+            .map((unit) => ({ unit, point: unit.phases && unit.phases[pid] }))
+            .filter((entry) => hasUsablePoint(entry.point));
+
+        for (let pass = 0; pass < COLLISION_RELAX_PASSES; pass++) {
+            let moved = false;
+
+            for (let i = 0; i < entries.length; i++) {
+                for (let j = i + 1; j < entries.length; j++) {
+                    const a = entries[i];
+                    const b = entries[j];
+                    const dx = b.point.x - a.point.x;
+                    const dy = b.point.y - a.point.y;
+                    const distance = Math.hypot(dx, dy);
+                    if (distance >= COLLISION_SAFE_DISTANCE) continue;
+
+                    const fallbackAngle = ((unitSeed(a.unit.id) * 31 + unitSeed(b.unit.id) * 17 + phaseIndex * 19) % 360) * Math.PI / 180;
+                    const ux = distance > 0.1 ? dx / distance : Math.cos(fallbackAngle);
+                    const uy = distance > 0.1 ? dy / distance : Math.sin(fallbackAngle);
+                    const push = ((COLLISION_SAFE_DISTANCE - Math.max(distance, 0)) / 2) + 8;
+
+                    const nextA = getTerrainSafePointForUnit(a.point.x - ux * push, a.point.y - uy * push, a.unit);
+                    const nextB = getTerrainSafePointForUnit(b.point.x + ux * push, b.point.y + uy * push, b.unit);
+
+                    a.point.x = nextA.x;
+                    a.point.y = nextA.y;
+                    b.point.x = nextB.x;
+                    b.point.y = nextB.y;
+                    moved = true;
+                }
+            }
+
+            if (!moved) break;
+        }
+
+        // Collision çözümü kıyı çizgisinde çok küçük sapmalar üretebilir;
+        // son sözü terrain gate söylesin.
+        entries.forEach((entry) => {
+            const safe = getTerrainSafePointForUnit(entry.point.x, entry.point.y, entry.unit);
+            entry.point.x = safe.x;
+            entry.point.y = safe.y;
+        });
+    }
+}
+
 /** Phase meta bilgisi al (status, objective, outcome) */
 export function resolvePhaseMetaText(phase, unit, key) {
     const byFaction = phase && phase[`${key}ByFaction`];
@@ -85,53 +191,214 @@ export function isDestroyedPhaseData(phaseData) {
     return status.includes('battı') || outcome.includes('battı');
 }
 
+function isoDay(iso) {
+    const match = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return 0;
+    return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) / 86400000;
+}
+
+function dateProgress(iso, startIso, endIso) {
+    const start = isoDay(startIso);
+    const end = isoDay(endIso);
+    const value = isoDay(iso);
+    if (!start || !end || end <= start) return 0;
+    return normalizeValue((value - start) / (end - start), 0, 1);
+}
+
+function mix(a, b, t) {
+    return a + (b - a) * normalizeValue(t, 0, 1);
+}
+
+function interpolateWaypoints(points, t) {
+    if (!points.length) return { x: 0, y: 0 };
+    if (points.length === 1) return points[0];
+    const scaled = normalizeValue(t, 0, 1) * (points.length - 1);
+    const index = Math.min(points.length - 2, Math.floor(scaled));
+    const localT = scaled - index;
+    return {
+        x: mix(points[index].x, points[index + 1].x, localT),
+        y: mix(points[index].y, points[index + 1].y, localT)
+    };
+}
+
+const NAVAL_APPROACH_ROUTE = [
+    { x: 760, y: 2780 },
+    { x: 920, y: 2660 },
+    { x: 1160, y: 2490 },
+    { x: 1325, y: 2355 },
+    { x: 1425, y: 2225 },
+    { x: 1470, y: 2115 }
+];
+
+const NAVAL_WITHDRAW_ROUTE = [
+    { x: 1450, y: 2180 },
+    { x: 1340, y: 2335 },
+    { x: 1150, y: 2490 },
+    { x: 900, y: 2700 }
+];
+
+const NUSRET_PATROL_ROUTE = [
+    { x: 1460, y: 2115 },
+    { x: 1510, y: 2175 },
+    { x: 1435, y: 2260 },
+    { x: 1350, y: 2330 }
+];
+
+const NUSRET_MINE_LINE_ROUTE = [
+    { x: 1265, y: 2360 },
+    { x: 1325, y: 2338 },
+    { x: 1388, y: 2310 },
+    { x: 1435, y: 2285 }
+];
+
+const ALLIED_NAVAL_LANES = {
+    'hms-queen-elizabeth': {
+        offset: { x: 18, y: -54 },
+        startT: 0.52,
+        attackT: 0.98,
+        hitPoint: { x: 1485, y: 2125 },
+        retreatPoint: { x: 1010, y: 2625 },
+        role: 'birinci hat amiral gemisi'
+    },
+    suffren: {
+        offset: { x: -58, y: 18 },
+        startT: 0.44,
+        attackT: 0.82,
+        hitPoint: { x: 1468, y: 2228 },
+        retreatPoint: { x: 930, y: 2685 },
+        role: 'Fransız ikinci hattı'
+    },
+    bouvet: {
+        offset: { x: -94, y: 48 },
+        startT: 0.38,
+        attackT: 0.78,
+        hitPoint: { x: 1396, y: 2295 },
+        retreatPoint: { x: 1396, y: 2295 },
+        role: 'Erenköy dönüş hattında battı'
+    },
+    'hms-irresistible': {
+        offset: { x: -18, y: 74 },
+        startT: 0.31,
+        attackT: 0.72,
+        hitPoint: { x: 1320, y: 2368 },
+        retreatPoint: { x: 1320, y: 2368 },
+        role: 'Erenköy mayın hattında battı'
+    },
+    'hms-ocean': {
+        offset: { x: 42, y: 98 },
+        startT: 0.25,
+        attackT: 0.68,
+        hitPoint: { x: 1245, y: 2425 },
+        retreatPoint: { x: 1245, y: 2425 },
+        role: 'Irresistible yardımı sırasında battı'
+    }
+};
+
+const SUNK_ON_MARCH_18 = new Set(['bouvet', 'hms-irresistible', 'hms-ocean']);
+
+function getPhaseIso(phaseIndex) {
+    return String(BATTLE_DATA.phases[phaseIndex]?.isoStart || '');
+}
+
+function applyBreathing(point, unit, phaseIndex, scale = 1) {
+    const seed = unitSeed(unit.id);
+    return {
+        x: point.x + Math.sin((phaseIndex + seed) * 0.17) * 5 * scale,
+        y: point.y + Math.cos((phaseIndex + seed) * 0.19) * 4 * scale
+    };
+}
+
+function getAlliedNavalPosition(unit, phaseIndex) {
+    const iso = getPhaseIso(phaseIndex);
+    const lane = ALLIED_NAVAL_LANES[unit.id] || ALLIED_NAVAL_LANES['hms-ocean'];
+
+    if (iso < '1915-02-19') {
+        const t = dateProgress(iso, '1914-11-03', '1915-02-18');
+        const base = interpolateWaypoints(NAVAL_APPROACH_ROUTE.slice(0, 3), t);
+        return applyBreathing({ x: base.x + lane.offset.x * 1.35, y: base.y + lane.offset.y * 1.15 }, unit, phaseIndex, 0.8);
+    }
+
+    if (iso < '1915-03-07') {
+        const t = dateProgress(iso, '1915-02-19', '1915-03-06');
+        const routePoint = interpolateWaypoints(NAVAL_APPROACH_ROUTE, mix(0.12, Math.max(0.18, lane.startT - 0.08), t));
+        return applyBreathing({ x: routePoint.x + lane.offset.x * 1.15, y: routePoint.y + lane.offset.y * 1.05 }, unit, phaseIndex, 0.7);
+    }
+
+    if (iso < '1915-03-18') {
+        const t = dateProgress(iso, '1915-03-07', '1915-03-17');
+        const routePoint = interpolateWaypoints(NAVAL_APPROACH_ROUTE, mix(lane.startT, lane.attackT, t));
+        return applyBreathing({ x: routePoint.x + lane.offset.x * 0.75, y: routePoint.y + lane.offset.y * 0.75 }, unit, phaseIndex, 0.45);
+    }
+
+    if (iso === '1915-03-18') {
+        return applyBreathing(lane.hitPoint, unit, phaseIndex, SUNK_ON_MARCH_18.has(unit.id) ? 0.08 : 0.25);
+    }
+
+    const t = dateProgress(iso, '1915-03-19', '1915-04-24');
+    const base = interpolateWaypoints(NAVAL_WITHDRAW_ROUTE, t);
+    return applyBreathing({ x: base.x + lane.offset.x * 0.9, y: base.y + lane.offset.y * 0.9 }, unit, phaseIndex, 0.45);
+}
+
+function getNusretPosition(unit, phaseIndex) {
+    const iso = getPhaseIso(phaseIndex);
+    if (iso >= '1915-03-07' && iso <= '1915-03-08') {
+        const t = dateProgress(iso, '1915-03-07', '1915-03-08');
+        return applyBreathing(interpolateWaypoints(NUSRET_MINE_LINE_ROUTE, t), unit, phaseIndex, 0.25);
+    }
+    if (iso > '1915-03-08' && iso <= '1915-03-18') {
+        // Kritik hattı döşedikten sonra Nusret'i Erenköy dönüş hattının tam üstünde
+        // değil, mayın hattının kuzeydoğu/nöbet ucunda gösteriyoruz. Böylece hem
+        // tarihsel rol görünür kalıyor hem de İtilaf gemileriyle token yığılması oluşmuyor.
+        const base = { x: 1518, y: 2180 };
+        return applyBreathing(base, unit, phaseIndex, 0.35);
+    }
+    if (iso > '1915-03-18') {
+        return applyBreathing({ x: 1468, y: 2148 }, unit, phaseIndex, 0.45);
+    }
+    const t = dateProgress(iso, '1914-11-03', '1915-03-06');
+    return applyBreathing(interpolateWaypoints(NUSRET_PATROL_ROUTE, t), unit, phaseIndex, 0.5);
+}
+
 /** Deniz birimlerinin narrative pozisyon hesaplaması */
 export function getNarrativeNavalPosition(unit, phaseIndex) {
+    if (unit.type === 'deniz') {
+        const historical = getHistoricalPlacementForPhase(unit, phaseIndex);
+        const historicalPoint = pointFromHistoricalPlacement(historical);
+        if (historicalPoint) {
+            return getTerrainSafePointForUnit(historicalPoint.x, historicalPoint.y, unit);
+        }
+    }
+
     if (!isNavalEraPhaseIndex(phaseIndex)) return null;
-    const t = getNavalEraProgress(phaseIndex);
-    const seed = unitSeed(unit.id);
 
-    // Müttefik deniz unsurları: açık denizden (Batı/Güneybatı Ege) boğaza yaklaşma
-    if (unit.type === 'deniz' && unit.faction !== 'ottoman') {
-        const laneById = {
-            'hms-queen-elizabeth': 0,
-            'hms-irresistible': 1,
-            'hms-ocean': 2,
-            bouvet: 3,
-            suffren: 4
-        };
-        const lane = laneById[unit.id] ?? (seed % 5);
-        // Ege Denizi'nden başla (Sol alt)
-        const startX = 60 + lane * 18;
-        const startY = 460 + lane * 22;
-        const baseBase = unit.phases['naval-assault'];
-        const endX = baseBase ? baseBase.x : 505 + lane * 8;
-        const endY = baseBase ? baseBase.y : 333 + lane * 16;
-        return {
-            x: normalizeValue(Math.round(startX + (endX - startX) * t), 45, 680),
-            y: normalizeValue(Math.round(startY + (endY - startY) * t + Math.sin((phaseIndex + seed) * 0.22) * 3), 18, 548)
-        };
-    }
-
-    // Nusret: mayın hattı çevresinde kontrollü hareket
     if (unit.id === 'nusret') {
-        return {
-            x: normalizeValue(Math.round(454 + Math.sin((phaseIndex + seed) * 0.35) * 7), 45, 680),
-            y: normalizeValue(Math.round(382 + Math.cos((phaseIndex + seed) * 0.28) * 5), 18, 548)
-        };
+        return getTerrainSafePointForUnit(getNusretPosition(unit, phaseIndex).x, getNusretPosition(unit, phaseIndex).y, unit);
     }
 
-    // Osmanlı kara/topçu birlikleri: kıyı bataryalarına yayılım
+    if (unit.type === 'deniz' && unit.faction !== 'ottoman') {
+        const point = getAlliedNavalPosition(unit, phaseIndex);
+        return getTerrainSafePointForUnit(point.x, point.y, unit);
+    }
+
+    // Osmanlı kara/topçu birlikleri: deniz fazında kendi başlangıç pozisyonlarında kalır.
+    // Batarya birimleri kıyı tabyalarında, piyade birlikleri ise karargâh konumlarında.
     if (unit.faction === 'ottoman' && unit.type !== 'deniz') {
-        const batteryLine = [
-            { x: 405, y: 340 }, { x: 400, y: 365 }, { x: 395, y: 385 },
-            { x: 415, y: 310 }, { x: 498, y: 345 }, { x: 495, y: 365 }
-        ];
+        const seed = unitSeed(unit.id);
+        // Birim zaten naval-assault fazında elle tanımlanmış konuma sahip — onu kullan
+        const basePos = unit.phases && unit.phases[BASE_PHASE_ID];
+        if (basePos) {
+            return {
+                x: normalizeValue(Math.round(basePos.x + Math.sin((phaseIndex + seed) * 0.25) * 8), VP_MIN_X, VP_MAX_X),
+                y: normalizeValue(Math.round(basePos.y + Math.cos((phaseIndex + seed) * 0.2) * 8), VP_MIN_Y, VP_MAX_Y)
+            };
+        }
+        // Fallback: kıyı batarya hattı (Avrupa + Asya yakası tabyaları — geo-calibration'dan dinamik)
+        const batteryLine = MAP_FORTS.map(f => ({ x: f.x, y: f.y }));
         const slot = seed % batteryLine.length;
         const anchor = batteryLine[slot];
         return {
-            x: normalizeValue(Math.round(anchor.x + ((seed % 5) - 2) * 3 + Math.sin((phaseIndex + slot) * 0.21) * 2), 45, 680),
-            y: normalizeValue(Math.round(anchor.y + ((Math.floor(seed / 7) % 5) - 2) * 2 + Math.cos((phaseIndex + slot) * 0.19) * 2), 18, 548)
+            x: normalizeValue(Math.round(anchor.x + ((seed % 5) - 2) * 10 + Math.sin((phaseIndex + slot) * 0.21) * 7), VP_MIN_X, VP_MAX_X),
+            y: normalizeValue(Math.round(anchor.y + ((Math.floor(seed / 7) % 5) - 2) * 7 + Math.cos((phaseIndex + slot) * 0.19) * 7), VP_MIN_Y, VP_MAX_Y)
         };
     }
 
@@ -147,8 +414,8 @@ export function getClusterOffset(spreadState, x, y, unit, phaseIndex) {
     spreadState[key] = bucket;
     const ring = Math.floor(idx / 6);
     const slot = idx % 6;
-    const radius = PHASE_TOKEN_SPREAD + ring * 3.5;
-    const angle = ((idx * 58 + unitSeed(unit.id) + phaseIndex * 9) % 360) * Math.PI / 180;
+    const radius = PHASE_TOKEN_SPREAD + ring * 12;
+    const angle = ((idx * 58 + unitSeed(unit.id)) % 360) * Math.PI / 180;
     return {
         x: Math.round(Math.cos(angle) * (slot === 0 ? 1 : radius)),
         y: Math.round(Math.sin(angle) * (slot === 0 ? 1 : radius))
@@ -163,25 +430,25 @@ export function getUnitEntryOrigin(unit, targetBase) {
 
     if (unit.type === 'deniz' && unit.faction !== 'ottoman') {
         // Müttefik gemileri Batı'dan (Ege'den) gelir
-        x -= 190 + (seed % 35);
-        y += ((seed % 9) - 4) * 9;
+        x -= 650 + (seed % 120);
+        y += ((seed % 9) - 4) * 30;
     } else if (unit.faction === 'anzac') {
-        // ANZAC kuvvetleri denizden (Batı Ege) Arıburnu/Kabatepe sahiline (Doğuya doğru) çıkar
-        x -= 220 + (seed % 45); // Daha batıdan başlat
-        y += 10 + ((seed % 11) - 5) * 8;
+        // ANZAC kuvvetleri denizden (Batı Ege) Arıburnu/Kabatepe sahiline çıkar
+        x -= 750 + (seed % 150);
+        y += 35 + ((seed % 11) - 5) * 27;
     } else if (unit.faction === 'british' || unit.faction === 'french') {
-        // İngiliz/Fransız birlikleri Güneybatıdan (Ege/Limni) Seddülbahir/Kumkale'ye gelir
-        x -= 150 + (seed % 40); // Batı/Güneybatı'dan başlat
-        y += 120 + ((seed % 9) - 4) * 8; // Daha güneyden başlat
+        // İngiliz/Fransız birlikleri Güneybatıdan (Ege/Limni) gelir
+        x -= 510 + (seed % 140);
+        y += 410 + ((seed % 9) - 4) * 27;
     } else {
         // Osmanlı birlikleri Karadan (Kuzey/Doğu/Kuzeydoğu) gelir
-        x += (seed % 2 ? -1 : 1) * (85 + (seed % 40));
-        y -= 100 + (seed % 30);
+        x += (seed % 2 ? -1 : 1) * (290 + (seed % 140));
+        y -= 340 + (seed % 100);
     }
 
     return {
-        x: normalizeValue(Math.round(x), 45, 680),
-        y: normalizeValue(Math.round(y), 18, 548)
+        x: normalizeValue(Math.round(x), VP_MIN_X, VP_MAX_X),
+        y: normalizeValue(Math.round(y), VP_MIN_Y, VP_MAX_Y)
     };
 }
 
@@ -199,11 +466,11 @@ export function enforceCorridorSeparation(x, y, unit, campaignPhaseId) {
         // Frontline'ın ortalamasını bul
         const avgX = fl.points.reduce((s, p) => s + p.x, 0) / fl.points.length;
         const avgY = fl.points.reduce((s, p) => s + p.y, 0) / fl.points.length;
-        const hw = (fl.corridorWidth || 18) / 2;
+        const hw = (fl.corridorWidth || 60) / 2;
 
-        // Birim frontline'a yakın mı? (60 SVG unit mesafe içinde)
+        // Birim frontline'a yakın mı? (120 SVG unit mesafe içinde)
         const dist = Math.hypot(x - avgX, y - avgY);
-        if (dist > 60) continue;
+        if (dist > 120) continue;
 
         // side1 = allied (genellikle batı/güney), side2 = ottoman (doğu/kuzey)
         // Yarımadada batı = düşük x, doğu = yüksek x
@@ -222,7 +489,7 @@ export function enforceCorridorSeparation(x, y, unit, campaignPhaseId) {
         }
     }
 
-    return { x: normalizeValue(x, 45, 680), y: normalizeValue(y, 18, 548) };
+    return { x: normalizeValue(x, VP_MIN_X, VP_MAX_X), y: normalizeValue(y, VP_MIN_Y, VP_MAX_Y) };
 }
 
 /** Birim phase durumunu türet (fallback için) */
@@ -253,17 +520,22 @@ export function expandUnitTrails() {
         if (!startPhase) return;
 
         const hintedStart = resolvePhaseLocation(startPhase, unit, startIndex);
-        const baseData = unit.phases[startPhase.id] || unit.phases[BASE_PHASE_ID] || hintedStart;
+        const historicalStartPlacement = getHistoricalPlacementForPhase(unit, startIndex);
+        const historicalStart = pointFromHistoricalPlacement(historicalStartPlacement);
+        const navalStart = !historicalStart && unit.type === 'deniz' ? getNarrativeNavalPosition(unit, startIndex) : null;
+        const baseData = historicalStart || navalStart || ((hasCanonicalPhaseHint(startPhase, unit) && hintedStart)
+            ? hintedStart
+            : (unit.phases[startPhase.id] || hintedStart || unit.phases[BASE_PHASE_ID]));
         if (!baseData) return;
 
-        let x = baseData.x;
-        let y = baseData.y;
-        const drift = phaseDirectionByUnit(unit);
+        const safeBase = getTerrainSafePointForUnit(baseData.x, baseData.y, unit);
+        let x = safeBase.x;
+        let y = safeBase.y;
         const seed = unitSeed(unit.id);
         const startStatus = resolvePhaseMetaText(startPhase, unit, 'status') || (unit.phases[startPhase.id] && unit.phases[startPhase.id].status) || 'hazır';
         const startObjective = resolvePhaseMetaText(startPhase, unit, 'objective') || (unit.phases[startPhase.id] && unit.phases[startPhase.id].objective) || 'Temel görev başlangıcı';
         const startOutcome = resolvePhaseMetaText(startPhase, unit, 'outcome') || (unit.phases[startPhase.id] && unit.phases[startPhase.id].outcome) || 'Saha dağılımı tamamlandı';
-        unit.phases[startPhase.id] = { x: Math.round(x), y: Math.round(y), status: startStatus, objective: startObjective, outcome: startOutcome };
+        unit.phases[startPhase.id] = withHistoricalMeta({ x: Math.round(x), y: Math.round(y), status: startStatus, objective: startObjective, outcome: startOutcome }, historicalStartPlacement);
 
         for (let i = startIndex + 1; i < phaseIds.length; i++) {
             const pid = phaseIds[i];
@@ -271,13 +543,19 @@ export function expandUnitTrails() {
             const phase = BATTLE_DATA.phases[i];
 
             if (destroyedAnchorIndex !== -1 && i >= destroyedAnchorIndex) {
-                unit.phases[pid] = {
-                    x: Math.round(basePhaseData.x),
-                    y: Math.round(basePhaseData.y),
+                const destroyedPlacement = getHistoricalPlacementForPhase(unit, Math.min(i, destroyedAnchorIndex));
+                const historicalDestroyedPoint = pointFromHistoricalPlacement(destroyedPlacement);
+                const destroyedPoint = unit.type === 'deniz'
+                    ? (historicalDestroyedPoint || getNarrativeNavalPosition(unit, Math.min(i, destroyedAnchorIndex)) || basePhaseData)
+                    : basePhaseData;
+                const safeDestroyedPoint = getTerrainSafePointForUnit(destroyedPoint.x, destroyedPoint.y, unit);
+                unit.phases[pid] = withHistoricalMeta({
+                    x: Math.round(safeDestroyedPoint.x),
+                    y: Math.round(safeDestroyedPoint.y),
                     status: basePhaseData.status,
                     objective: basePhaseData.objective,
                     outcome: basePhaseData.outcome
-                };
+                }, destroyedPlacement);
                 x = unit.phases[pid].x;
                 y = unit.phases[pid].y;
                 continue;
@@ -298,55 +576,68 @@ export function expandUnitTrails() {
             }
 
             if (!unit.phases[pid]) {
-                const hinted = resolvePhaseLocation(phase, unit, i);
-                if (hinted) {
-                    x = hinted.x;
-                    y = hinted.y;
-                } else if (unit.type === 'deniz' && unit.faction !== 'ottoman') {
-                    // Hayatta kalan müttefik gemileri Boğazdan çekilip Ege (açık deniz) yönüne sabitlenir
-                    x = normalizeValue(60 + (seed % 4) * 20, 45, 680);
-                    y = normalizeValue(450 + (seed % 3) * 20, 18, 548);
+                const historicalPlacement = getHistoricalPlacementForPhase(unit, i);
+                const historicalPoint = pointFromHistoricalPlacement(historicalPlacement);
+
+                if (historicalPoint) {
+                    x = historicalPoint.x;
+                    y = historicalPoint.y;
                 } else {
-                    const fx = Math.sin((i + seed) * 0.42) * 3;
-                    const fy = Math.cos((i + seed) * 0.53) * 3;
-                    // Anchor region kısıtı: birim anchorRegion'dan maxDrift'ten fazla uzaklaşamaz
-                    const anchor = unit.anchorRegion && LOCATION_BY_ID[unit.anchorRegion];
-                    if (anchor) {
-                        const maxDrift = 35;
-                        x = normalizeValue(x + drift.x * 4 + fx, Math.max(45, anchor.x - maxDrift), Math.min(680, anchor.x + maxDrift));
-                        y = normalizeValue(y + drift.y * 4 + fy, Math.max(18, anchor.y - maxDrift), Math.min(548, anchor.y + maxDrift));
+                    // ── DENİZ BİRİMLERİ: getNarrativeNavalPosition ile hat formasyonu ──
+                    // Gemiler "bogaz" lokasyonuna yığılmasın — narrative pozisyon hesabı kullan
+                    const navalPos = getNarrativeNavalPosition(unit, i);
+                    if (navalPos) {
+                        x = navalPos.x;
+                        y = navalPos.y;
+                    } else if (unit.type === 'deniz' && unit.faction !== 'ottoman') {
+                        // Post-naval era: Ege'ye çekilir
+                        x = normalizeValue(200 + (seed % 4) * 70, VP_MIN_X, VP_MAX_X);
+                        y = normalizeValue(1800 + (seed % 3) * 70, VP_MIN_Y, VP_MAX_Y);
                     } else {
-                        x = normalizeValue(x + drift.x * 7 + fx, 45, 680);
-                        y = normalizeValue(y + drift.y * 7 + fy, 18, 548);
+                        const hinted = resolvePhaseLocation(phase, unit, i);
+                        if (hinted) {
+                            x = hinted.x;
+                            y = hinted.y;
+                        } else {
+                            // Kaynaksız mikro-hareket üretme: yeni tarihsel katman veri
+                            // sağlamıyorsa birim son güvenilir konumunda bekler.
+                            x = normalizeValue(x, VP_MIN_X, VP_MAX_X);
+                            y = normalizeValue(y, VP_MIN_Y, VP_MAX_Y);
+                        }
                     }
                 }
 
                 // ── TERRAIN GATE: entity tipine uygun terrain'e clamp ──
-                const typeDef = ENTITY_TYPES[unit.entityType];
-                if (typeDef) {
-                    const terrain = getTerrainAtPoint(x, y);
-                    if (!typeDef.allowedTerrain.includes(terrain)) {
-                        const clamped = clampToAllowedTerrain(x, y, typeDef.allowedTerrain);
-                        x = clamped.x;
-                        y = clamped.y;
-                    }
-                }
+                const safePoint = getTerrainSafePointForUnit(x, y, unit);
+                x = safePoint.x;
+                y = safePoint.y;
 
                 const status = resolvePhaseMetaText(phase, unit, 'status') || deriveUnitPhaseState(unit, i, phase && phase.title);
                 const objective = resolvePhaseMetaText(phase, unit, 'objective') || `${phase ? phase.title : 'Sıradaki'} kapsamında konum al`;
                 const outcome = resolvePhaseMetaText(phase, unit, 'outcome') || `${phase ? phase.title : 'Sıradaki'} hedefi için pozisyon alındı`;
-                unit.phases[pid] = {
+                unit.phases[pid] = withHistoricalMeta({
                     x: Math.round(x),
                     y: Math.round(y),
                     status,
                     objective,
                     outcome
-                };
+                }, historicalPlacement);
             } else {
                 const existing = unit.phases[pid];
-                x = existing.x ?? x;
-                y = existing.y ?? y;
+                const historicalPlacement = getHistoricalPlacementForPhase(unit, i);
+                const historicalPoint = pointFromHistoricalPlacement(historicalPlacement);
+                const sourcePoint = historicalPoint || { x: existing.x ?? x, y: existing.y ?? y };
+                const safeExisting = getTerrainSafePointForUnit(sourcePoint.x, sourcePoint.y, unit);
+                x = safeExisting.x;
+                y = safeExisting.y;
+                unit.phases[pid] = withHistoricalMeta({
+                    ...existing,
+                    x: Math.round(x),
+                    y: Math.round(y)
+                }, historicalPlacement);
             }
         }
     });
+
+    separateUnitTrails(phaseIds);
 }

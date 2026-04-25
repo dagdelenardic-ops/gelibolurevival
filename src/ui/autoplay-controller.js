@@ -3,13 +3,13 @@
 // Adaptive hız: major fazlar 6s, minor fazlar 2.5s, narration uzunluğuna göre ek süre
 // ══════════════════════════════════════════════════════════════
 
-import { isMajorPhase } from '../engine/phase-engine.js';
-import { BATTLE_DATA } from '../data/battle-data.js';
+import { isMajorPhase } from '../engine/phase-engine.js?v=20260407-manual-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-const MINOR_INTERVAL = isMobile ? 3000 : 2500;
-const MAJOR_INTERVAL = isMobile ? 7000 : 6000;
-const MAX_INTERVAL = isMobile ? 5000 : 8000; // Narration readTime üst sınırı
+const MINOR_INTERVAL = isMobile ? 4000 : 3500;
+const MAJOR_INTERVAL = isMobile ? 9000 : 8000;
+const MAX_INTERVAL = isMobile ? 10000 : 12000; // Narration readTime üst sınırı
 
 let autoplayTimer = null;
 let isAutoPlaying = false;
@@ -28,6 +28,10 @@ function isQuietPeriod(isoDate) {
 function getAdaptiveInterval(phaseIndex) {
     const phase = BATTLE_DATA.phases[phaseIndex];
     if (!phase) return MINOR_INTERVAL;
+
+    if (isMobile && Number.isFinite(phase.autoplayHoldMs)) {
+        return phase.autoplayHoldMs;
+    }
 
     const iso = phase.isoStart || '';
 
@@ -75,6 +79,13 @@ export function stopAutoPlay() {
 
 export function toggleAutoPlay(setActivePhase, getCurrentPhaseIndex) {
     isAutoPlaying ? stopAutoPlay() : startAutoPlay(setActivePhase, getCurrentPhaseIndex);
+}
+
+export function syncAutoPlay(setActivePhase, getCurrentPhaseIndex) {
+    if (!isAutoPlaying) return;
+    if (autoplayTimer) clearTimeout(autoplayTimer);
+    autoplayTimer = null;
+    scheduleNext(setActivePhase, getCurrentPhaseIndex);
 }
 
 export function refreshAutoPlayButton() {

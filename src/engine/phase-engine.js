@@ -3,13 +3,14 @@
 // Günlük faz üretimi, faz yönetimi, timeline veri hazırlığı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js';
+import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260407-manual-r1';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { HISTORICAL_ANCHORS } from '../data/historical-anchors.js';
 import {
     isoToUTCDate, utcDateToISO, addUTCDateDays,
     formatISOToTR, dayDiffISO, normalizeValue, normalizeDateText
 } from './date-utils.js';
-import { unitSeed } from './position-engine.js';
+import { unitSeed } from './position-engine.js?v=20260407-manual-r1';
 // Dynamic import — 1.1MB dosyayı ana modül parse'ını bloklamadan yükle
 let BOOK_PHASE_EVENTS = [];
 let BOOK_WEEKLY_GUIDE = [];
@@ -28,16 +29,95 @@ export async function loadBookData() {
 }
 import { CANONICAL_POSITIONS, getCanonicalPosition } from '../data/canonical-positions.js';
 
+const BASE_PHASE_TEMPLATES = JSON.parse(JSON.stringify(BATTLE_DATA.phases));
+
 // ── Modül State ──
 let UNIT_ENTRY_PHASE_INDEX = {};
 let PHASE_MAJOR_ORDER = [];
 let NAVAL_ERA_END_INDEX = 0;
 let WEEKLY_GUIDE = [];
 
+const MOBILE_STORY_CHAPTERS = [
+    {
+        id: 'opening',
+        title: 'Hazırlıklar',
+        shortTitle: '1914',
+        startIso: '1914-11-03',
+        endIso: '1915-02-18',
+        defaultLocations: ['gelibolu', 'bogaz', 'canakkale']
+    },
+    {
+        id: 'naval',
+        title: 'Deniz Harekâtı',
+        shortTitle: 'Deniz',
+        startIso: '1915-02-19',
+        endIso: '1915-03-17',
+        defaultLocations: ['bogaz', 'kilitbahir', 'canakkale']
+    },
+    {
+        id: 'march18',
+        title: '18 Mart',
+        shortTitle: '18 Mart',
+        startIso: '1915-03-18',
+        endIso: '1915-03-24',
+        defaultLocations: ['bogaz', 'kilitbahir', 'canakkale']
+    },
+    {
+        id: 'landings',
+        title: 'Çıkarmalar',
+        shortTitle: 'Çıkarma',
+        startIso: '1915-04-25',
+        endIso: '1915-05-18',
+        defaultLocations: ['ariburnu', 'seddulbahir', 'bigali']
+    },
+    {
+        id: 'trenches',
+        title: 'Siperler',
+        shortTitle: 'Siperler',
+        startIso: '1915-05-19',
+        endIso: '1915-08-05',
+        defaultLocations: ['ariburnu', 'conkbayiri', 'kirte', 'alcitepe']
+    },
+    {
+        id: 'anafartalar',
+        title: 'Anafartalar',
+        shortTitle: 'Anaf.',
+        startIso: '1915-08-06',
+        endIso: '1915-12-06',
+        defaultLocations: ['suvla', 'anafartalar', 'conkbayiri']
+    },
+    {
+        id: 'evacuation',
+        title: 'Tahliye',
+        shortTitle: 'Tahliye',
+        startIso: '1915-12-07',
+        endIso: '1916-01-09',
+        defaultLocations: ['ariburnu', 'suvla', 'seddulbahir']
+    }
+];
+
+const UNIT_CLASS_PRIORITY = {
+    mine_layer: 6,
+    battery: 5,
+    regiment: 4,
+    brigade: 3,
+    division: 2,
+    corps: 1,
+    army_hq: 0,
+    ship: 4
+};
+
 export function getUnitEntryPhaseIndex() { return UNIT_ENTRY_PHASE_INDEX; }
 export function getPhaseMajorOrder() { return PHASE_MAJOR_ORDER; }
 export function getNavalEraEndIndex() { return NAVAL_ERA_END_INDEX; }
 export function getWeeklyGuide() { return WEEKLY_GUIDE; }
+export function getMobileStoryChapters() { return MOBILE_STORY_CHAPTERS; }
+
+export function getMobileStoryChapter(isoDate) {
+    const iso = String(isoDate || '');
+    const match = MOBILE_STORY_CHAPTERS.find((chapter) => iso >= chapter.startIso && iso <= chapter.endIso);
+    return match || MOBILE_STORY_CHAPTERS[0];
+}
 
 // ── Phase Blend Utilities ──
 
@@ -73,6 +153,194 @@ function blendObjectMaps(prevMap, nextMap, ratio, salt = 0, coherent = false) {
 function mergeLocationIdArrays(a, b) {
     const merged = [...new Set([...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])])];
     return merged.length ? merged : ['gelibolu'];
+}
+
+function flattenLocationValue(value) {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === 'string' && value) return [value];
+    return [];
+}
+
+function cleanNarrationText(rawNarration) {
+    if (!rawNarration) return '';
+    return String(rawNarration)
+        .split(/\s*\|\s*/)
+        .map((part) => part
+            .replace(/^Açık Olay:\s*/i, '')
+            .replace(/^Operasyon Durumu:\s*/i, '')
+            .replace(/^Haftalık Bağlam:\s*/i, '')
+            .trim())
+        .filter(Boolean)
+        .join(' ')
+        .replace(/^[^.?!]*\bEPUB\b[^.?!]*[.?!]\s*/i, '')
+        .replace(/\bEPUB\s*kayd[ıi]\b/gi, '')
+        .replace(/(?:Resmi Günlük Kayıt|Günlük Akış|Haftalık Bağlam|Haftalık Bağ|Kayd[ıi])\s*:?/gi, '')
+        .replace(/\s*[·–-]\s*(?=[·–-]|\.|,|;|:|$)/g, '')
+        .replace(/^[\s·–-]+|[\s·–-]+$/g, '')
+        .replace(/\s+([,.;:!?])/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function cleanPhaseTitle(rawTitle) {
+    return String(rawTitle || '')
+        .replace(/\s*\(EPUB[^)]*\)/gi, '')
+        .replace(/(?:EPUB|Resmi Günlük Kayıt|Günlük Akış|Haftalık Bağlam|Haftalık Bağ|Kayd[ıi])\s*:?/gi, '')
+        .replace(/\s*·\s*/g, ' · ')
+        .replace(/\s*[·–-]\s*(?=[·–-]|$)/g, '')
+        .replace(/^[\s·–-]+|[\s·–-]+$/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim() || 'Cephe Günü';
+}
+
+function buildMobileSummary(text) {
+    const cleaned = cleanNarrationText(text);
+    if (!cleaned) return '';
+
+    const sentences = cleaned
+        .split(/(?<=[.!?])\s+/)
+        .map((sentence) => sentence.trim())
+        .filter(Boolean);
+
+    const summary = sentences.slice(0, 2).join(' ').trim() || cleaned;
+    if (summary.length <= 220) return summary;
+
+    const shortened = summary.slice(0, 217);
+    const lastSpace = shortened.lastIndexOf(' ');
+    return `${(lastSpace > 120 ? shortened.slice(0, lastSpace) : shortened).trim()}...`;
+}
+
+function collectPhaseLocationIds(phase, chapter) {
+    const ids = new Set();
+    flattenLocationValue(phase.locationIds).forEach((id) => ids.add(id));
+    Object.values(phase.locationByFaction || {}).forEach((value) => {
+        flattenLocationValue(value).forEach((id) => ids.add(id));
+    });
+    Object.values(phase.locationByUnit || {}).forEach((value) => {
+        flattenLocationValue(value).forEach((id) => ids.add(id));
+    });
+    (chapter?.defaultLocations || []).forEach((id) => ids.add(id));
+    return [...ids].filter((id) => BATTLE_DATA.locations.some((location) => location.id === id));
+}
+
+function buildMapFocus(locationIds) {
+    const coords = locationIds
+        .map((id) => getMapLocationById(id))
+        .filter(Boolean);
+
+    if (!coords.length) {
+        return {
+            x: 0,
+            y: MAP_CROP_TOP,
+            w: MAP_WIDTH,
+            h: MAP_VIEW_HEIGHT,
+            locationIds: [],
+            key: 'full-map'
+        };
+    }
+
+    const xs = coords.map((location) => location.x);
+    const ys = coords.map((location) => location.y);
+    const paddingX = coords.length === 1 ? 370 : 290;
+    const paddingY = coords.length === 1 ? 300 : 240;
+    const minW = coords.length === 1 ? 850 : 1100;
+    const minH = coords.length === 1 ? 700 : 800;
+    const maxW = 1800;
+    const maxH = 1400;
+
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    const w = Math.min(maxW, Math.max(minW, (maxX - minX) + paddingX * 2));
+    const h = Math.min(maxH, Math.max(minH, (maxY - minY) + paddingY * 2));
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const x = Math.max(0, Math.min(MAP_WIDTH - w, centerX - w / 2));
+    const y = Math.max(MAP_CROP_TOP, Math.min(MAP_HEIGHT - h, centerY - h / 2));
+
+    return {
+        x: Math.round(x),
+        y: Math.round(y),
+        w: Math.round(w),
+        h: Math.round(h),
+        locationIds,
+        key: locationIds.join('|')
+    };
+}
+
+function getUnitDisplayScore(unit, phase, focusIds) {
+    const focusSet = focusIds instanceof Set ? focusIds : new Set(focusIds);
+    let score = 0;
+
+    if (focusSet.has(getMapLocationId(unit.anchorRegion))) score += 4;
+
+    const unitLocation = phase.locationByUnit && phase.locationByUnit[unit.id];
+    flattenLocationValue(unitLocation).forEach((id) => {
+        if (focusSet.has(getMapLocationId(id))) score += 6;
+    });
+
+    const factionLocation = phase.locationByFaction && phase.locationByFaction[unit.faction];
+    flattenLocationValue(factionLocation).forEach((id) => {
+        if (focusSet.has(getMapLocationId(id))) score += 2;
+    });
+
+    if (unit.type === 'deniz' && focusSet.has('bogaz')) score += 3;
+    score += UNIT_CLASS_PRIORITY[unit.unitClass] || 0;
+
+    return score;
+}
+
+function deriveVisibleUnitIds(phase, locationIds) {
+    const focusSet = new Set(locationIds.map((id) => getMapLocationId(id)));
+    const scored = BATTLE_DATA.units
+        .map((unit) => ({ unit, score: getUnitDisplayScore(unit, phase, focusSet) }))
+        .filter((entry) => entry.score > 0)
+        .sort((a, b) => b.score - a.score || a.unit.name.localeCompare(b.unit.name, 'tr'));
+
+    const visibleIds = [];
+    const factionCounts = new Map();
+
+    for (const entry of scored) {
+        const count = factionCounts.get(entry.unit.faction) || 0;
+        if (count >= 3 && visibleIds.length >= 6) continue;
+        visibleIds.push(entry.unit.id);
+        factionCounts.set(entry.unit.faction, count + 1);
+        if (visibleIds.length >= 8) break;
+    }
+
+    return visibleIds;
+}
+
+function getAutoplayHoldMs(phase, chapter) {
+    const iso = String(phase.isoStart || '');
+    if (iso < '1915-02-19' && phase.importance !== 'major') return 900;
+    if (chapter.id === 'march18') return 5200;
+    if (phase.importance === 'major') return 4600;
+    if (chapter.id === 'opening') return 1200;
+    if (chapter.id === 'evacuation') return 1600;
+    return 1400;
+}
+
+function decoratePhasesForMobile() {
+    BATTLE_DATA.phases = BATTLE_DATA.phases.map((phase) => {
+        const chapter = getMobileStoryChapter(phase.isoStart);
+        const locationIds = collectPhaseLocationIds(phase, chapter);
+        const mapFocus = buildMapFocus(locationIds);
+        return {
+            ...phase,
+            mobilePriority: phase.importance === 'major' ? 'feature' : 'supporting',
+            mobileSummary: buildMobileSummary(phase.narration),
+            autoplayHoldMs: getAutoplayHoldMs(phase, chapter),
+            mapFocus,
+            mobileChapterId: chapter.id,
+            mobileChapterTitle: chapter.title,
+            mobileChapterShortTitle: chapter.shortTitle,
+            mobileVisibleUnitIds: deriveVisibleUnitIds(phase, mapFocus.locationIds)
+        };
+    });
 }
 
 // ── Phase Builders ──
@@ -116,8 +384,8 @@ function buildDailyHistoricalPhases(templatePhases = []) {
             id: `gun-${String(i + 1).padStart(4, '0')}`,
             isoStart: iso,
             date: formatISOToTR(iso),
-            title: anchor ? anchor.title : (exactParsed ? exactParsed.title : ((base.title || 'Cephe Günü') + ' · Günlük Akış')),
-            narration: anchor ? anchor.narration : (exactParsed ? exactParsed.narration : (base.narration || `${formatISOToTR(iso)} tarihinde cephede hareketlilik sürdü.`)),
+            title: cleanPhaseTitle(anchor ? anchor.title : (exactParsed ? exactParsed.title : (base.title || 'Cephe Günü'))),
+            narration: cleanNarrationText(anchor ? anchor.narration : (exactParsed ? exactParsed.narration : (base.narration || `${formatISOToTR(iso)} tarihinde cephede hareketlilik sürdü.`))),
             importance: anchor ? 'major' : (exactParsed ? exactParsed.importance : 'minor'),
             locationIds: anchor && Array.isArray(anchor.locationIds) ? anchor.locationIds : mergeLocationIdArrays(active.locationIds, next.locationIds),
             locationByFaction: anchor && anchor.locationByFaction ? anchor.locationByFaction : blendObjectMaps(active.locationByFaction, next.locationByFaction, ratio, i + 11, true),
@@ -140,8 +408,8 @@ function getParsedPhasesFromBook() {
             id: String(p.id || `epub-faz-${String(i + 1).padStart(2, '0')}`),
             date: p.date || '1915',
             isoStart: p.isoStart || p.isoDate || null,
-            title: (p.title && p.title.trim()) || `Faz ${i + 1}`,
-            narration: p.narration || `Kaynak metin: ${p.titleEn || p.title || 'Bilinmiyor'}.`,
+            title: cleanPhaseTitle((p.title && p.title.trim()) || `Faz ${i + 1}`),
+            narration: cleanNarrationText(p.narration || `Kaynak metin: ${p.titleEn || p.title || 'Bilinmiyor'}.`),
             importance: p.importance === 'major' ? 'major' : 'minor',
             locationIds: Array.isArray(p.locationIds) ? p.locationIds : [],
             locationByFaction: p.locationByFaction && typeof p.locationByFaction === 'object' ? p.locationByFaction : null,
@@ -185,7 +453,14 @@ function applyCanonicalPositions(phases) {
 }
 
 /** Phase genişletmeyi tetikle — kitap verisi varsa onu kullan, yoksa günlük phase üret */
-function ensureExpandedPhases() {
+function cloneBasePhases() {
+    return JSON.parse(JSON.stringify(BASE_PHASE_TEMPLATES));
+}
+
+function ensureExpandedPhases(options = {}) {
+    const { expandDaily = true } = options;
+    BATTLE_DATA.phases = cloneBasePhases();
+
     const parsedPhases = getParsedPhasesFromBook();
     WEEKLY_GUIDE = Array.isArray(BOOK_WEEKLY_GUIDE) ? BOOK_WEEKLY_GUIDE : [];
     if (parsedPhases && parsedPhases.length > 0) {
@@ -196,6 +471,14 @@ function ensureExpandedPhases() {
         applyCanonicalPositions(BATTLE_DATA.phases);
         return;
     }
+
+    if (!expandDaily) {
+        BATTLE_DATA.phases = BATTLE_DATA.phases
+            .map((p, idx) => ({ ...p, isoStart: p.isoStart || normalizeDateText(p.date, idx), title: cleanPhaseTitle(p.title), narration: cleanNarrationText(p.narration) }))
+            .sort((a, b) => (a.isoStart < b.isoStart ? -1 : a.isoStart > b.isoStart ? 1 : 0));
+        return;
+    }
+
     BATTLE_DATA.phases = buildDailyHistoricalPhases(BATTLE_DATA.phases);
 }
 
@@ -283,9 +566,16 @@ export function getNavalEraProgress(phaseIndex) {
 }
 
 /** Tüm veri hazırlama orchestrator — init() tarafından çağrılır */
-export async function hydrateTimelineData() {
-    await loadBookData();
-    ensureExpandedPhases();
+export async function hydrateTimelineData(options = {}) {
+    const { loadBook = true, expandDaily = true } = options;
+    if (loadBook) {
+        await loadBookData();
+    } else {
+        BOOK_PHASE_EVENTS = [];
+        BOOK_WEEKLY_GUIDE = [];
+    }
+    ensureExpandedPhases({ expandDaily });
+    decoratePhasesForMobile();
     computePhaseMajorOrder();
     computeUnitEntryPhaseIndexes();
 }

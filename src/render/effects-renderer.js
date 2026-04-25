@@ -3,10 +3,13 @@
 // Battery shot animasyonları, deniz dönemi efektleri
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js';
-import { isNavalEraPhaseIndex } from '../engine/phase-engine.js';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js';
-import { getNarrativeNavalPosition, isDestroyedPhaseData } from '../engine/position-engine.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
+import { MAP_FORTS } from '../data/geo-calibration.js?v=20260407-manual-r1';
+import { isNavalEraPhaseIndex, getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260407-manual-r1';
+import { getNarrativeNavalPosition, isDestroyedPhaseData } from '../engine/position-engine.js?v=20260407-manual-r1';
+
+const BATTERY_FORT_IDS = ['fort-kilitbahir', 'fort-cimenlik', 'fort-hamidiye', 'fort-rumeli-mecidiye'];
+const FORT_BY_ID = MAP_FORTS.reduce((acc, f) => { acc[f.id] = f; return acc; }, {});
 
 /** Savaş efektlerini (battery shot) güncelle */
 export function renderBattleEffects(phaseIndex) {
@@ -22,12 +25,7 @@ export function renderBattleEffects(phaseIndex) {
         return;
     }
 
-    const batteries = [
-        { x: 405, y: 340 },
-        { x: 498, y: 345 },
-        { x: 395, y: 385 },
-        { x: 495, y: 365 }
-    ];
+    const batteries = BATTERY_FORT_IDS.map(id => FORT_BY_ID[id]).filter(Boolean);
     const UNIT_ENTRY = getUnitEntryPhaseIndex();
     const shipTargets = BATTLE_DATA.units
         .filter((u) => u.type === 'deniz' && u.faction !== 'ottoman')
@@ -45,7 +43,7 @@ export function renderBattleEffects(phaseIndex) {
         const d = entry.target;
         return `<g>
       <line class="battery-shot" style="--shot-delay:${(entry.idx * 0.09).toFixed(2)}s" x1="${battery.x}" y1="${battery.y}" x2="${d.x}" y2="${d.y}"></line>
-      <circle class="battery-impact" cx="${d.x}" cy="${d.y}" r="4"></circle>
+      <circle class="battery-impact" cx="${d.x}" cy="${d.y}" r="12"></circle>
     </g>`;
     }).join('');
 }

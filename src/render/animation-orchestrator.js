@@ -4,8 +4,9 @@
 // → eventType + intensity + unit states → zengin savaş animasyonları
 // ══════════════════════════════════════════════════════════════
 
-import { LOCATION_BY_ID } from '../data/battle-data.js';
-import { FRONTLINES } from '../data/frontlines.js';
+import { LOCATION_BY_ID } from '../data/battle-data.js?v=20260407-manual-r1';
+import { FRONTLINES } from '../data/frontlines.js?v=20260407-manual-r1';
+import { COORD_SCALE } from '../data/coordinate-map.js';
 import {
     renderAdvanceArrow,
     renderRetreatArrow,
@@ -26,33 +27,35 @@ import {
  * Cephe adı → harita geometrisi eşleştirmesi.
  * ottoman/allied pozisyonları + frontline referansı
  */
+/** Ölçeklenmiş koordinatlar (eski 720×560 → yeni 2451×3467 viewport) */
+const S = COORD_SCALE; // 3.4
 const FRONT_GEOMETRY = {
     'Deniz': {
-        center: { x: 445, y: 338 },
-        ottoman: { x: 408, y: 348 },
-        allied: { x: 480, y: 330 },
+        center: { x: Math.round(445 * S), y: Math.round(338 * S) },
+        ottoman: { x: Math.round(408 * S), y: Math.round(348 * S) },
+        allied: { x: Math.round(480 * S), y: Math.round(330 * S) },
         type: 'naval',
     },
     'Arıburnu': {
-        center: { x: 240, y: 250 },
-        ottoman: { x: 270, y: 240 },
-        allied: { x: 222, y: 258 },
+        center: { x: Math.round(240 * S), y: Math.round(250 * S) },
+        ottoman: { x: Math.round(270 * S), y: Math.round(240 * S) },
+        allied: { x: Math.round(222 * S), y: Math.round(258 * S) },
         frontlineId: 'ariburnu-front',
         type: 'trench',
         alliedFaction: 'anzac',
     },
     'Seddülbahir': {
-        center: { x: 310, y: 440 },
-        ottoman: { x: 305, y: 420 },
-        allied: { x: 315, y: 460 },
+        center: { x: Math.round(310 * S), y: Math.round(440 * S) },
+        ottoman: { x: Math.round(305 * S), y: Math.round(420 * S) },
+        allied: { x: Math.round(315 * S), y: Math.round(460 * S) },
         frontlineId: 'seddulbahir-front',
         type: 'trench',
         alliedFaction: 'allied',
     },
     'Anafartalar': {
-        center: { x: 290, y: 160 },
-        ottoman: { x: 320, y: 155 },
-        allied: { x: 260, y: 165 },
+        center: { x: Math.round(290 * S), y: Math.round(160 * S) },
+        ottoman: { x: Math.round(320 * S), y: Math.round(155 * S) },
+        allied: { x: Math.round(260 * S), y: Math.round(165 * S) },
         frontlineId: 'suvla-front',
         type: 'trench',
         alliedFaction: 'allied',
@@ -119,7 +122,7 @@ export function orchestrateAnimations(animData, positions) {
         case 'IDLE':
         default:
             if (intensity > 3) {
-                fx = renderIdlePressure(fronts, intensity, seed);
+                ({ routes, fx } = renderIdlePressure(fronts, intensity, seed));
             }
             break;
     }

@@ -3,13 +3,15 @@
 // Birlik token SVG oluşturma, animasyon, highlight
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { normalizeValue } from '../engine/date-utils.js';
 import {
     unitSeed, getNarrativeNavalPosition,
-    getClusterOffset, getUnitEntryOrigin, isDestroyedPhaseData
-} from '../engine/position-engine.js';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js';
+    getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, isDestroyedPhaseData
+} from '../engine/position-engine.js?v=20260407-manual-r1';
+import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260407-manual-r1';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js';
 import { getUnitStrength, formatStrength } from '../data/casualty-model.js';
 import { getUnitIcon } from '../data/icon-registry.js';
 
@@ -32,40 +34,41 @@ function navalTokenShape(unit, f, cx, cy, phaseData) {
     const cl = f.colorLight;
     const isFlagship = unit.id === 'hms-queen-elizabeth' || unit.id === 'nusret';
     const isSunk = isDestroyedPhaseData(phaseData);
-    return `<path d="M${cx - 13} ${cy + 5} L${cx - 8} ${cy - 3} L${cx + 8} ${cy - 3} L${cx + 13} ${cy + 5} Z" fill="${c}" stroke="${cl}" stroke-width=".8" opacity="${isSunk ? '.5' : '.92'}" filter="url(#subtleGlow)"/>` +
-        `<rect x="${cx - 6}" y="${cy - 8}" width="12" height="5" rx="1.4" fill="${cl}" opacity="${isSunk ? '.35' : '.82'}"/>` +
-        `<rect x="${cx - 1.2}" y="${cy - 13}" width="2.4" height="7" fill="${cl}" opacity="${isSunk ? '.35' : '.9'}"/>` +
-        `<line x1="${cx}" y1="${cy - 13}" x2="${cx + 6}" y2="${cy - 9}" stroke="${cl}" stroke-width=".7" opacity=".8"/>` +
-        `<circle cx="${cx - 7}" cy="${cy + 1}" r="1.1" fill="${cl}" opacity=".8"/>` +
-        `<circle cx="${cx}" cy="${cy + 1}" r="1.1" fill="${cl}" opacity=".8"/>` +
-        `<circle cx="${cx + 7}" cy="${cy + 1}" r="1.1" fill="${cl}" opacity=".8"/>` +
-        (isFlagship ? `<polygon points="${cx + 1},${cy - 13} ${cx + 7},${cy - 11} ${cx + 1},${cy - 9}" fill="#f6e5a7" opacity=".9"/>` : '') +
-        (isSunk ? `<path d="M${cx - 10} ${cy - 10} L${cx + 10} ${cy + 10} M${cx + 10} ${cy - 10} L${cx - 10} ${cy + 10}" stroke="#f6e5a7" stroke-width="1.1" opacity=".85"/>` : '') +
-        (() => { const ic = getUnitIcon(unit.id); return `<image href="assets/icons/${ic.icon}.png" x="${cx - ic.size / 2}" y="${cy - ic.size / 2 - 2}" width="${ic.size}" height="${ic.size}" opacity="${isSunk ? '.3' : '.82'}" pointer-events="none"/>`; })();
+    const s = 2.8; // scale factor for 2451x3467 viewport
+    return `<path d="M${cx - 13*s} ${cy + 5*s} L${cx - 8*s} ${cy - 3*s} L${cx + 8*s} ${cy - 3*s} L${cx + 13*s} ${cy + 5*s} Z" fill="${c}" stroke="${cl}" stroke-width="${.8*s}" opacity="${isSunk ? '.5' : '.92'}" filter="url(#subtleGlow)"/>` +
+        `<rect x="${cx - 6*s}" y="${cy - 8*s}" width="${12*s}" height="${5*s}" rx="${1.4*s}" fill="${cl}" opacity="${isSunk ? '.35' : '.82'}"/>` +
+        `<rect x="${cx - 1.2*s}" y="${cy - 13*s}" width="${2.4*s}" height="${7*s}" fill="${cl}" opacity="${isSunk ? '.35' : '.9'}"/>` +
+        `<line x1="${cx}" y1="${cy - 13*s}" x2="${cx + 6*s}" y2="${cy - 9*s}" stroke="${cl}" stroke-width="${.7*s}" opacity=".8"/>` +
+        `<circle cx="${cx - 7*s}" cy="${cy + 1*s}" r="${1.1*s}" fill="${cl}" opacity=".8"/>` +
+        `<circle cx="${cx}" cy="${cy + 1*s}" r="${1.1*s}" fill="${cl}" opacity=".8"/>` +
+        `<circle cx="${cx + 7*s}" cy="${cy + 1*s}" r="${1.1*s}" fill="${cl}" opacity=".8"/>` +
+        (isFlagship ? `<polygon points="${cx + 1*s},${cy - 13*s} ${cx + 7*s},${cy - 11*s} ${cx + 1*s},${cy - 9*s}" fill="#f6e5a7" opacity=".9"/>` : '') +
+        (isSunk ? `<path d="M${cx - 10*s} ${cy - 10*s} L${cx + 10*s} ${cy + 10*s} M${cx + 10*s} ${cy - 10*s} L${cx - 10*s} ${cy + 10*s}" stroke="#f6e5a7" stroke-width="${1.1*s}" opacity=".85"/>` : '') +
+        (() => { const ic = getUnitIcon(unit.id); const sz = ic.size * s; return `<image href="assets/icons/${ic.icon}.png" x="${cx - sz / 2}" y="${cy - sz / 2 - 2*s}" width="${sz}" height="${sz}" opacity="${isSunk ? '.3' : '.82'}" pointer-events="none"/>`; })();
 }
 
-/** unitClass bazlı token radius */
+/** unitClass bazlı token radius (2451×3467 viewport için ölçekli) */
 function getTokenRadius(unitClass) {
-    const radii = { army_hq: 13, corps: 11, division: 10, brigade: 8, regiment: 7, battery: 9 };
-    return radii[unitClass] || 10;
+    const radii = { army_hq: 35, corps: 30, division: 27, brigade: 22, regiment: 19, battery: 24, mine_layer: 24, ship: 24 };
+    return radii[unitClass] || 27;
 }
 
 /** unitClass bazlı NATO-style boyut işareti */
 function unitClassMarker(cx, cy, unitClass, cl) {
-    const y = cy - getTokenRadius(unitClass) - 3;
+    const y = cy - getTokenRadius(unitClass) - 8;
     switch (unitClass) {
         case 'army_hq':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="5" font-weight="bold" font-family="var(--mono)">★★★</text>`;
+            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="14" font-weight="bold" font-family="var(--mono)">★★★</text>`;
         case 'corps':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="4.5" font-weight="bold" font-family="var(--mono)">XX</text>`;
+            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="13" font-weight="bold" font-family="var(--mono)">XX</text>`;
         case 'division':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="4" font-family="var(--mono)">××</text>`;
+            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="11" font-family="var(--mono)">××</text>`;
         case 'brigade':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="4" font-family="var(--mono)">×</text>`;
+            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="11" font-family="var(--mono)">×</text>`;
         case 'regiment':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="3.5" font-family="var(--mono)">III</text>`;
+            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="10" font-family="var(--mono)">III</text>`;
         case 'battery':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="4" font-family="var(--mono)">⌇</text>`;
+            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="11" font-family="var(--mono)">⌇</text>`;
         default:
             return '';
     }
@@ -117,6 +120,45 @@ function tokenShape(unit, phaseData, f, cx, cy) {
     }
 }
 
+function escapeAttr(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function getActionDashArray(actionKey) {
+    switch (actionKey) {
+        case 'defending': return '';
+        case 'reserve': return '1.5 2.5';
+        case 'bombarding': return '4 2';
+        case 'engaged': return '2.4 1.6';
+        case 'landing': return '5 2.4';
+        case 'advancing': return '6 2.8';
+        case 'retreating': return '2 3.5';
+        default: return '3 3';
+    }
+}
+
+function actionAdornment(unit, intent) {
+    const color = intent && intent.actionColor ? intent.actionColor : '#a6a08f';
+    const dashArray = getActionDashArray(intent && intent.actionKey);
+
+    if (unit.type === 'deniz') {
+        return `<g class="unit-action-adornment" aria-hidden="true">
+          <ellipse class="unit-action-ring" data-action-key="${intent.actionKey}" cx="0" cy="0" rx="18" ry="12.5" fill="none" stroke="${color}" stroke-width="1.1" opacity=".8"${dashArray ? ` stroke-dasharray="${dashArray}"` : ''}/>
+          <circle class="unit-action-pip" cx="12.5" cy="-9" r="2.4" fill="${color}" stroke="rgba(20, 18, 16, .92)" stroke-width=".85"/>
+        </g>`;
+    }
+
+    const r = getTokenRadius(unit.unitClass) + 3;
+    return `<g class="unit-action-adornment" aria-hidden="true">
+      <circle class="unit-action-ring" data-action-key="${intent.actionKey}" cx="0" cy="0" r="${r}" fill="none" stroke="${color}" stroke-width="1.1" opacity=".8"${dashArray ? ` stroke-dasharray="${dashArray}"` : ''}/>
+      <circle class="unit-action-pip" cx="${r - 1}" cy="${-r + 1}" r="2.2" fill="${color}" stroke="rgba(20, 18, 16, .92)" stroke-width=".8"/>
+    </g>`;
+}
+
 /** Kuvvet badge'i SVG — token altında sayı gösterir */
 function strengthBadge(cx, cy, unit, isoDate, animData) {
     if (!unit.strength || unit.type === 'deniz') return '';
@@ -145,15 +187,15 @@ function strengthBadge(cx, cy, unit, isoDate, animData) {
     else barColor = 'rgba(200,70,50,.85)';
 
     const r = getTokenRadius(unit.unitClass);
-    const by = cy + r + 10; // isim altı
-    const barW = 16;
-    const barH = 2;
+    const by = cy + r + 28; // isim altı (ölçekli)
+    const barW = 45;
+    const barH = 6;
     const fillW = barW * ratio;
 
     return `<g class="strength-badge" opacity=".85">
-      <text x="${cx}" y="${by + 8}" text-anchor="middle" fill="#d5c8a1" font-family="var(--mono)" font-size="4" opacity=".9">${txt}</text>
-      <rect x="${cx - barW / 2}" y="${by + 10}" width="${barW}" height="${barH}" rx="1" fill="rgba(40,35,25,.6)"/>
-      <rect x="${cx - barW / 2}" y="${by + 10}" width="${fillW}" height="${barH}" rx="1" fill="${barColor}"/>
+      <text x="${cx}" y="${by + 22}" text-anchor="middle" fill="#d5c8a1" font-family="var(--mono)" font-size="12" opacity=".9">${txt}</text>
+      <rect x="${cx - barW / 2}" y="${by + 26}" width="${barW}" height="${barH}" rx="3" fill="rgba(40,35,25,.6)"/>
+      <rect x="${cx - barW / 2}" y="${by + 26}" width="${fillW}" height="${barH}" rx="3" fill="${barColor}"/>
     </g>`;
 }
 
@@ -162,6 +204,7 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
     const spreadNext = {};
     const spreadPrev = {};
     const UNIT_ENTRY = getUnitEntryPhaseIndex();
+    const phase = BATTLE_DATA.phases[phaseIndex] || BATTLE_DATA.phases.find((item) => item.id === pid) || null;
     return BATTLE_DATA.units.map((u) => {
         const entryIndex = UNIT_ENTRY[u.id] ?? 0;
         if (phaseIndex < entryIndex) return '';
@@ -170,6 +213,7 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         if (!targetBase) return ''; // Yok olan veya henüz girmeyen birlik
 
         const phaseData = u.phases[pid];
+        const intent = deriveUnitIntent(u, phase, phaseData || null, animData);
         const f = BATTLE_DATA.factions[u.faction];
         const hasPrev = !!prevPositions[u.id];
         const isEntryFrame = phaseIndex === entryIndex && !hasPrev;
@@ -178,24 +222,36 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         const visible = phaseData ? 1 : 0.55;
         const prevOffset = getClusterOffset(spreadPrev, prev.x, prev.y, u, prevPhaseIndex);
         const targetOffset = getClusterOffset(spreadNext, targetBase.x, targetBase.y, u, phaseIndex);
-        const sx = normalizeValue(Math.round(prev.x + prevOffset.x), 45, 680);
-        const sy = normalizeValue(Math.round(prev.y + prevOffset.y), 18, 548);
-        const tx = normalizeValue(Math.round(targetBase.x + targetOffset.x), 45, 680);
-        const ty = normalizeValue(Math.round(targetBase.y + targetOffset.y), 18, 548);
-        const statusText = phaseData ? (phaseData.status || 'Bilinmiyor') : 'Hazır durum';
-        const ariaLabel = `${u.name} – ${f.name} – ${statusText}`;
+        const sx = normalizeValue(Math.round(prev.x + prevOffset.x), VP_MIN_X, VP_MAX_X);
+        const sy = normalizeValue(Math.round(prev.y + prevOffset.y), VP_MIN_Y, VP_MAX_Y);
+        const targetPoint = getTerrainSafePointForUnit(targetBase.x + targetOffset.x, targetBase.y + targetOffset.y, u);
+        const tx = normalizeValue(Math.round(targetPoint.x), VP_MIN_X, VP_MAX_X);
+        const ty = normalizeValue(Math.round(targetPoint.y), VP_MIN_Y, VP_MAX_Y);
+        const statusText = intent.statusText;
+        const ariaLabel = `${u.name} – ${f.name} – ${intent.actionLabel} – ${intent.currentLocationName}`;
+        const titleText = `${u.name} — ${intent.actionLabel} — ${intent.currentLocationName}${intent.targetLocationName && intent.targetLocationName !== intent.currentLocationName ? ` → ${intent.targetLocationName}` : ''}`;
         return `<g class="unit-token" role="button" tabindex="0" aria-label="${ariaLabel}"
       data-unit-id="${u.id}"
       data-unit-name="${u.name}"
       data-unit-commander="${u.commander}"
       data-unit-strength="${u.strength}"
-      data-phase-status="${statusText}"
-      data-phase-objective="${phaseData ? (phaseData.objective || 'Bilinmiyor') : 'Bilinmiyor'}"
-      data-phase-outcome="${phaseData ? (phaseData.outcome || 'Bilinmiyor') : 'Bilinmiyor'}"
+      data-phase-status="${escapeAttr(statusText)}"
+      data-phase-objective="${escapeAttr(intent.objectiveText)}"
+      data-phase-outcome="${escapeAttr(intent.outcomeText)}"
+      data-action-key="${intent.actionKey}"
+      data-action-label="${escapeAttr(intent.actionLabel)}"
+      data-current-location="${escapeAttr(intent.currentLocationId || '')}"
+      data-current-location-name="${escapeAttr(intent.currentLocationName)}"
+      data-target-location="${escapeAttr(intent.targetLocationId || '')}"
+      data-target-location-name="${escapeAttr(intent.targetLocationName)}"
+      data-front="${escapeAttr(intent.frontLabel || '')}"
+      data-contact-summary="${escapeAttr(intent.contactLabel || '')}"
       data-target-x="${tx}" data-target-y="${ty}"
       style="transform:translate(${sx}px, ${sy}px);opacity:${visible}">
+      <title>${escapeAttr(titleText)}</title>
+      ${actionAdornment(u, intent)}
       ${tokenShape(u, phaseData, f, 0, 0)}
-      <text x="0" y="18" text-anchor="middle" fill="${f.colorLight}" font-family="var(--mono)" font-size="5.5" class="unit-label">
+      <text x="0" y="50" text-anchor="middle" fill="${f.colorLight}" font-family="var(--mono)" font-size="15" class="unit-label">
         ${u.name.length > 20 ? u.name.slice(0, 18) + '…' : u.name}
       </text>
       ${strengthBadge(0, 0, u, isoDate, animData)}
