@@ -199,13 +199,23 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
+function shouldSkipOnboarding() {
+    if (localStorage.getItem(STORAGE_KEY)) return true;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('editor') === '1' || params.get('doctor') === '1') return true;
+    if (params.get('date') || params.get('day') || params.get('iso')) return true;
+
+    return false;
+}
+
 /**
  * @param {object} opts
  * @param {Function} opts.onFinish — tutorial bitince opsiyonel olarak çağrılır
  * @returns {boolean} tutorial gösterildi mi
  */
 export function initOnboarding(opts = {}) {
-    if (localStorage.getItem(STORAGE_KEY)) return false;
+    if (shouldSkipOnboarding()) return false;
 
     injectStyles();
 

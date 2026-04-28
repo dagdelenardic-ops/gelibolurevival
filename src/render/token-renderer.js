@@ -196,6 +196,63 @@ function actionAdornment(unit, intent) {
     </g>`;
 }
 
+function vitalAdornment(unit, vitals, intent) {
+    if (!vitals?.base || unit.type === 'deniz') return '';
+
+    const stressed = vitals.stamina <= 0.58 || vitals.lossRatio >= 0.18 || (vitals.todayLoss || 0) >= 180;
+    if (!stressed) return '';
+
+    const r = getTokenRadius(unit.unitClass) + 6;
+    const critical = vitals.stamina <= 0.24 || vitals.lossRatio >= 0.4;
+    const fatigued = vitals.stamina <= 0.42 || vitals.lossRatio >= 0.24;
+    const actionKey = intent?.actionKey || '';
+    const combatActive = ['engaged', 'bombarding', 'advancing', 'landing', 'retreating', 'defending'].includes(actionKey);
+    const auraColor = critical
+        ? 'rgba(196, 86, 72, .22)'
+        : fatigued
+            ? 'rgba(210, 158, 82, .18)'
+            : 'rgba(126, 174, 200, .16)';
+    const tickColor = critical ? 'rgba(232, 132, 115, .82)' : 'rgba(226, 191, 110, .76)';
+    const smokeColor = critical ? 'rgba(170, 74, 68, .24)' : 'rgba(154, 126, 92, .18)';
+    const tickCount = Math.min(4, Math.max(1, Math.round(vitals.lossRatio * 8)));
+    const wispCount = critical ? 3 : fatigued ? 2 : 1;
+    const pulseDur = combatActive ? (critical ? '1.1s' : '1.6s') : (critical ? '1.8s' : '2.4s');
+
+    const ticks = Array.from({ length: tickCount }, (_, index) => {
+        const angle = (-46 + index * 17) * Math.PI / 180;
+        const inner = r - 2;
+        const outer = inner + (critical ? 8 : 6);
+        const x1 = Math.cos(angle) * inner;
+        const y1 = Math.sin(angle) * inner;
+        const x2 = Math.cos(angle) * outer;
+        const y2 = Math.sin(angle) * outer;
+        return `<line class="unit-vitals-notch" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
+            stroke="${tickColor}" stroke-width="${critical ? 1.6 : 1.2}" opacity="${critical ? '.88' : '.72'}"/>`;
+    }).join('');
+
+    const wisps = Array.from({ length: wispCount }, (_, index) => {
+        const dx = (index - ((wispCount - 1) / 2)) * 8;
+        const startY = -r + 4 - (index * 2);
+        const peakY = startY - (critical ? 14 : 10);
+        const drift = critical ? 7 : 5;
+        const delay = `${(index * 0.24).toFixed(2)}s`;
+        const dur = critical ? '1.15s' : '1.65s';
+        return `<path class="unit-vitals-wisp" d="M${dx} ${startY} Q${(dx + drift / 2).toFixed(1)} ${(startY + peakY) / 2} ${dx + drift} ${peakY}"
+            fill="none" stroke="${smokeColor}" stroke-width="${critical ? 1.8 : 1.3}" stroke-linecap="round" opacity=".22">
+            <animate attributeName="opacity" values=".08;.26;.06" dur="${dur}" begin="${delay}" repeatCount="indefinite"/>
+        </path>`;
+    }).join('');
+
+    return `<g class="unit-vitals-adornment" aria-hidden="true">
+      <circle class="unit-vitals-aura" cx="0" cy="0" r="${r}" fill="${auraColor}" opacity="${critical ? '.2' : '.15'}">
+        <animate attributeName="r" values="${(r - 2).toFixed(1)};${(r + (critical ? 5 : 3)).toFixed(1)};${(r - 2).toFixed(1)}" dur="${pulseDur}" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="${critical ? '.18;.28;.18' : '.1;.2;.1'}" dur="${pulseDur}" repeatCount="indefinite"/>
+      </circle>
+      ${ticks}
+      ${wisps}
+    </g>`;
+}
+
 /** Kuvvet badge'i SVG — token altında sayı gösterir */
 function strengthBadge(cx, cy, unit, vitals) {
     if (!unit.strength || unit.type === 'deniz' || !vitals) return '';
@@ -292,6 +349,7 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
       data-target-x="${tx}" data-target-y="${ty}"
       style="transform:translate(${sx}px, ${sy}px);opacity:${visible};--stamina:${vitals.stamina || 1};--loss-ratio:${vitals.lossRatio || 0};--pulse-dur:${pulseDur}s">
       <title>${escapeAttr(titleText)}</title>
+      ${vitalAdornment(u, vitals, intent)}
       ${actionAdornment(u, intent)}
       ${tokenShape(u, phaseData, f, 0, 0)}
       <text x="0" y="50" text-anchor="middle" fill="${f.colorLight}" font-family="var(--mono)" font-size="15" class="unit-label">

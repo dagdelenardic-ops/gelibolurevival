@@ -159,6 +159,26 @@ body[data-map-editor="open"] .unit-label {
     stroke-width: 1.2px
 }
 
+.unit-vitals-adornment,
+.unit-vitals-aura,
+.unit-vitals-notch,
+.unit-vitals-wisp {
+    pointer-events: none
+}
+
+.unit-vitals-notch,
+.unit-vitals-wisp {
+    filter: drop-shadow(0 0 2px rgba(24, 20, 18, .22))
+}
+
+.unit-token.is-fatigued .strength-badge {
+    opacity: .94
+}
+
+.unit-token.is-depleted .strength-badge {
+    opacity: 1
+}
+
 /* ── Lokasyon Etiketleri — hiyerarşik, inline'da set ediliyor ── */
 .location-label {
     font-family: var(--mono);

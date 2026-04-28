@@ -13,7 +13,7 @@ import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from 
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
 import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation } from './engine/position-engine.js?v=20260407-manual-r1';
 import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260407-manual-r1';
-import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js';
+import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260428-vital-adornment';
 import { renderBattleEffects } from './render/effects-renderer.js';
 import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js';
 import { animateCamera } from './render/camera.js?v=20260428-camera-safe';
@@ -24,7 +24,7 @@ import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } 
 import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js';
 import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js';
 import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay } from './ui/autoplay-controller.js';
-import { initOnboarding } from './ui/onboarding.js';
+import { initOnboarding } from './ui/onboarding.js?v=20260428-deeplink-skip';
 import { toggleStatsPanel } from './ui/stats-panel.js';
 import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js';
 
