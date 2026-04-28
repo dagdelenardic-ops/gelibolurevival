@@ -10,6 +10,8 @@ const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 const MINOR_INTERVAL = isMobile ? 4000 : 3500;
 const MAJOR_INTERVAL = isMobile ? 9000 : 8000;
 const MAX_INTERVAL = isMobile ? 10000 : 12000; // Narration readTime üst sınırı
+const READING_WPM = isMobile ? 130 : 165;
+const MIN_READING_WORDS = isMobile ? 18 : 28;
 
 let autoplayTimer = null;
 let isAutoPlaying = false;
@@ -23,6 +25,38 @@ const QUIET_PERIODS = [
 function isQuietPeriod(isoDate) {
     if (!isoDate) return false;
     return QUIET_PERIODS.some(p => isoDate >= p.start && isoDate <= p.end);
+}
+
+function countReadableWords(text) {
+    return String(text || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(' ')
+        .filter(Boolean)
+        .length;
+}
+
+function getReadingExtraMs(phase) {
+    const sourceText = phase.mobileSummary || phase.narration || phase.title || '';
+    const wordCount = countReadableWords(sourceText);
+    if (!wordCount) return 0;
+
+    const effectiveWords = Math.max(0, wordCount - MIN_READING_WORDS);
+    if (!effectiveWords) return 0;
+
+    const rawMs = Math.round((effectiveWords / READING_WPM) * 60_000);
+    return Math.min(isMobile ? 2600 : 3200, rawMs);
+}
+
+function getIntensityExtraMs(phase) {
+    const iso = String(phase?.isoStart || '');
+    const animData = typeof window !== 'undefined' ? window.ANIMATION_EVENTS_BY_DATE?.[iso] : null;
+    const intensity = Number(animData?.intensity || 0);
+
+    if (intensity >= 8) return isMobile ? 1400 : 1800;
+    if (intensity >= 6) return isMobile ? 900 : 1200;
+    if (intensity >= 4) return isMobile ? 400 : 550;
+    return 0;
 }
 
 function getAdaptiveInterval(phaseIndex) {
@@ -49,8 +83,14 @@ function getAdaptiveInterval(phaseIndex) {
     }
 
     const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;
+    const readingExtra = getReadingExtraMs(phase);
+    const intensityExtra = getIntensityExtraMs(phase);
 
-    return Math.min(MAX_INTERVAL, base);
+    return Math.min(MAX_INTERVAL, base + readingExtra + intensityExtra);
+}
+
+export function getAutoPlayIntervalForPhase(phaseIndex) {
+    return getAdaptiveInterval(phaseIndex);
 }
 
 function scheduleNext(setActivePhase, getCurrentPhaseIndex) {

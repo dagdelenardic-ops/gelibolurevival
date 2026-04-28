@@ -23,7 +23,7 @@ import { orchestrateAnimations } from './render/animation-orchestrator.js';
 import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js';
 import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js';
 import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton } from './ui/autoplay-controller.js';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay } from './ui/autoplay-controller.js';
 import { initOnboarding } from './ui/onboarding.js';
 import { toggleStatsPanel } from './ui/stats-panel.js';
 import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js';
@@ -64,7 +64,10 @@ function loadAnimationEventsInBackground() {
 
     Promise.resolve()
         .then(() => loader())
-        .then(() => setActivePhase(currentPhaseIndex))
+        .then(() => {
+            setActivePhase(currentPhaseIndex);
+            syncAutoPlay(setActivePhase, getCurrentPhaseIndex);
+        })
         .catch((err) => console.warn('Animasyon verileri hazır olamadı:', err));
 }
 
@@ -101,6 +104,7 @@ async function hydrateRichTimelineInBackground() {
         }
 
         setActivePhase(currentPhaseIndex);
+        syncAutoPlay(setActivePhase, getCurrentPhaseIndex);
         refreshAutoPlayButton();
         await refreshTerrainSafeTrails();
     } catch (err) {
