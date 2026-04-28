@@ -12,7 +12,7 @@ import {
 } from '../engine/position-engine.js?v=20260407-manual-r1';
 import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260407-manual-r1';
 import { deriveUnitIntent } from '../engine/unit-intelligence.js';
-import { getUnitStrength, formatStrength } from '../data/casualty-model.js';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 import { getUnitIcon } from '../data/icon-registry.js';
 
 let tokenTrailTimer = null;
@@ -141,6 +141,43 @@ function getActionDashArray(actionKey) {
     }
 }
 
+function normalizeAnimUnitName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+        .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/[^a-z0-9\s.-]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function getAnimatedUnitState(unit, animData) {
+    let unitState = 'idle';
+    let intensity = 0;
+    if (!animData) return { unitState, intensity };
+
+    intensity = Number(animData.intensity || 0);
+    const unitName = normalizeAnimUnitName(unit.name);
+    const animUnit = animData.units?.find((entry) => {
+        const animName = normalizeAnimUnitName(entry.name);
+        return animName === unitName || animName.includes(unitName) || unitName.includes(animName);
+    });
+
+    if (animUnit) unitState = animUnit.state || unitState;
+    return { unitState, intensity };
+}
+
+function getTokenVitals(unit, isoDate, animData) {
+    const { unitState, intensity } = getAnimatedUnitState(unit, animData);
+    return getUnitVitals(unit.id, isoDate, intensity, unitState, unit.strength || 0);
+}
+
+function getVitalClass(vitals) {
+    if (!vitals || !vitals.base) return '';
+    if (vitals.ratio <= 0.38 || vitals.stamina <= 0.24) return ' is-depleted';
+    if (vitals.ratio <= 0.62 || vitals.stamina <= 0.42) return ' is-fatigued';
+    if (vitals.lossRatio >= 0.2) return ' is-worn';
+    return '';
+}
+
 function actionAdornment(unit, intent) {
     const color = intent && intent.actionColor ? intent.actionColor : '#a6a08f';
     const dashArray = getActionDashArray(intent && intent.actionKey);
@@ -160,25 +197,13 @@ function actionAdornment(unit, intent) {
 }
 
 /** Kuvvet badge'i SVG — token altında sayı gösterir */
-function strengthBadge(cx, cy, unit, isoDate, animData) {
-    if (!unit.strength || unit.type === 'deniz') return '';
+function strengthBadge(cx, cy, unit, vitals) {
+    if (!unit.strength || unit.type === 'deniz' || !vitals) return '';
 
-    // Animasyon verisinden bu birimin state'ini bul
-    let unitState = 'idle';
-    let intensity = 0;
-    if (animData) {
-        intensity = animData.intensity || 0;
-        const animUnit = animData.units?.find(u => {
-            const n1 = (u.name || '').toLowerCase();
-            const n2 = unit.name.toLowerCase();
-            return n1 === n2 || n1.includes(n2) || n2.includes(n1);
-        });
-        if (animUnit) unitState = animUnit.state || 'idle';
-    }
-
-    const str = getUnitStrength(unit.id, isoDate, intensity, unitState, unit.strength);
-    const txt = formatStrength(str.current);
-    const ratio = str.ratio;
+    const txt = formatStrength(vitals.current);
+    const lossTxt = vitals.loss > 0 ? `-${formatStrength(vitals.loss)}` : '';
+    const ratio = vitals.ratio;
+    const stamina = vitals.stamina;
 
     // Renk: yeşil → sarı → kırmızı
     let barColor;
@@ -186,16 +211,26 @@ function strengthBadge(cx, cy, unit, isoDate, animData) {
     else if (ratio > 0.4) barColor = 'rgba(220,180,50,.8)';
     else barColor = 'rgba(200,70,50,.85)';
 
+    let staminaColor;
+    if (stamina > 0.7) staminaColor = 'rgba(126, 174, 200, .86)';
+    else if (stamina > 0.42) staminaColor = 'rgba(218, 170, 80, .86)';
+    else staminaColor = 'rgba(205, 85, 72, .9)';
+
     const r = getTokenRadius(unit.unitClass);
     const by = cy + r + 28; // isim altı (ölçekli)
     const barW = 45;
-    const barH = 6;
+    const barH = 5;
     const fillW = barW * ratio;
+    const staminaW = barW * stamina;
 
     return `<g class="strength-badge" opacity=".85">
-      <text x="${cx}" y="${by + 22}" text-anchor="middle" fill="#d5c8a1" font-family="var(--mono)" font-size="12" opacity=".9">${txt}</text>
+      <title>Kalan kuvvet: ${txt}${lossTxt ? ` · Kayıp: ${lossTxt}` : ''} · Stamina: ${vitals.staminaPercent}% (${vitals.staminaLabel})</title>
+      <text x="${cx}" y="${by + 20}" text-anchor="middle" fill="#d5c8a1" font-family="var(--mono)" font-size="12" opacity=".9">${txt}${lossTxt ? ` ${lossTxt}` : ''}</text>
       <rect x="${cx - barW / 2}" y="${by + 26}" width="${barW}" height="${barH}" rx="3" fill="rgba(40,35,25,.6)"/>
       <rect x="${cx - barW / 2}" y="${by + 26}" width="${fillW}" height="${barH}" rx="3" fill="${barColor}"/>
+      <rect x="${cx - barW / 2}" y="${by + 34}" width="${barW}" height="${barH}" rx="3" fill="rgba(40,35,25,.52)"/>
+      <rect x="${cx - barW / 2}" y="${by + 34}" width="${staminaW}" height="${barH}" rx="3" fill="${staminaColor}"/>
+      <text x="${cx}" y="${by + 50}" text-anchor="middle" fill="#9fb9c5" font-family="var(--mono)" font-size="9" opacity=".82">STA ${vitals.staminaPercent}%</text>
     </g>`;
 }
 
@@ -214,6 +249,8 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
 
         const phaseData = u.phases[pid];
         const intent = deriveUnitIntent(u, phase, phaseData || null, animData);
+        const vitals = getTokenVitals(u, isoDate, animData);
+        const vitalClass = getVitalClass(vitals);
         const f = BATTLE_DATA.factions[u.faction];
         const hasPrev = !!prevPositions[u.id];
         const isEntryFrame = phaseIndex === entryIndex && !hasPrev;
@@ -228,13 +265,19 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         const tx = normalizeValue(Math.round(targetPoint.x), VP_MIN_X, VP_MAX_X);
         const ty = normalizeValue(Math.round(targetPoint.y), VP_MIN_Y, VP_MAX_Y);
         const statusText = intent.statusText;
-        const ariaLabel = `${u.name} – ${f.name} – ${intent.actionLabel} – ${intent.currentLocationName}`;
-        const titleText = `${u.name} — ${intent.actionLabel} — ${intent.currentLocationName}${intent.targetLocationName && intent.targetLocationName !== intent.currentLocationName ? ` → ${intent.targetLocationName}` : ''}`;
-        return `<g class="unit-token" role="button" tabindex="0" aria-label="${ariaLabel}"
+        const staminaLabel = vitals.base ? ` – stamina ${vitals.staminaPercent}% – kayıp ${formatStrength(vitals.loss)}` : '';
+        const ariaLabel = `${u.name} – ${f.name} – ${intent.actionLabel} – ${intent.currentLocationName}${staminaLabel}`;
+        const titleText = `${u.name} — ${intent.actionLabel} — ${intent.currentLocationName}${intent.targetLocationName && intent.targetLocationName !== intent.currentLocationName ? ` → ${intent.targetLocationName}` : ''}${staminaLabel}`;
+        const pulseDur = vitals.stamina <= 0.35 ? 2.7 : vitals.lossRatio >= 0.35 ? 2.25 : 1.7;
+        return `<g class="unit-token${vitalClass}" role="button" tabindex="0" aria-label="${ariaLabel}"
       data-unit-id="${u.id}"
       data-unit-name="${u.name}"
       data-unit-commander="${u.commander}"
       data-unit-strength="${u.strength}"
+      data-current-strength="${vitals.current || ''}"
+      data-unit-loss="${vitals.loss || 0}"
+      data-loss-ratio="${vitals.lossRatio?.toFixed ? vitals.lossRatio.toFixed(3) : '0'}"
+      data-stamina="${vitals.stamina?.toFixed ? vitals.stamina.toFixed(3) : '1'}"
       data-phase-status="${escapeAttr(statusText)}"
       data-phase-objective="${escapeAttr(intent.objectiveText)}"
       data-phase-outcome="${escapeAttr(intent.outcomeText)}"
@@ -247,14 +290,14 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
       data-front="${escapeAttr(intent.frontLabel || '')}"
       data-contact-summary="${escapeAttr(intent.contactLabel || '')}"
       data-target-x="${tx}" data-target-y="${ty}"
-      style="transform:translate(${sx}px, ${sy}px);opacity:${visible}">
+      style="transform:translate(${sx}px, ${sy}px);opacity:${visible};--stamina:${vitals.stamina || 1};--loss-ratio:${vitals.lossRatio || 0};--pulse-dur:${pulseDur}s">
       <title>${escapeAttr(titleText)}</title>
       ${actionAdornment(u, intent)}
       ${tokenShape(u, phaseData, f, 0, 0)}
       <text x="0" y="50" text-anchor="middle" fill="${f.colorLight}" font-family="var(--mono)" font-size="15" class="unit-label">
         ${u.name.length > 20 ? u.name.slice(0, 18) + '…' : u.name}
       </text>
-      ${strengthBadge(0, 0, u, isoDate, animData)}
+      ${strengthBadge(0, 0, u, vitals)}
     </g>`;
     }).join('');
 }

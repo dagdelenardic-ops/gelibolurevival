@@ -18,12 +18,22 @@ export function animateCamera(svg, target, duration = 600) {
     if (cameraAnimFrame) cancelAnimationFrame(cameraAnimFrame);
 
     const vb = svg.viewBox.baseVal;
-    const start = { x: vb.x, y: vb.y, w: vb.width, h: vb.height };
+    const start = {
+        x: Number.isFinite(vb.x) ? vb.x : 0,
+        y: Number.isFinite(vb.y) ? vb.y : MAP_CROP_TOP,
+        w: Number.isFinite(vb.width) && vb.width > 0 ? vb.width : MAP_WIDTH,
+        h: Number.isFinite(vb.height) && vb.height > 0 ? vb.height : MAP_VIEW_HEIGHT
+    };
+    const targetWidth = Number.isFinite(target.w) && target.w > 0 ? target.w : MAP_WIDTH;
+    const targetHeight = Number.isFinite(target.h) && target.h > 0 ? target.h : MAP_VIEW_HEIGHT;
+    const targetX = Number.isFinite(target.x) ? target.x : 0;
+    const targetY = Number.isFinite(target.y) ? target.y : MAP_CROP_TOP;
+
     // Clamp target to valid viewport bounds
-    const tx = Math.max(0, Math.min(MAP_WIDTH - target.w, target.x));
-    const ty = Math.max(MAP_CROP_TOP, Math.min(MAP_HEIGHT - target.h, target.y));
-    const tw = Math.max(600, Math.min(MAP_WIDTH, target.w));
-    const th = Math.max(500, Math.min(MAP_VIEW_HEIGHT, target.h));
+    const tw = Math.max(600, Math.min(MAP_WIDTH, targetWidth));
+    const th = Math.max(500, Math.min(MAP_VIEW_HEIGHT, targetHeight));
+    const tx = Math.max(0, Math.min(MAP_WIDTH - tw, targetX));
+    const ty = Math.max(MAP_CROP_TOP, Math.min(MAP_HEIGHT - th, targetY));
 
     const startTime = performance.now();
 
@@ -38,7 +48,7 @@ export function animateCamera(svg, target, duration = 600) {
         const cw = start.w + (tw - start.w) * ease;
         const ch = start.h + (th - start.h) * ease;
 
-        svg.setAttribute('viewBox', `${cx.toFixed(1)} ${cy.toFixed(1)} ${cw.toFixed(1)} ${ch.toFixed(1)}`);
+        svg.setAttribute('viewBox', `${cx.toFixed(1)} ${cy.toFixed(1)} ${Math.max(1, cw).toFixed(1)} ${Math.max(1, ch).toFixed(1)}`);
 
         if (t < 1) {
             cameraAnimFrame = requestAnimationFrame(frame);

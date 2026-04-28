@@ -3,20 +3,20 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from './data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260407-manual-r1';
 import { ENTITY_TYPES } from './data/entity-types.js';
 import { waitForTerrainSampler } from './data/terrain-zones.js';
-import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from './data/coordinate-map.js';
+import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js';
 import { isUnitDestroyed } from './data/canonical-positions.js';
-import { normalizeDateText, normalizeValue } from './engine/date-utils.js';
+import { normalizeDateText } from './engine/date-utils.js';
 import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260407-manual-r1';
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
-import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation, getClusterOffset, getTerrainSafePointForUnit } from './engine/position-engine.js?v=20260407-manual-r1';
+import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation } from './engine/position-engine.js?v=20260407-manual-r1';
 import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260407-manual-r1';
 import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js';
 import { renderBattleEffects } from './render/effects-renderer.js';
 import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js';
-import { animateCamera } from './render/camera.js';
+import { animateCamera } from './render/camera.js?v=20260428-camera-safe';
 import { initTouchZoom } from "./engine/touch-zoom.js?v=20260407-manual-r1";
 
 import { orchestrateAnimations } from './render/animation-orchestrator.js';
@@ -35,59 +35,19 @@ const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 let richTimelineHydrationStarted = false;
 let terrainRefreshVersion = 0;
 
-// ── Mobile DOM Patching: innerHTML yerine mevcut token'ları güncelle ──
-function patchTokens(tg, pid, prevPositions, nextPositions, phaseIndex, prevPhaseIndex, isoDate, animData) {
-    const UNIT_ENTRY = getUnitEntryPhaseIndex();
-    const existingNodes = new Map();
-    tg.querySelectorAll('.unit-token').forEach(el => {
-        existingNodes.set(el.dataset.unitId, el);
-    });
+function getCurrentPhaseIndex() { return currentPhaseIndex; }
 
-    const activeUnitIds = new Set();
-
-    BATTLE_DATA.units.forEach((u) => {
-        const entryIndex = UNIT_ENTRY[u.id] ?? 0;
-        if (phaseIndex < entryIndex) return;
-
-        const targetBase = nextPositions[u.id];
-        if (!targetBase) return;
-
-        const phaseData = u.phases[pid];
-        const visible = phaseData ? 1 : 0.55;
-        const offset = getClusterOffset({}, targetBase.x, targetBase.y, u, phaseIndex);
-        const targetPoint = getTerrainSafePointForUnit(targetBase.x + offset.x, targetBase.y + offset.y, u);
-        const tx = normalizeValue(Math.round(targetPoint.x), VP_MIN_X, VP_MAX_X);
-        const ty = normalizeValue(Math.round(targetPoint.y), VP_MIN_Y, VP_MAX_Y);
-
-        activeUnitIds.add(u.id);
-
-        const existing = existingNodes.get(u.id);
-        if (existing) {
-            // Sadece pozisyon ve opacity güncelle — DOM silmeden
-            existing.style.transform = `translate(${tx}px, ${ty}px)`;
-            existing.style.opacity = String(visible);
-            existing.dataset.targetX = tx;
-            existing.dataset.targetY = ty;
-        } else {
-            // Yeni token: sadece ilk kez girenlerde innerHTML ekle
-            const nextMarkup = renderTokens(pid, prevPositions, { [u.id]: nextPositions[u.id] }, phaseIndex, prevPhaseIndex, isoDate, animData);
-            if (nextMarkup.trim()) {
-                const temp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                temp.innerHTML = nextMarkup;
-                while (temp.firstChild) tg.appendChild(temp.firstChild);
-            }
-        }
-    });
-
-    // Artık ekranda olmaması gereken token'ları gizle (silmeden)
-    existingNodes.forEach((el, id) => {
-        if (!activeUnitIds.has(id)) {
-            el.style.opacity = '0';
-        }
-    });
+function getRequestedStartIso() {
+    if (typeof window === 'undefined') return '';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('date') || params.get('day') || params.get('iso') || '';
 }
 
-function getCurrentPhaseIndex() { return currentPhaseIndex; }
+function applyRequestedStartPhase() {
+    const requestedIso = getRequestedStartIso();
+    if (!requestedIso) return;
+    currentPhaseIndex = getPhaseIndexByIso(requestedIso);
+}
 
 function scheduleIdleTask(callback) {
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
@@ -113,7 +73,7 @@ async function hydrateRichTimelineInBackground() {
     richTimelineHydrationStarted = true;
 
     const activePhase = BATTLE_DATA.phases[currentPhaseIndex];
-    const activeIso = activePhase?.isoStart || normalizeDateText(activePhase?.date, currentPhaseIndex);
+    const activeIso = getRequestedStartIso() || activePhase?.isoStart || normalizeDateText(activePhase?.date, currentPhaseIndex);
     const previousMobileMode = getMobileViewMode();
 
     try {
@@ -209,10 +169,140 @@ function isQuietPeriod(iso) {
     return iso && QUIET_PERIODS.some(p => iso >= p.start && iso <= p.end);
 }
 let narrationTimer = null;
+let lastCameraKey = '';
 
-function focusStoryMapForPhase(phase) {
-    if (!isMobile || !phase?.mapFocus || !window.GELIBOLU_VIEWPORT) return;
-    const focus = phase.mapFocus;
+const FRONT_CAMERA_TARGETS = {
+    Deniz: { x: 1120, y: 1650, w: 980, h: 820, locationIds: ['bogaz', 'canakkale', 'kilitbahir', 'erenkoyu'] },
+    Arıburnu: { x: 760, y: 1430, w: 820, h: 700, locationIds: ['ariburnu', 'conkbayiri', 'bigali'] },
+    Seddülbahir: { x: 760, y: 2040, w: 900, h: 780, locationIds: ['seddulbahir', 'kirte', 'alcitepe', 'morto-koyu'] },
+    Anafartalar: { x: 850, y: 1320, w: 760, h: 680, locationIds: ['suvla', 'anafartalar', 'kirectepe', 'conkbayiri'] }
+};
+
+const EVACUATION_CAMERA_TARGETS = {
+    north: { x: 720, y: 1320, w: 980, h: 860, locationIds: ['suvla', 'ariburnu', 'anafartalar', 'conkbayiri', 'kirectepe'] },
+    south: { x: 740, y: 2030, w: 980, h: 860, locationIds: ['seddulbahir', 'kirte', 'alcitepe', 'morto-koyu'] }
+};
+
+function clampCameraTarget(target) {
+    const w = Math.max(620, Math.min(MAP_WIDTH, Math.round(target.w || MAP_WIDTH)));
+    const h = Math.max(560, Math.min(MAP_VIEW_HEIGHT, Math.round(target.h || MAP_VIEW_HEIGHT)));
+    const x = Math.max(0, Math.min(MAP_WIDTH - w, Math.round(target.x || 0)));
+    const y = Math.max(MAP_CROP_TOP, Math.min(MAP_CROP_TOP + MAP_VIEW_HEIGHT - h, Math.round(target.y || MAP_CROP_TOP)));
+    return { ...target, x, y, w, h };
+}
+
+function targetFromPoints(points, options = {}) {
+    const valid = points.filter((point) => point && Number.isFinite(point.x) && Number.isFinite(point.y));
+    if (!valid.length) return null;
+
+    const minX = Math.min(...valid.map((point) => point.x));
+    const maxX = Math.max(...valid.map((point) => point.x));
+    const minY = Math.min(...valid.map((point) => point.y));
+    const maxY = Math.max(...valid.map((point) => point.y));
+    const padding = options.padding ?? 210;
+    const minW = options.minW ?? 760;
+    const minH = options.minH ?? 640;
+    const maxW = options.maxW ?? 1500;
+    const maxH = options.maxH ?? 1200;
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const w = Math.min(maxW, Math.max(minW, (maxX - minX) + padding * 2));
+    const h = Math.min(maxH, Math.max(minH, (maxY - minY) + padding * 2));
+
+    return clampCameraTarget({
+        x: centerX - w / 2,
+        y: centerY - h / 2,
+        w,
+        h,
+        locationIds: options.locationIds || []
+    });
+}
+
+function normalizeAnimName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+        .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/[^a-z0-9\s.-]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function getAnimationUnitIds(animData) {
+    if (!Array.isArray(animData?.units) || !animData.units.length) return null;
+    const names = animData.units.map((unit) => normalizeAnimName(unit.name)).filter(Boolean);
+    if (!names.length) return null;
+    return new Set(BATTLE_DATA.units
+        .filter((unit) => {
+            const modelName = normalizeAnimName(unit.name);
+            return names.some((name) => modelName === name || modelName.includes(name) || name.includes(modelName));
+        })
+        .map((unit) => unit.id));
+}
+
+function buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData) {
+    const iso = String(phase?.isoStart || '');
+    const fronts = Array.isArray(animData?.fronts) ? animData.fronts : [];
+    const activeUnitIds = getAnimationUnitIds(animData);
+    const activePoints = Object.entries(nextPositions || {})
+        .filter(([unitId]) => !activeUnitIds || activeUnitIds.has(unitId))
+        .map(([, point]) => point);
+
+    if (iso >= '1915-12-07' && iso <= '1915-12-20') {
+        return { ...EVACUATION_CAMERA_TARGETS.north, reason: 'evacuation-north' };
+    }
+    if (iso > '1915-12-20') {
+        return { ...EVACUATION_CAMERA_TARGETS.south, reason: 'evacuation-south' };
+    }
+
+    if (fronts.length === 1 && FRONT_CAMERA_TARGETS[fronts[0]]) {
+        return { ...FRONT_CAMERA_TARGETS[fronts[0]], reason: `front:${fronts[0]}` };
+    }
+
+    if (activePoints.length >= 2 && Number(animData?.intensity || 0) >= 4) {
+        const target = targetFromPoints(activePoints, {
+            padding: Number(animData?.intensity || 0) >= 7 ? 250 : 190,
+            minW: 760,
+            minH: 620,
+            maxW: 1450,
+            maxH: 1100
+        });
+        if (target) return { ...target, reason: 'active-units' };
+    }
+
+    if (Array.isArray(phase?.locationIds) && phase.locationIds.length) {
+        const locationPoints = phase.locationIds
+            .map((id) => getMapLocationById(id))
+            .filter(Boolean);
+        const target = targetFromPoints(locationPoints, {
+            padding: 260,
+            minW: 900,
+            minH: 720,
+            maxW: 1600,
+            maxH: 1220,
+            locationIds: phase.locationIds
+        });
+        if (target) return { ...target, reason: 'phase-locations' };
+    }
+
+    if (phase?.mapFocus) return { ...phase.mapFocus, reason: 'phase-map-focus' };
+    return campaignPhase.camera || { x: 0, y: MAP_CROP_TOP, w: MAP_WIDTH, h: MAP_VIEW_HEIGHT, reason: 'campaign' };
+}
+
+function applyPhaseCamera(phase, campaignPhase, nextPositions, animData) {
+    const svg = document.getElementById('battleMap');
+    if (!svg) return null;
+    const target = clampCameraTarget(buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData));
+    const key = `${target.x}:${target.y}:${target.w}:${target.h}`;
+    if (key !== lastCameraKey) {
+        animateCamera(svg, target, 720);
+        lastCameraKey = key;
+    }
+    return target;
+}
+
+function focusStoryMapForPhase(phase, focusOverride = null) {
+    if (!isMobile || !window.GELIBOLU_VIEWPORT) return;
+    const focus = focusOverride || phase?.mapFocus;
+    if (!focus) return;
     window.GELIBOLU_VIEWPORT.focusOnPoint(
         focus.x + focus.w / 2,
         focus.y + focus.h / 2,
@@ -300,14 +390,16 @@ function setActivePhase(i) {
 
     // ── MOBİL SESSIZ DÖNEM: Tarih chip + narration güncelle (fotoğraf değiştiğinde) ──
     if (quiet) {
+        const campaignPhase = resolveCampaignPhase(currentIso);
+        const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
+        const cameraTarget = applyPhaseCamera(p, campaignPhase, currentPositions, animData);
         const ind = document.getElementById('phaseIndicator');
         if (ind) ind.textContent = formatPhaseIndicator(p);
         updateMapDateIndicator(p.date);
-        if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p);
+        updateMapSceneState(p, animData, cameraTarget);
+        if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p, cameraTarget);
         // Her 3 fazda narration güncelle — fotoğraflar da değişebilsin
         if (nextIndex % 3 === 0) {
-            const campaignPhase = resolveCampaignPhase(currentIso);
-            const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
             prevCampaignPhaseId = campaignPhase.id;
             if (narrationTimer) clearTimeout(narrationTimer);
             narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), 150);
@@ -370,26 +462,19 @@ function setActivePhase(i) {
     });
 
     const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
+    const cameraTarget = applyPhaseCamera(p, campaignPhase, nextPositions, animData);
 
     const tg = document.getElementById('unitTokens');
     if (tg) {
-        if (isMobile) {
-            patchTokens(tg, p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
-        } else {
-            const nextMarkup = renderTokens(p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
-            tg.innerHTML = nextMarkup;
-            const tokenNodes = [...tg.querySelectorAll('.unit-token')];
-            requestAnimationFrame(() => applyTokenSlideWithTrail(tokenNodes));
-        }
+        const nextMarkup = renderTokens(p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
+        tg.innerHTML = nextMarkup;
+        const tokenNodes = [...tg.querySelectorAll('.unit-token')];
+        requestAnimationFrame(() => applyTokenSlideWithTrail(tokenNodes));
     }
     if (isMobile) {
-        if (isTransition) {
-            const svg = document.getElementById('battleMap');
-            if (svg) animateCamera(svg, campaignPhase.camera);
-        }
         if (animData) triggerPhaseSfx(animData, campaignPhase.id);
-        updateMapSceneState(p, animData);
-        if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p);
+        updateMapSceneState(p, animData, cameraTarget);
+        if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p, cameraTarget);
     } else {
         renderBattleEffects(nextIndex);
         renderFrontlines(campaignPhase, currentIso);
@@ -401,11 +486,6 @@ function setActivePhase(i) {
         const combatLayer = document.getElementById('layer-combat-fx');
         if (combatLayer) combatLayer.innerHTML += animFx;
 
-        if (isTransition) {
-            const svg = document.getElementById('battleMap');
-            if (svg) animateCamera(svg, campaignPhase.camera);
-        }
-
         if (animData) {
             if (animData.units?.length) renderAnimationUnits(animData);
             renderAtmosphere(animData.animationState);
@@ -416,7 +496,7 @@ function setActivePhase(i) {
             renderAtmosphere(null);
             renderTransition('');
         }
-        updateMapSceneState(p, animData);
+        updateMapSceneState(p, animData, cameraTarget);
     }
 
     // ── Info card ──
@@ -468,6 +548,7 @@ function initPinchZoom() {
 // ── Ana Başlatma ──
 async function init() {
     await hydrateTimelineData({ loadBook: false, expandDaily: false });
+    applyRequestedStartPhase();
     expandUnitTrails();
     initPositions();
     renderTopBar();

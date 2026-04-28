@@ -4,9 +4,10 @@
 // → eventType + intensity + unit states → zengin savaş animasyonları
 // ══════════════════════════════════════════════════════════════
 
-import { LOCATION_BY_ID } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { FRONTLINES } from '../data/frontlines.js?v=20260407-manual-r1';
 import { COORD_SCALE } from '../data/coordinate-map.js';
+import { getUnitVitals } from '../data/casualty-model.js';
 import {
     renderAdvanceArrow,
     renderRetreatArrow,
@@ -87,6 +88,50 @@ function dateSeed(dateStr) {
         h = ((h << 5) - h + dateStr.charCodeAt(i)) | 0;
     }
     return Math.abs(h);
+}
+
+function normalizeUnitName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+        .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/[^a-z0-9\s.-]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function findModelUnit(animUnit) {
+    const wanted = normalizeUnitName(animUnit?.name);
+    if (!wanted) return null;
+    return BATTLE_DATA.units.find((unit) => {
+        const actual = normalizeUnitName(unit.name);
+        return actual === wanted || actual.includes(wanted) || wanted.includes(actual);
+    }) || null;
+}
+
+function getFrontCasualtyLevel(animData, frontName, fallbackIntensity) {
+    const units = Array.isArray(animData?.units)
+        ? animData.units.filter((unit) => !frontName || unit.front === frontName)
+        : [];
+    const vitals = units
+        .map((animUnit) => {
+            const model = findModelUnit(animUnit);
+            if (!model?.strength) return null;
+            return getUnitVitals(model.id, animData.date, animData.intensity || fallbackIntensity || 0, animUnit.state || 'idle', model.strength);
+        })
+        .filter(Boolean);
+
+    if (!vitals.length) {
+        if (fallbackIntensity >= 8) return 'heavy';
+        if (fallbackIntensity >= 6) return 'moderate';
+        return 'light';
+    }
+
+    const avgLoss = vitals.reduce((sum, item) => sum + item.lossRatio, 0) / vitals.length;
+    const minStamina = Math.min(...vitals.map((item) => item.stamina));
+    const todayLoss = vitals.reduce((sum, item) => sum + (item.todayLoss || 0), 0);
+
+    if (avgLoss >= 0.42 || minStamina <= 0.24 || todayLoss >= 900 || fallbackIntensity >= 8) return 'heavy';
+    if (avgLoss >= 0.2 || minStamina <= 0.46 || todayLoss >= 240 || fallbackIntensity >= 6) return 'moderate';
+    return 'light';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -181,9 +226,9 @@ function renderBombardment(animData, fronts, intensity, seed) {
         const pressureLevel = intensity > 7 ? 'high' : intensity > 4 ? 'medium' : 'low';
         fx += renderFrontlinePressure(geo.center.x, geo.center.y, pressureLevel);
 
-        // Kayıp göstergesi (yoğun bombardımanda)
-        if (intensity >= 7) {
-            fx += renderCasualtyIndicator(geo.center.x, geo.center.y + 8, 'moderate');
+        // Kayıp göstergesi, cephedeki güncel yıpranma seviyesine göre güçlenir.
+        if (intensity >= 6) {
+            fx += renderCasualtyIndicator(geo.center.x, geo.center.y + 8, getFrontCasualtyLevel(animData, frontName, intensity));
         }
     }
 
@@ -274,7 +319,7 @@ function renderCombat(animData, fronts, intensity, seed) {
 
             // 9. Kayıp göstergesi
             if (intensity >= 7) {
-                const casualtyLevel = intensity >= 8 ? 'heavy' : 'moderate';
+                const casualtyLevel = getFrontCasualtyLevel(animData, frontName, intensity);
                 fx += renderCasualtyIndicator(
                     geo.center.x + (fi % 2 === 0 ? -8 : 8),
                     geo.center.y + 10,

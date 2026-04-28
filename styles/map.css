@@ -47,6 +47,18 @@
     filter: brightness(1.15) drop-shadow(0 0 4px rgba(160, 150, 130, .4))
 }
 
+.unit-token.is-worn {
+    filter: saturate(.92) brightness(.96)
+}
+
+.unit-token.is-fatigued {
+    filter: saturate(.78) brightness(.9) drop-shadow(0 0 4px rgba(190, 126, 80, .22))
+}
+
+.unit-token.is-depleted {
+    filter: saturate(.62) brightness(.82) drop-shadow(0 0 5px rgba(170, 65, 55, .28))
+}
+
 .unit-token.is-referenced {
     filter: brightness(1.24) drop-shadow(0 0 8px rgba(210, 186, 122, .35));
     z-index: 2
@@ -67,7 +79,17 @@
 .unit-action-ring[data-action-key="bombarding"],
 .unit-action-ring[data-action-key="advancing"],
 .unit-action-ring[data-action-key="landing"] {
-    animation: unitActionPulse 1.7s ease-in-out infinite
+    animation: unitActionPulse var(--pulse-dur, 1.7s) ease-in-out infinite
+}
+
+.unit-token.is-fatigued .unit-action-ring {
+    stroke-width: 1.35;
+    opacity: .68
+}
+
+.unit-token.is-depleted .unit-action-ring {
+    stroke-width: 1.55;
+    opacity: .56
 }
 
 .unit-action-ring[data-action-key="reserve"] {
@@ -121,16 +143,27 @@
 }
 
 .unit-token:hover .unit-label,
-.unit-token.is-active .unit-label,
-.unit-token.is-referenced .unit-label,
+.unit-token:focus-visible .unit-label,
 body[data-map-editor="open"] .unit-label {
     opacity: .9
+}
+
+.map-container[data-camera-zoom="wide"] .unit-token.is-referenced .unit-label {
+    opacity: .72
+}
+
+.strength-badge {
+    pointer-events: none;
+    paint-order: stroke;
+    stroke: rgba(20, 18, 16, .55);
+    stroke-width: 1.2px
 }
 
 /* ── Lokasyon Etiketleri — hiyerarşik, inline'da set ediliyor ── */
 .location-label {
     font-family: var(--mono);
-    transition: fill .2s ease
+    opacity: 0 !important;
+    transition: fill .2s ease, opacity .18s ease
 }
 
 .location-dot {
@@ -145,8 +178,21 @@ body[data-map-editor="open"] .unit-label {
     filter: drop-shadow(0 0 3px rgba(160, 150, 130, .4))
 }
 
-.location-group:hover .location-label {
+.location-group:hover .location-label,
+.location-group.is-focus-location .location-label {
     fill: #d0c8a8 !important
+}
+
+.location-group:hover .location-label,
+.location-group.is-focus-location .location-label,
+.location-group.is-current-location .location-label,
+.location-group.is-target-location .location-label,
+body[data-map-editor="open"] .location-label {
+    opacity: .9 !important
+}
+
+.location-group.is-label-suppressed .location-label {
+    opacity: 0 !important
 }
 
 .location-group.is-scene-hidden,
@@ -162,7 +208,8 @@ body[data-map-editor="open"] .unit-label {
 }
 
 .location-group.is-current-location .location-label {
-    fill: #ede2bb !important
+    fill: #ede2bb !important;
+    opacity: .95 !important
 }
 
 .location-group.is-target-location .location-dot {
@@ -173,7 +220,12 @@ body[data-map-editor="open"] .unit-label {
 }
 
 .location-group.is-target-location .location-label {
-    fill: #f0c6a4 !important
+    fill: #f0c6a4 !important;
+    opacity: .95 !important
+}
+
+.map-container[data-camera-zoom="close"] .location-group.is-label-suppressed .location-label {
+    opacity: 0 !important
 }
 
 .unit-intent-overlay {
@@ -258,12 +310,30 @@ body[data-map-editor="open"] .unit-label {
     paint-order: stroke;
     stroke: rgba(30, 28, 24, .7);
     stroke-width: 1.5px;
-    opacity: .75
+    opacity: .28 !important
 }
 
 .scene-label-sub {
     font-size: 5px;
-    opacity: .6
+    opacity: .2 !important
+}
+
+.map-container[data-camera-zoom="close"] .scene-label {
+    opacity: .08 !important
+}
+
+.map-container[data-camera-zoom="close"] .scene-label-sub {
+    opacity: .05 !important
+}
+
+.fort-group text {
+    opacity: 0 !important;
+    transition: opacity .18s ease
+}
+
+.fort-group:hover text,
+body[data-map-editor="open"] .fort-group text {
+    opacity: .88 !important
 }
 
 #minefields.is-scene-dimmed,

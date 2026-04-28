@@ -26,20 +26,29 @@ let cachedMinefields = null;
 let cachedForts = null;
 let cachedFortifications = null;
 let lastSceneKey = null;
+let lastFocusKey = null;
 
-export function updateMapSceneState(phase, animData) {
+export function updateMapSceneState(phase, animData, cameraTarget = null) {
     const svg = document.getElementById('battleMap');
     const ctr = document.querySelector('.map-container');
     if (!svg || !ctr) return;
 
     const sceneKey = getSceneKey(phase, animData);
+    const preferredFocusIds = Array.isArray(cameraTarget?.locationIds) && cameraTarget.locationIds.length
+        ? cameraTarget.locationIds
+        : (Array.isArray(phase?.mapFocus?.locationIds) ? phase.mapFocus.locationIds.slice(0, 5) : []);
+    const focusLocationIds = new Set(preferredFocusIds.filter(Boolean));
+    const focusKey = `${sceneKey}:${cameraTarget?.x || 0}:${cameraTarget?.y || 0}:${cameraTarget?.w || 0}:${[...focusLocationIds].join('|')}`;
 
-    // Sahne değişmediyse DOM işlemi yapma
-    if (sceneKey === lastSceneKey) return;
+    // Sahne ve odak değişmediyse DOM işlemi yapma
+    if (sceneKey === lastSceneKey && focusKey === lastFocusKey) return;
     lastSceneKey = sceneKey;
+    lastFocusKey = focusKey;
 
     svg.dataset.scene = sceneKey;
     ctr.dataset.scene = sceneKey;
+    ctr.dataset.cameraZoom = cameraTarget && cameraTarget.w <= 1200 ? 'close' : 'wide';
+    if (cameraTarget?.reason) ctr.dataset.cameraReason = cameraTarget.reason;
 
     const visibleByScene = {
         naval: new Set(['bogaz', 'canakkale', 'kilitbahir', 'kumkale', 'seddulbahir', 'gelibolu']),
@@ -58,7 +67,11 @@ export function updateMapSceneState(phase, animData) {
 
     cachedLocationGroups.forEach((el) => {
         const locationId = el.dataset.locationId;
-        el.classList.toggle('is-scene-hidden', !!visible && !visible.has(locationId));
+        const inScene = !visible || visible.has(locationId);
+        const inFocus = focusLocationIds.has(locationId);
+        el.classList.toggle('is-scene-hidden', !inScene && !inFocus);
+        el.classList.toggle('is-focus-location', inFocus);
+        el.classList.toggle('is-label-suppressed', focusLocationIds.size > 0 && !inFocus);
     });
 
     cachedAnnotationGroups.forEach((el) => {
@@ -110,19 +123,20 @@ function resetMapSceneCache() {
     cachedForts = null;
     cachedFortifications = null;
     lastSceneKey = null;
+    lastFocusKey = null;
 }
 
 function renderEditableLocation(location) {
     const primary = ['canakkale', 'eceabat', 'conkbayiri', 'anafartalar'].includes(location.id);
     const secondary = ['ariburnu', 'seddulbahir', 'kabatepe', 'kirte', 'kirectepe', 'kumkale', 'bigali', 'suvla', 'kilitbahir'].includes(location.id);
-    const fontSize = primary ? 30 : secondary ? 24 : 20;
+    const fontSize = primary ? 24 : secondary ? 18 : 15;
     const fontWeight = primary ? 800 : secondary ? 700 : 600;
     const dotR = primary ? 9 : secondary ? 7 : 5;
     const opacity = primary ? .92 : secondary ? .78 : .64;
     const fillColor = primary ? '#efe3bc' : secondary ? '#d8c49a' : '#bca77f';
-    const strokeW = primary ? 7 : secondary ? 5 : 4;
+    const strokeW = primary ? 5.4 : secondary ? 4.2 : 3.2;
 
-    return `<g class="location-group map-overlay-item" data-location-id="${escapeSvgText(location.id)}" data-overlay-key="location:${escapeSvgText(location.id)}">
+    return `<g class="location-group map-overlay-item" data-location-id="${escapeSvgText(location.id)}" data-label-priority="${primary ? 'primary' : secondary ? 'secondary' : 'minor'}" data-overlay-key="location:${escapeSvgText(location.id)}">
       <circle cx="${location.x}" cy="${location.y}" r="${dotR}" class="location-dot" fill="#d8c49a" stroke="#2b261e" stroke-width="2" opacity="${opacity}"/>
       <text x="${location.x + dotR + 8}" y="${location.y + dotR}" class="location-label" fill="${fillColor}" font-size="${fontSize}" font-weight="${fontWeight}" opacity="${opacity}"
         paint-order="stroke" stroke="rgba(18,15,12,.86)" stroke-width="${strokeW}" font-family="var(--mono)">${escapeSvgText(location.name)}</text>
@@ -138,7 +152,7 @@ function renderEditableFort(item) {
     return `<g class="fort-group map-overlay-item" data-fort-id="${id}" data-overlay-key="fort:${id}">
       <rect x="${x - 10}" y="${y - 10}" width="20" height="20" fill="rgba(36, 25, 18, .72)" stroke="#f0c8a8" stroke-width="2.2" opacity=".88" transform="rotate(45,${x},${y})"/>
       <circle cx="${x}" cy="${y}" r="4.2" fill="#f0c8a8" opacity=".9"/>
-      <text x="${x + 18}" y="${y + 7}" fill="#f3d6bb" font-family="var(--mono)" font-size="18" opacity=".88" font-weight="700"
+      <text x="${x + 18}" y="${y + 7}" fill="#f3d6bb" font-family="var(--mono)" font-size="14" opacity=".88" font-weight="700"
         paint-order="stroke" stroke="rgba(22,16,12,.86)" stroke-width="4">${name}</text>
     </g>`;
 }

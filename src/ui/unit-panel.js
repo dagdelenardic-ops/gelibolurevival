@@ -7,6 +7,7 @@ import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { getUnitIcon } from '../data/icon-registry.js';
 import { getCommanderPortrait } from '../data/commander-portraits.js';
 import { deriveUnitIntent } from '../engine/unit-intelligence.js';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 
 /** Faksiyon banner rengi — desatüre askeri tonlar */
 function getFactionBanner(faction) {
@@ -22,6 +23,53 @@ function getFactionBanner(faction) {
 function setPanelA11yState(panel, open) {
     panel.toggleAttribute('inert', !open);
     panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
+function normalizeAnimUnitName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+        .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/[^a-z0-9\s.-]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function getAnimatedUnitState(unit, animData) {
+    let unitState = 'idle';
+    let intensity = 0;
+    if (!animData) return { unitState, intensity };
+
+    intensity = Number(animData.intensity || 0);
+    const unitName = normalizeAnimUnitName(unit.name);
+    const animUnit = animData.units?.find((entry) => {
+        const animName = normalizeAnimUnitName(entry.name);
+        return animName === unitName || animName.includes(unitName) || unitName.includes(animName);
+    });
+
+    if (animUnit) unitState = animUnit.state || unitState;
+    return { unitState, intensity };
+}
+
+function renderVitals(unit, phase, animData) {
+    if (!unit.strength) return '-';
+    const isoDate = String(phase?.isoStart || '');
+    const { unitState, intensity } = getAnimatedUnitState(unit, animData);
+    const vitals = getUnitVitals(unit.id, isoDate, intensity, unitState, unit.strength);
+    const current = vitals.current.toLocaleString('tr-TR');
+    const base = vitals.base.toLocaleString('tr-TR');
+    const loss = vitals.loss.toLocaleString('tr-TR');
+    const lossPct = Math.round(vitals.lossRatio * 100);
+    const strengthPct = Math.round(vitals.ratio * 100);
+
+    return `
+        <div class="panel-vitals">
+            <div><strong>${current}</strong> / ${base} asker</div>
+            <div class="panel-vitals-sub">Kayıp: ${loss} (${lossPct}%) · Stamina: ${vitals.staminaPercent}% ${vitals.staminaLabel}</div>
+            <div class="panel-vitals-bars" aria-hidden="true">
+                <span style="--vital-width:${strengthPct}%;--vital-color:${vitals.ratio > .62 ? '#72ad67' : vitals.ratio > .38 ? '#d9a94f' : '#c95b4d'}"></span>
+                <span style="--vital-width:${vitals.staminaPercent}%;--vital-color:${vitals.stamina > .62 ? '#7eaec8' : vitals.stamina > .38 ? '#d9a94f' : '#c95b4d'}"></span>
+            </div>
+            <div class="panel-vitals-sub">Bugünkü baskı: ${intensity}/10 · ${formatStrength(vitals.todayLoss || 0)} tahmini günlük kayıp</div>
+        </div>`;
 }
 
 /** Birim detay panelini aç */
@@ -62,7 +110,7 @@ export function showUnitPanel(u, d, phase, animData) {
 
     document.getElementById('panelUnitName').textContent = u.name || '-';
     document.getElementById('panelUnitCommander').textContent = u.commander || '-';
-    document.getElementById('panelUnitStrength').textContent = u.strength ? `${u.strength.toLocaleString('tr-TR')} asker` : '-';
+    document.getElementById('panelUnitStrength').innerHTML = renderVitals(u, phase, animData);
     document.getElementById('panelUnitAction').textContent = intent.actionLabel || '-';
     document.getElementById('panelUnitLocation').textContent = intent.currentLocationName || '-';
     document.getElementById('panelUnitTarget').textContent = intent.targetLocationName || '-';

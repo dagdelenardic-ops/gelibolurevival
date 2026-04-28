@@ -222,6 +222,54 @@ export function getUnitStrength(unitId, isoDate, intensity, unitState, baseStren
     return result;
 }
 
+function clamp01(value) {
+    return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function getStateFatigue(unitState) {
+    switch (unitState) {
+        case 'fighting': return 0.34;
+        case 'bombardment': return 0.22;
+        case 'marching': return 0.18;
+        case 'landing': return 0.2;
+        case 'patrolling': return 0.12;
+        case 'idle': return 0.04;
+        default: return 0.08;
+    }
+}
+
+function getStaminaLabel(stamina) {
+    if (stamina >= 0.72) return 'Dinç';
+    if (stamina >= 0.48) return 'Yıpranıyor';
+    if (stamina >= 0.26) return 'Tükenmiş';
+    return 'Kritik';
+}
+
+/**
+ * Harita tokenleri ve panel için tek bakışlık savaş kondisyonu.
+ * Stamina kesin tarihsel veri değil; kayıp oranı + günün yoğunluğu + birim
+ * eyleminden türetilen görsel okuma yardımcısıdır.
+ */
+export function getUnitVitals(unitId, isoDate, intensity = 0, unitState = 'idle', baseStrength = 0) {
+    const strength = getUnitStrength(unitId, isoDate, intensity, unitState, baseStrength);
+    const lossRatio = baseStrength ? clamp01(strength.loss / baseStrength) : 0;
+    const intensityFatigue = clamp01(intensity / 10) * 0.26;
+    const stateFatigue = getStateFatigue(unitState);
+    const freshReserveBonus = unitState === 'reserve' || unitState === 'idle' ? 0.08 : 0;
+    const stamina = clamp01(1 - (lossRatio * 0.58) - intensityFatigue - stateFatigue + freshReserveBonus);
+
+    return {
+        ...strength,
+        base: baseStrength || 0,
+        lossRatio,
+        stamina,
+        staminaPercent: Math.round(stamina * 100),
+        staminaLabel: getStaminaLabel(stamina),
+        intensity: Number(intensity) || 0,
+        unitState: unitState || 'idle'
+    };
+}
+
 /**
  * Kuvvet sayısını kısa formata çevir (1200 → "1.2K", 84000 → "84K")
  */
