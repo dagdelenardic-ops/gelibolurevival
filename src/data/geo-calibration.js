@@ -324,12 +324,12 @@ export const MAP_FRONTLINES = [
         side1: 'allied',
         side2: 'ottoman',
         points: [
-            fromCropPoint({ cropX: 880, cropY: 860 }),
-            fromCropPoint({ cropX: 920, cropY: 875 }),
-            fromCropPoint({ cropX: 960, cropY: 900 }),
-            fromCropPoint({ cropX: 995, cropY: 930 })
+            fromCropPoint({ cropX: 1220, cropY: 884 }),
+            fromCropPoint({ cropX: 1248, cropY: 898 }),
+            fromCropPoint({ cropX: 1276, cropY: 922 }),
+            fromCropPoint({ cropX: 1302, cropY: 946 })
         ].map(({ x, y }) => ({ x, y })),
-        corridorWidth: 54,
+        corridorWidth: 40,
         intensity: 'low',
         label: 'Suvla Cephesi'
     },

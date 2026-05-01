@@ -5,7 +5,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
-import { FRONTLINES } from '../data/frontlines.js?v=20260407-manual-r1';
+import { FRONTLINES } from '../data/frontlines.js?v=20260501-suvla-r7';
 import { COORD_SCALE } from '../data/coordinate-map.js';
 import { getUnitVitals } from '../data/casualty-model.js';
 import {
@@ -54,9 +54,9 @@ const FRONT_GEOMETRY = {
         alliedFaction: 'allied',
     },
     'Anafartalar': {
-        center: { x: Math.round(290 * S), y: Math.round(160 * S) },
-        ottoman: { x: Math.round(320 * S), y: Math.round(155 * S) },
-        allied: { x: Math.round(260 * S), y: Math.round(165 * S) },
+        center: { x: 1260, y: 1706 },
+        ottoman: { x: 1296, y: 1728 },
+        allied: { x: 1224, y: 1686 },
         frontlineId: 'suvla-front',
         type: 'trench',
         alliedFaction: 'allied',
@@ -243,8 +243,6 @@ function renderCombat(animData, fronts, intensity, seed) {
 
     const ottomanFighting = animData.units?.some(u => u.side === 'ottoman' && u.state === 'fighting');
     const alliedFighting = animData.units?.some(u => u.side === 'allied' && u.state === 'fighting');
-    const alliedBombarding = animData.units?.some(u => u.side === 'allied' && u.state === 'bombardment');
-
     for (let fi = 0; fi < fronts.length; fi++) {
         const frontName = fronts[fi];
         const geo = FRONT_GEOMETRY[frontName];
@@ -276,18 +274,6 @@ function renderCombat(animData, fronts, intensity, seed) {
                 routes += renderAssaultWave(geo.ottoman, geo.center, FACTION_COLORS.ottoman, 2);
             } else if (alliedFighting && intensity >= 7) {
                 routes += renderAssaultWave(geo.allied, geo.center, alliedColor, 2);
-            }
-
-            if (alliedBombarding && intensity >= 6) {
-                routes += renderArtilleryArc(
-                    { x: geo.allied.x - 15, y: geo.allied.y + 10 },
-                    { x: geo.ottoman.x + 5, y: geo.ottoman.y - 5 }
-                );
-            } else if (intensity >= 8) {
-                routes += renderArtilleryArc(
-                    { x: geo.ottoman.x + 15, y: geo.ottoman.y - 10 },
-                    { x: geo.allied.x, y: geo.allied.y + 5 }
-                );
             }
 
             if (intensity >= 8) {

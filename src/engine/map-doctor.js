@@ -14,7 +14,7 @@ import {
     getHistoricalPlacementForUnit,
     getHistoricalSourcesForIds
 } from '../data/historical-map-data.js?v=20260407-manual-r1';
-import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260501-smoke-r1';
+import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260501-scene-r2';
 import {
     enforceCorridorSeparation,
     getClusterOffset,

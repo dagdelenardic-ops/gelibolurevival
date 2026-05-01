@@ -5,7 +5,7 @@
 
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { normalizeDateText } from '../engine/date-utils.js';
-import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260501-smoke-r1';
+import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260501-scene-r2';
 
 const isMobileTimeline = typeof window !== 'undefined' && window.innerWidth <= 768;
 

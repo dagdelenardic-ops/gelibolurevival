@@ -3,7 +3,7 @@
 // Adaptive hız: major fazlar 6s, minor fazlar 2.5s, narration uzunluğuna göre ek süre
 // ══════════════════════════════════════════════════════════════
 
-import { isMajorPhase } from '../engine/phase-engine.js?v=20260501-smoke-r1';
+import { isMajorPhase } from '../engine/phase-engine.js?v=20260501-scene-r2';
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;

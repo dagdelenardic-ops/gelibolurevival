@@ -17,6 +17,8 @@ let musicEnabled = false;
 let sfxEnabled = true;
 let isPlaying = false;
 let audioUnlocked = false;
+const ACTIVE_COMBAT_STATES = new Set(['fighting', 'bombardment']);
+const FORCED_SILENCE_DATES = new Set(['1915-03-08', '1915-05-24']);
 
 /** Lazy AudioContext — kullanıcı etkileşimi gerektirir */
 function ensureContext() {
@@ -26,7 +28,7 @@ function ensureContext() {
         musicGain.gain.value = 0.25; // Arka plan müziği düşük ses
         musicGain.connect(audioCtx.destination);
         sfxGain = audioCtx.createGain();
-        sfxGain.gain.value = 0.35;
+        sfxGain.gain.value = 0.22;
         sfxGain.connect(audioCtx.destination);
     }
     if (audioCtx.state === 'suspended') {
@@ -155,6 +157,70 @@ function rd(base, variance) {
     return base + Math.random() * variance;
 }
 
+function createCombatEnvelope(ctx, now, options = {}) {
+    const filter = ctx.createBiquadFilter();
+    filter.type = options.filterType || 'lowpass';
+    filter.frequency.setValueAtTime(options.frequency ?? 1200, now);
+    if (Number.isFinite(options.frequencyEnd)) {
+        filter.frequency.exponentialRampToValueAtTime(options.frequencyEnd, now + (options.release ?? 0.3));
+    }
+    filter.Q.value = options.q ?? 0.8;
+
+    const gain = ctx.createGain();
+    const attack = options.attack ?? 0.01;
+    const peak = options.peak ?? 0.12;
+    const hold = options.hold ?? 0.04;
+    const release = options.release ?? 0.28;
+    const sustain = Math.max(0.0001, peak * (options.sustainRatio ?? 0.4));
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(peak, now + attack);
+    gain.gain.exponentialRampToValueAtTime(sustain, now + attack + hold);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + release);
+
+    filter.connect(gain).connect(sfxGain);
+    return { filter, gain, release };
+}
+
+function normalizeEventType(value) {
+    return String(value || 'IDLE').toUpperCase();
+}
+
+function getActiveCombatUnits(animData) {
+    return Array.isArray(animData?.units)
+        ? animData.units.filter((unit) => ACTIVE_COMBAT_STATES.has(String(unit?.state || '').toLowerCase()))
+        : [];
+}
+
+function isNavalEngagement(animData) {
+    const fronts = Array.isArray(animData?.fronts) ? animData.fronts : [];
+    return fronts.includes('Deniz') || String(animData?.date || '') < '1915-04-25';
+}
+
+export function classifyCombatAudio(animData, campaignPhaseId) {
+    if (!animData || campaignPhaseId === 'evacuation') return 'none';
+    if (FORCED_SILENCE_DATES.has(String(animData.date || ''))) return 'none';
+
+    const eventType = normalizeEventType(animData.eventType);
+    const intensity = Number(animData.intensity ?? 0);
+    if (intensity < 6) return 'none';
+    if (['IDLE', 'LOGISTICS', 'POLITICAL', 'NAVAL_PATROL', 'LANDING', 'ASSAULT'].includes(eventType)) return 'none';
+
+    const activeUnits = getActiveCombatUnits(animData);
+    const activeSides = new Set(activeUnits.map((unit) => unit.side).filter(Boolean));
+    if (!activeUnits.length || activeSides.size < 2) return 'none';
+
+    const isNaval = isNavalEngagement(animData);
+    if (eventType === 'BOMBARDMENT' && isNaval) {
+        return intensity >= 8 ? 'heavy' : 'none';
+    }
+
+    if (eventType !== 'COMBAT' && eventType !== 'BOMBARDMENT') return 'none';
+    if (intensity >= 8) return 'heavy';
+    if (intensity >= 7) return 'direct';
+    return 'distant';
+}
+
 /**
  * 🔊 Top ateşi — keskin patlama + metalik geri tepme + yankı
  * Kullanım: Kıyı bataryası ateşi
@@ -211,62 +277,30 @@ export function sfxExplosion() {
     if (!sfxEnabled) return;
     const ctx = ensureContext();
     const now = ctx.currentTime;
-
-    // 1. İlk şok dalgası (keskin, kısa)
-    const shock = ctx.createBufferSource();
-    shock.buffer = createNoiseBuffer(0.15);
-    const shockG = ctx.createGain();
-    shockG.gain.setValueAtTime(0.7, now);
-    shockG.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-    const shockHp = ctx.createBiquadFilter();
-    shockHp.type = 'highpass';
-    shockHp.frequency.value = 1500;
-    shock.connect(shockHp).connect(shockG).connect(sfxGain);
-    shock.start(now);
-    shock.stop(now + 0.15);
-
-    // 2. Ana patlama gövdesi
     const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(1.5);
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.65, now + 0.03);
-    noiseGain.gain.linearRampToValueAtTime(0.45, now + 0.15);
-    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.setValueAtTime(2500, now);
-    lp.frequency.exponentialRampToValueAtTime(150, now + 1.0);
-    noise.connect(lp).connect(noiseGain).connect(sfxGain);
-    noise.start(now + 0.02);
-    noise.stop(now + 1.5);
+    noise.buffer = createNoiseBuffer(0.42);
+    const body = createCombatEnvelope(ctx, now, {
+        frequency: 680,
+        frequencyEnd: 140,
+        peak: 0.11,
+        hold: 0.05,
+        release: 0.34,
+        sustainRatio: 0.28
+    });
+    noise.connect(body.filter);
+    noise.start(now);
+    noise.stop(now + 0.45);
 
-    // 3. Derin bas boom (göğüste hissedilen)
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(rp(70, 15), now);
-    osc.frequency.exponentialRampToValueAtTime(18, now + 0.6);
-    const oscGain = ctx.createGain();
-    oscGain.gain.setValueAtTime(0.6, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
-    osc.connect(oscGain).connect(sfxGain);
+    osc.frequency.setValueAtTime(rp(58, 8), now);
+    osc.frequency.exponentialRampToValueAtTime(24, now + 0.28);
+    const low = ctx.createGain();
+    low.gain.setValueAtTime(0.08, now);
+    low.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+    osc.connect(low).connect(sfxGain);
     osc.start(now);
-    osc.stop(now + 0.75);
-
-    // 4. Enkaz düşme sesleri (gecikmeli tıkırtılar)
-    for (let i = 0; i < 4; i++) {
-        const t = now + 0.5 + rd(0.2, 0.4) * i;
-        const deb = ctx.createBufferSource();
-        deb.buffer = createNoiseBuffer(0.06);
-        const dg = ctx.createGain();
-        dg.gain.setValueAtTime(rp(0.06, 0.03), t);
-        dg.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-        const dhp = ctx.createBiquadFilter();
-        dhp.type = 'highpass';
-        dhp.frequency.value = rp(3000, 1000);
-        deb.connect(dhp).connect(dg).connect(sfxGain);
-        deb.start(t);
-        deb.stop(t + 0.06);
-    }
+    osc.stop(now + 0.34);
 }
 
 /**
@@ -317,35 +351,23 @@ export function sfxRifleShot() {
     if (!sfxEnabled) return;
     const ctx = ensureContext();
     const now = ctx.currentTime;
-    const shots = 2 + Math.floor(Math.random() * 2); // 2-3 atış
+    const shots = 1 + Math.floor(Math.random() * 2);
 
     for (let i = 0; i < shots; i++) {
-        const t = now + i * rd(0.3, 0.2);
-
-        // Atış patlaması
+        const t = now + i * rd(0.22, 0.1);
         const noise = ctx.createBufferSource();
-        noise.buffer = createNoiseBuffer(0.1);
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(rp(0.2, 0.05), t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.07);
-        const hp = ctx.createBiquadFilter();
-        hp.type = 'highpass';
-        hp.frequency.value = rp(2200, 400);
-        noise.connect(hp).connect(gain).connect(sfxGain);
+        noise.buffer = createNoiseBuffer(0.05);
+        const voice = createCombatEnvelope(ctx, t, {
+            frequency: rp(1250, 120),
+            frequencyEnd: 520,
+            peak: rp(0.04, 0.01),
+            hold: 0.015,
+            release: 0.09,
+            sustainRatio: 0.18
+        });
+        noise.connect(voice.filter);
         noise.start(t);
-        noise.stop(t + 0.1);
-
-        // Mermi çınlaması (yumuşatılmış — tıss azaltma)
-        const whiz = ctx.createOscillator();
-        whiz.type = 'sine';
-        whiz.frequency.setValueAtTime(rp(2500, 500), t + 0.03);
-        whiz.frequency.exponentialRampToValueAtTime(800, t + 0.12);
-        const wg = ctx.createGain();
-        wg.gain.setValueAtTime(0.015, t + 0.03);
-        wg.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        whiz.connect(wg).connect(sfxGain);
-        whiz.start(t + 0.03);
-        whiz.stop(t + 0.13);
+        noise.stop(t + 0.06);
     }
 }
 
@@ -435,37 +457,35 @@ export function sfxMachineGun() {
     if (!sfxEnabled) return;
     const ctx = ensureContext();
     const now = ctx.currentTime;
-    const burstLen = 8 + Math.floor(Math.random() * 5); // 8-12 atış
+    const burstLen = 4 + Math.floor(Math.random() * 2);
 
     for (let i = 0; i < burstLen; i++) {
-        const t = now + i * rp(0.075, 0.015); // Hafif düzensiz ritim
-
-        // Her atış
+        const t = now + i * rp(0.09, 0.02);
         const noise = ctx.createBufferSource();
-        noise.buffer = createNoiseBuffer(0.05);
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(rp(0.16, 0.04), t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
-        const bp = ctx.createBiquadFilter();
-        bp.type = 'bandpass';
-        bp.frequency.value = rp(3000, 600);
-        bp.Q.value = 2;
-        noise.connect(bp).connect(g).connect(sfxGain);
+        noise.buffer = createNoiseBuffer(0.035);
+        const voice = createCombatEnvelope(ctx, t, {
+            frequency: rp(1450, 180),
+            frequencyEnd: 760,
+            peak: rp(0.05, 0.01),
+            hold: 0.01,
+            release: 0.06,
+            sustainRatio: 0.16
+        });
+        noise.connect(voice.filter);
         noise.start(t);
-        noise.stop(t + 0.05);
+        noise.stop(t + 0.04);
     }
 
-    // Mekanizma sesi (çok düşük — arka plan dokusu)
     const mech = ctx.createOscillator();
-    mech.type = 'sine'; // square → sine: daha yumuşak, tıss yok
-    mech.frequency.setValueAtTime(80, now);
+    mech.type = 'sine';
+    mech.frequency.setValueAtTime(62, now);
     const mechG = ctx.createGain();
-    mechG.gain.setValueAtTime(0.015, now);
-    mechG.gain.setValueAtTime(0.015, now + burstLen * 0.075);
+    mechG.gain.setValueAtTime(0.006, now);
+    mechG.gain.setValueAtTime(0.006, now + burstLen * 0.09);
     mechG.gain.exponentialRampToValueAtTime(0.001, now + burstLen * 0.075 + 0.1);
     mech.connect(mechG).connect(sfxGain);
     mech.start(now);
-    mech.stop(now + burstLen * 0.075 + 0.15);
+    mech.stop(now + burstLen * 0.09 + 0.12);
 }
 
 /**
@@ -477,45 +497,30 @@ export function sfxNavalCannon() {
     const ctx = ensureContext();
     const now = ctx.currentTime;
 
-    // Derin patlama gövdesi
     const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(0.8);
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.5, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.setValueAtTime(600, now);
-    lp.frequency.exponentialRampToValueAtTime(80, now + 0.6);
-    noise.connect(lp).connect(noiseGain).connect(sfxGain);
+    noise.buffer = createNoiseBuffer(0.55);
+    const body = createCombatEnvelope(ctx, now, {
+        frequency: 520,
+        frequencyEnd: 90,
+        peak: 0.085,
+        hold: 0.05,
+        release: 0.45,
+        sustainRatio: 0.26
+    });
+    noise.connect(body.filter);
     noise.start(now);
-    noise.stop(now + 0.8);
+    noise.stop(now + 0.55);
 
-    // Çok derin bas vuruş
     const osc = ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(60, now);
-    osc.frequency.exponentialRampToValueAtTime(18, now + 0.6);
+    osc.frequency.setValueAtTime(46, now);
+    osc.frequency.exponentialRampToValueAtTime(20, now + 0.38);
     const oscGain = ctx.createGain();
-    oscGain.gain.setValueAtTime(0.55, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+    oscGain.gain.setValueAtTime(0.075, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
     osc.connect(oscGain).connect(sfxGain);
     osc.start(now);
-    osc.stop(now + 0.75);
-
-    // Yankı — gecikmeli gürültü
-    const echo = ctx.createBufferSource();
-    echo.buffer = createNoiseBuffer(0.5);
-    const echoGain = ctx.createGain();
-    echoGain.gain.setValueAtTime(0, now);
-    echoGain.gain.linearRampToValueAtTime(0.12, now + 0.3);
-    echoGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
-    const echoLp = ctx.createBiquadFilter();
-    echoLp.type = 'lowpass';
-    echoLp.frequency.value = 300;
-    echo.connect(echoLp).connect(echoGain).connect(sfxGain);
-    echo.start(now + 0.2);
-    echo.stop(now + 1.2);
+    osc.stop(now + 0.45);
 }
 
 /**
@@ -639,35 +644,31 @@ export function sfxDistantBattle() {
     const now = ctx.currentTime;
 
     const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(3.0);
-    const nGain = ctx.createGain();
-    nGain.gain.setValueAtTime(0.01, now);
-    nGain.gain.linearRampToValueAtTime(0.06, now + 0.5);
-    nGain.gain.setValueAtTime(0.06, now + 2.0);
-    nGain.gain.exponentialRampToValueAtTime(0.01, now + 2.8);
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 800;
-    const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 100;
-    noise.connect(lp).connect(hp).connect(nGain).connect(sfxGain);
+    noise.buffer = createNoiseBuffer(1.4);
+    const bed = createCombatEnvelope(ctx, now, {
+        frequency: 520,
+        frequencyEnd: 180,
+        peak: 0.035,
+        hold: 0.18,
+        release: 0.75,
+        sustainRatio: 0.45
+    });
+    noise.connect(bed.filter);
     noise.start(now);
-    noise.stop(now + 3.0);
+    noise.stop(now + 1.5);
 
-    // Aralıklı uzak patlamalar
-    for (let i = 0; i < 3; i++) {
-        const t = now + 0.4 + i * 0.8 + Math.random() * 0.3;
+    for (let i = 0; i < 2; i++) {
+        const t = now + 0.28 + i * 0.34 + Math.random() * 0.12;
         const osc = ctx.createOscillator();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(50 + Math.random() * 30, t);
-        osc.frequency.exponentialRampToValueAtTime(20, t + 0.2);
+        osc.frequency.setValueAtTime(42 + Math.random() * 18, t);
+        osc.frequency.exponentialRampToValueAtTime(24, t + 0.12);
         const og = ctx.createGain();
-        og.gain.setValueAtTime(0.08, t);
-        og.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+        og.gain.setValueAtTime(0.03, t);
+        og.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
         osc.connect(og).connect(sfxGain);
         osc.start(t);
-        osc.stop(t + 0.3);
+        osc.stop(t + 0.16);
     }
 }
 
@@ -701,76 +702,40 @@ function throttled(key, minIntervalMs, fn) {
 export function triggerPhaseSfx(animData, campaignPhaseId) {
     if (!audioUnlocked || !sfxEnabled || !animData) return;
 
-    let eventType = animData.eventType || 'IDLE';
     const intensity = animData.intensity ?? 0;
-    const fronts = animData.fronts || [];
-    let isNaval = fronts.includes('Deniz');
-    const dateStr = animData.date || "";
+    const profile = classifyCombatAudio(animData, campaignPhaseId);
+    if (profile === 'none') return;
 
-    // 18 Mart'a/Nisana kadar sadece deniz ve kıyı harbi (kara siper savaşı yok)
-    if (dateStr && dateStr < "1915-04-25") {
-        isNaval = true; // Deniz bombardımanı
-        if (eventType === 'COMBAT') {
-            eventType = 'BOMBARDMENT'; // Siper tüfeğini iptal et, top atışı yap
-        }
-    }
+    const isNaval = isNavalEngagement(animData);
 
-    switch (eventType) {
-        case 'BOMBARDMENT':
+    switch (profile) {
+        case 'distant':
+            throttled('distant', 7000, sfxDistantBattle);
+            break;
+        case 'direct':
             if (isNaval) {
-                // Deniz bombardımanı — gemi topu + dalga
-                throttled('navalCannon', 3000, sfxNavalCannon);
-                setTimeout(() => throttled('waves', 5000, sfxWaves), 600);
+                throttled('navalDirect', 10000, sfxNavalCannon);
+            } else {
+                throttled('rifle', 5000, sfxRifleShot);
+            }
+            break;
+        case 'heavy':
+            if (isNaval) {
                 if (intensity >= 9) {
-                    setTimeout(() => throttled('mine', 5000, sfxMineExplosion), 1200);
+                    throttled('mine', 14000, sfxMineExplosion);
+                } else {
+                    throttled('navalHeavy', 12000, sfxNavalCannon);
                 }
             } else {
-                // Kara bombardımanı — kara topu + havan
-                throttled('cannon', 2000, sfxCannonFire);
-                if (intensity >= 7) {
-                    setTimeout(() => throttled('mortar', 3000, sfxMortarWhistle), 800);
+                const primary = intensity >= 8 ? sfxMachineGun : sfxRifleShot;
+                const key = intensity >= 8 ? 'machineGun' : 'rifle';
+                throttled(key, intensity >= 8 ? 7000 : 5000, primary);
+                if (intensity >= 9) {
+                    setTimeout(() => throttled('explosion', 12000, sfxExplosion), 380);
                 }
             }
             break;
-
-        case 'COMBAT':
-            if (intensity >= 8) {
-                // Yoğun çatışma — makineli + patlama
-                throttled('machineGun', 3000, sfxMachineGun);
-                setTimeout(() => throttled('explosion', 4000, sfxExplosion), 600);
-            } else if (intensity >= 5) {
-                // Orta çatışma — tüfek + uzak çatışma
-                throttled('rifle', 1500, sfxRifleShot);
-                setTimeout(() => throttled('distant', 5000, sfxDistantBattle), 400);
-            } else if (intensity >= 3) {
-                throttled('distant', 4000, sfxDistantBattle);
-            }
-            break;
-
-        case 'NAVAL_PATROL':
-            // Deniz devriyesi — dalga + hafif top
-            throttled('waves', 6000, sfxWaves);
-            if (intensity >= 5) {
-                setTimeout(() => throttled('navalCannon', 4000, sfxNavalCannon), 1000);
-            }
-            break;
-
-        case 'LANDING':
-            // Çıkarma — gemi düdüğü + dalga + tüfek
-            throttled('horn', 8000, sfxShipHorn);
-            setTimeout(() => throttled('waves', 5000, sfxWaves), 800);
-            setTimeout(() => throttled('rifle', 2000, sfxRifleShot), 1500);
-            break;
-
-        case 'ASSAULT':
-            // Taarruz — boru + makineli + patlama
-            throttled('bugle', 6000, sfxBugle);
-            setTimeout(() => throttled('machineGun', 3000, sfxMachineGun), 1000);
-            setTimeout(() => throttled('explosion', 4000, sfxExplosion), 1800);
-            break;
-
         default:
-            // Idle — sessiz
             break;
     }
 }

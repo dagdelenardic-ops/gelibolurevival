@@ -3,7 +3,7 @@
 // Cephe hatları, engagement corridors, kontrollü savaş efektleri
 // ══════════════════════════════════════════════════════════════
 
-import { FRONTLINES } from '../data/frontlines.js?v=20260407-manual-r1';
+import { FRONTLINES } from '../data/frontlines.js?v=20260501-suvla-r7';
 
 /**
  * Aktif cephe hatlarını render et (#layer-zones veya fallback #battleEffects'e).

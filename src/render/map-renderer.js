@@ -654,20 +654,6 @@ export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers
       stroke-width=".5" opacity=".25" stroke-dasharray="3,2"/>
     <text x="358" y="349" fill="#7a7060" font-family="var(--mono)" font-size="4" opacity=".45" font-style="italic">Kilitbahir Plt.</text>
 
-    <!-- Kontur çizgileri -->
-    <g class="contour-lines" opacity=".12">
-      <path d="M228 222 C226 232 224 242 220 258 C218 272 216 286 216 300"
-        fill="none" stroke="#5a5842" stroke-width=".35" stroke-dasharray="2,3"/>
-      <path d="M244 215 C248 228 252 242 258 256 C264 270 268 280 272 290"
-        fill="none" stroke="#5a5842" stroke-width=".35" stroke-dasharray="2,3"/>
-      <path d="M308 218 C325 205 345 185 365 168 C385 152 400 138 415 122 C422 114 428 108 431 102"
-        fill="none" stroke="#5a5842" stroke-width=".4" stroke-dasharray="2,3"/>
-      <path d="M272 432 C285 425 298 420 310 418 C322 420 335 428 345 440"
-        fill="none" stroke="#5a5842" stroke-width=".35" stroke-dasharray="2,3"/>
-      <path d="M238 112 C248 106 258 100 268 94 C275 90 282 86 288 84"
-        fill="none" stroke="#5a5842" stroke-width=".3" stroke-dasharray="2,3"/>
-    </g>
-
     <!-- Dere/vadi göstergeleri -->
     <g class="ravines" opacity=".15">
       <path d="M232 228 C238 232 244 238 252 246" fill="none" stroke="#3a3828" stroke-width=".4" stroke-dasharray="1.5,2"/>
@@ -696,16 +682,6 @@ export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers
     <g class="suvla-detail" opacity=".2">
       <ellipse cx="255" cy="125" rx="16" ry="9" fill="#3a3828" stroke="#4a4838" stroke-width=".3" stroke-dasharray="2,2"/>
       <text x="243" y="132" fill="#5a5842" font-family="var(--mono)" font-size="2.8" font-style="italic">Suvla Ovası</text>
-    </g>
-
-    <!-- Sahil kenarı dalga çizgileri — kıyı şeridi -->
-    <g class="coastal-waves" opacity=".08">
-      <path d="M216 268 C214 280 212 295 214 310 C216 325 220 340 224 355"
-        fill="none" stroke="#5a6a72" stroke-width=".4" stroke-dasharray="2,4"/>
-      <path d="M224 355 C228 370 232 385 238 400 C244 415 250 430 258 445"
-        fill="none" stroke="#5a6a72" stroke-width=".4" stroke-dasharray="2,4"/>
-      <path d="M282 498 C290 502 300 506 312 510 C324 508 334 502 340 496"
-        fill="none" stroke="#5a6a72" stroke-width=".4" stroke-dasharray="2,4"/>
     </g>
 
     <!-- ═══ ASYA YAKASI ═══ -->
@@ -752,63 +728,10 @@ export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers
       <text x="450" y="478" fill="#6a6052" font-family="var(--mono)" font-size="3" font-style="italic">Intepe</text>
     </g>
 
-    <!-- Mesafe referansı -->
-    <g class="distance-refs" opacity=".12">
-      <line x1="220" y1="248" x2="305" y2="406" stroke="#5a5540" stroke-width=".25" stroke-dasharray="1,6"/>
-      <text x="260" y="330" fill="#5a5540" font-family="var(--mono)" font-size="2.8" transform="rotate(-58,260,330)">~22 km</text>
-    </g>
-
   </g><!-- /layer-terrain -->
 
   <!-- ═══ LAYER: FORTIFICATIONS ═══ -->
-  <g id="layer-fortifications">
-
-    <!-- Osmanlı Siper Hatları — toprak kahverengisi -->
-    <g class="trench-system" opacity=".22">
-      <path d="M240 218 C245 225 250 235 255 248 C260 260 265 270 270 280"
-        fill="none" stroke="#6a5a3a" stroke-width=".6" stroke-dasharray="3,1.5,1,1.5"/>
-      <path d="M250 212 C256 222 262 234 268 248 C274 262 278 274 282 286"
-        fill="none" stroke="#6a5a3a" stroke-width=".4" stroke-dasharray="2,2,1,2"/>
-      <path d="M272 438 C282 432 292 427 305 424 C318 424 328 428 338 435"
-        fill="none" stroke="#6a5a3a" stroke-width=".6" stroke-dasharray="3,1.5,1,1.5"/>
-      <path d="M278 430 C288 425 298 420 310 418 C322 418 332 422 340 428"
-        fill="none" stroke="#6a5a3a" stroke-width=".4" stroke-dasharray="2,2,1,2"/>
-      <path d="M260 138 C272 145 286 155 302 166 C314 174 325 180 335 186"
-        fill="none" stroke="#6a5a3a" stroke-width=".4" stroke-dasharray="2,2,1,2"/>
-    </g>
-
-    <!-- İtilaf Siper Hatları — soluk mavi-gri -->
-    <g class="trench-system" opacity=".18">
-      <path d="M218 230 C222 238 228 250 234 262 C240 274 245 282 250 292"
-        fill="none" stroke="#4a5a6a" stroke-width=".5" stroke-dasharray="3,1.5,1,1.5"/>
-      <path d="M214 236 C218 244 222 256 226 268 C230 280 234 288 238 298"
-        fill="none" stroke="#4a5a6a" stroke-width=".35" stroke-dasharray="2,3"/>
-      <path d="M258 452 C270 444 282 438 298 434 C312 434 324 438 336 446"
-        fill="none" stroke="#4a5a6a" stroke-width=".5" stroke-dasharray="3,1.5,1,1.5"/>
-    </g>
-
-    <!-- İrtibat Siperleri -->
-    <g class="comm-trenches" opacity=".1">
-      <path d="M268 272 C278 262 288 252 298 242 C306 235 312 230 318 226"
-        fill="none" stroke="#5a5540" stroke-width=".35" stroke-dasharray="2,3"/>
-      <path d="M310 420 C310 412 308 405 306 398"
-        fill="none" stroke="#5a5540" stroke-width=".35" stroke-dasharray="2,3"/>
-    </g>
-
-    <!-- Tel Örgü — çok ince -->
-    <g class="wire-entanglements" opacity=".07">
-      <path d="M232 232 L234 230 L236 234 L238 230 L240 234" fill="none" stroke="#5a5540" stroke-width=".3"/>
-      <path d="M272 442 L274 440 L276 444 L278 440 L280 444" fill="none" stroke="#5a5540" stroke-width=".3"/>
-    </g>
-
-    <!-- İkmal Yolları — ince kesikli -->
-    <g class="supply-routes" opacity=".08">
-      <path d="M478 52 C465 68 452 88 440 108 C428 132 415 158 400 182
-        C388 205 370 228 352 255 C338 278 325 305 312 340 C302 370 296 398 292 425"
-        fill="none" stroke="#6a6040" stroke-width=".5" stroke-dasharray="6,4"/>
-    </g>
-
-  </g><!-- /layer-fortifications -->
+  <g id="layer-fortifications"></g><!-- static trench decoration retired; dynamic frontlines carry combat readability -->
 
   <!-- ═══ LAYER: SEA ═══ -->
   <g id="layer-sea">

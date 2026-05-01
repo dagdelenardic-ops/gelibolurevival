@@ -10,7 +10,7 @@ import {
     unitSeed, getNarrativeNavalPosition,
     getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, isDestroyedPhaseData
 } from '../engine/position-engine.js?v=20260407-manual-r1';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260501-smoke-r1';
+import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260501-scene-r2';
 import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260501-guided-r2';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 import { getUnitIcon } from '../data/icon-registry.js';

@@ -259,6 +259,13 @@ function isUnitAvailableForPhase(unit, phase) {
 }
 
 function deriveVisibleUnitIds(phase, locationIds, chapter) {
+    if (Array.isArray(phase?.guidedUnitIdsOverride) && phase.guidedUnitIdsOverride.length) {
+        return phase.guidedUnitIdsOverride.filter((id) => {
+            const unit = BATTLE_DATA.units.find((item) => item.id === id);
+            return unit && isUnitAvailableForPhase(unit, phase);
+        });
+    }
+
     const focusSet = new Set(locationIds.map((id) => getMapLocationId(id)));
     const scored = BATTLE_DATA.units
         .filter((unit) => isUnitAvailableForPhase(unit, phase))
@@ -266,6 +273,11 @@ function deriveVisibleUnitIds(phase, locationIds, chapter) {
         .filter((entry) => entry.score > 0)
         .sort((a, b) => b.score - a.score || a.unit.name.localeCompare(b.unit.name, 'tr'));
 
+    const maxVisibleUnits = Number(chapter?.maxVisibleUnits) > 0 ? Number(chapter.maxVisibleUnits) : 8;
+    const scoreFloor = Number(chapter?.scoreFloor) > 0 ? Number(chapter.scoreFloor) : 4;
+    const factionCaps = chapter?.factionUnitCaps && typeof chapter.factionUnitCaps === 'object'
+        ? chapter.factionUnitCaps
+        : {};
     const visibleIds = [...(chapter?.primaryUnitIds || [])]
         .filter((id) => {
             const unit = BATTLE_DATA.units.find((item) => item.id === id);
@@ -279,15 +291,17 @@ function deriveVisibleUnitIds(phase, locationIds, chapter) {
 
     for (const entry of scored) {
         if (visibleIds.includes(entry.unit.id)) continue;
-        if (entry.score < 4) continue;
+        if (entry.score < scoreFloor) continue;
         const count = factionCounts.get(entry.unit.faction) || 0;
+        const cap = Number.isFinite(factionCaps[entry.unit.faction]) ? factionCaps[entry.unit.faction] : null;
+        if (cap !== null && count >= cap) continue;
         if (count >= 3 && visibleIds.length >= 6) continue;
         visibleIds.push(entry.unit.id);
         factionCounts.set(entry.unit.faction, count + 1);
-        if (visibleIds.length >= 8) break;
+        if (visibleIds.length >= maxVisibleUnits) break;
     }
 
-    return visibleIds;
+    return visibleIds.slice(0, maxVisibleUnits);
 }
 
 function getAutoplayHoldMs(phase, chapter) {
@@ -307,7 +321,7 @@ function decoratePhasesForMobile() {
     BATTLE_DATA.phases = BATTLE_DATA.phases.map((phase) => {
         const chapter = getMobileStoryChapter(phase.isoStart);
         const locationIds = collectPhaseLocationIds(phase, chapter);
-        const mapFocus = buildMapFocus(locationIds);
+        const mapFocus = phase.mapFocusOverride ? { ...phase.mapFocusOverride } : buildMapFocus(locationIds);
         return {
             ...phase,
             mobilePriority: phase.importance === 'major' ? 'feature' : 'supporting',
@@ -453,6 +467,8 @@ function applyHistoricalAnchors(phases) {
         phase.importance = 'major';
         if (Array.isArray(anchor.locationIds)) phase.locationIds = anchor.locationIds;
         if (anchor.locationByFaction) phase.locationByFaction = anchor.locationByFaction;
+        if (anchor.mapFocusOverride) phase.mapFocusOverride = anchor.mapFocusOverride;
+        if (Array.isArray(anchor.guidedUnitIds)) phase.guidedUnitIdsOverride = anchor.guidedUnitIds;
     }
 }
 
