@@ -15,7 +15,7 @@ import {
     getUnitEntryPhaseIndex, isMajorPhase,
     isNavalEraPhaseIndex, getNavalEraProgress,
     getMinimumStartIsoForUnit, getFirstPhaseIndexForIso
-} from './phase-engine.js?v=20260407-manual-r1';
+} from './phase-engine.js?v=20260501-smoke-r1';
 
 const BASE_PHASE_DESTRUCTION_ISO = '1915-03-18';
 const COLLISION_SAFE_DISTANCE = 92;
@@ -224,73 +224,80 @@ function interpolateWaypoints(points, t) {
 const NAVAL_APPROACH_ROUTE = [
     { x: 760, y: 2780 },
     { x: 920, y: 2660 },
-    { x: 1160, y: 2490 },
-    { x: 1325, y: 2355 },
-    { x: 1425, y: 2225 },
-    { x: 1470, y: 2115 }
+    { x: 1060, y: 2520 },
+    { x: 1180, y: 2440 },
+    { x: 1270, y: 2390 }
 ];
 
 const NAVAL_WITHDRAW_ROUTE = [
-    { x: 1450, y: 2180 },
-    { x: 1340, y: 2335 },
-    { x: 1150, y: 2490 },
+    { x: 1314, y: 2375 },
+    { x: 1215, y: 2420 },
+    { x: 1080, y: 2520 },
     { x: 900, y: 2700 }
 ];
 
 const NUSRET_PATROL_ROUTE = [
-    { x: 1460, y: 2115 },
-    { x: 1510, y: 2175 },
-    { x: 1435, y: 2260 },
-    { x: 1350, y: 2330 }
+    { x: 1475, y: 2103 },
+    { x: 1451, y: 2091 },
+    { x: 1432, y: 2093 },
+    { x: 1475, y: 2103 }
 ];
 
 const NUSRET_MINE_LINE_ROUTE = [
-    { x: 1265, y: 2360 },
-    { x: 1325, y: 2338 },
-    { x: 1388, y: 2310 },
-    { x: 1435, y: 2285 }
+    { x: 1179, y: 2386 },
+    { x: 1200, y: 2405 },
+    { x: 1222, y: 2425 },
+    { x: 1244, y: 2446 }
 ];
 
 const ALLIED_NAVAL_LANES = {
     'hms-queen-elizabeth': {
-        offset: { x: 18, y: -54 },
+        offset: { x: 34, y: -92 },
         startT: 0.52,
         attackT: 0.98,
-        hitPoint: { x: 1485, y: 2125 },
+        hitPoint: { x: 1215, y: 2420 },
         retreatPoint: { x: 1010, y: 2625 },
         role: 'birinci hat amiral gemisi'
     },
     suffren: {
-        offset: { x: -58, y: 18 },
+        offset: { x: 92, y: -18 },
         startT: 0.44,
         attackT: 0.82,
-        hitPoint: { x: 1468, y: 2228 },
+        hitPoint: { x: 1314, y: 2375 },
         retreatPoint: { x: 930, y: 2685 },
         role: 'Fransız ikinci hattı'
     },
     bouvet: {
-        offset: { x: -94, y: 48 },
+        offset: { x: -112, y: 38 },
         startT: 0.38,
         attackT: 0.78,
-        hitPoint: { x: 1396, y: 2295 },
-        retreatPoint: { x: 1396, y: 2295 },
+        hitPoint: { x: 1293, y: 2356 },
+        retreatPoint: { x: 1293, y: 2356 },
         role: 'Erenköy dönüş hattında battı'
     },
     'hms-irresistible': {
-        offset: { x: -18, y: 74 },
+        offset: { x: -42, y: 122 },
         startT: 0.31,
         attackT: 0.72,
-        hitPoint: { x: 1320, y: 2368 },
-        retreatPoint: { x: 1320, y: 2368 },
+        hitPoint: { x: 1226, y: 2369 },
+        retreatPoint: { x: 1226, y: 2369 },
         role: 'Erenköy mayın hattında battı'
     },
     'hms-ocean': {
-        offset: { x: 42, y: 98 },
+        offset: { x: 118, y: 88 },
         startT: 0.25,
         attackT: 0.68,
-        hitPoint: { x: 1245, y: 2425 },
-        retreatPoint: { x: 1245, y: 2425 },
+        hitPoint: { x: 1273, y: 2410 },
+        retreatPoint: { x: 1273, y: 2410 },
         role: 'Irresistible yardımı sırasında battı'
+    },
+    'allied-minesweepers': {
+        offset: { x: -150, y: 28 },
+        startT: 0.42,
+        attackT: 0.62,
+        hitPoint: { x: 1130, y: 2380 },
+        retreatPoint: { x: 930, y: 2685 },
+        role: 'mayın tarama trawlerları'
     }
 };
 
@@ -349,11 +356,11 @@ function getNusretPosition(unit, phaseIndex) {
         // Kritik hattı döşedikten sonra Nusret'i Erenköy dönüş hattının tam üstünde
         // değil, mayın hattının kuzeydoğu/nöbet ucunda gösteriyoruz. Böylece hem
         // tarihsel rol görünür kalıyor hem de İtilaf gemileriyle token yığılması oluşmuyor.
-        const base = { x: 1518, y: 2180 };
+        const base = { x: 1179, y: 2386 };
         return applyBreathing(base, unit, phaseIndex, 0.35);
     }
     if (iso > '1915-03-18') {
-        return applyBreathing({ x: 1468, y: 2148 }, unit, phaseIndex, 0.45);
+        return applyBreathing({ x: 1314, y: 2375 }, unit, phaseIndex, 0.45);
     }
     const t = dateProgress(iso, '1914-11-03', '1915-03-06');
     return applyBreathing(interpolateWaypoints(NUSRET_PATROL_ROUTE, t), unit, phaseIndex, 0.5);

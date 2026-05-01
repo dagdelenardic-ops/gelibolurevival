@@ -7,7 +7,8 @@ import { getNarrationIcon } from '../data/icon-registry.js';
 import { getRandomRomanticEntry } from '../data/romantic-layer.js';
 import { getEventImage } from '../data/event-images.js';
 import { getEventVideo } from '../data/event-videos.js';
-import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260407-manual-r1';
+import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260501-smoke-r1';
+import { getGuidedCampaignChapter } from '../data/guided-campaign.js';
 
 const isMobileNarration = typeof window !== 'undefined' && window.innerWidth <= 768;
 const MOBILE_VIEW_MODES = ['story', 'story+map', 'map-focus'];
@@ -15,6 +16,15 @@ const MOBILE_VIEW_MODES = ['story', 'story+map', 'map-focus'];
 let mobileHandlers = {};
 let mobileViewMode = isMobileNarration ? 'story' : 'desktop';
 let storySwipeStartY = 0;
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 /** Tarih metni → gün/ay/yıl parçaları */
 export function splitDisplayDateParts(dateText) {
@@ -135,6 +145,46 @@ function updateDetailToggle(hasDetail) {
     if (!hasDetail) {
         detail.classList.remove('is-open');
     }
+}
+
+function getIntensityCopy(animData, chapter) {
+    const intensity = Number(animData?.intensity || 0);
+    if (!intensity) return chapter?.casualtyLabel || 'Sahne kuruluyor';
+    if (intensity >= 8) return `Yoğunluk ${intensity}/10 · kritik temas`;
+    if (intensity >= 6) return `Yoğunluk ${intensity}/10 · ağır baskı`;
+    if (intensity >= 4) return `Yoğunluk ${intensity}/10 · aktif çatışma`;
+    return `Yoğunluk ${intensity}/10 · hazırlık/temas`;
+}
+
+function renderChapterButtons(className) {
+    return getMobileStoryChapters().map((chapter) => (
+        `<button class="${className}" type="button" data-chapter-id="${chapter.id}" data-start-iso="${chapter.startIso}" aria-label="${escapeHtml(chapter.title)} bölümüne git">${escapeHtml(chapter.shortTitle)}</button>`
+    )).join('');
+}
+
+function syncGuidedCampaignReadout(phase, animData) {
+    const chapter = getGuidedCampaignChapter(phase?.isoStart);
+    const fields = {
+        campaignPromise: phase?.guidedChapterPromise || chapter.promise,
+        campaignMetric: phase?.guidedChapterMetric || chapter.metricLabel,
+        campaignOutcome: phase?.guidedChapterOutcome || chapter.outcome,
+        campaignIntensity: getIntensityCopy(animData, chapter),
+        storyCampaignPromise: phase?.guidedChapterPromise || chapter.promise,
+        storyCampaignMetric: phase?.guidedChapterMetric || chapter.metricLabel,
+        storyCampaignOutcome: phase?.guidedChapterOutcome || chapter.outcome,
+        storyCampaignIntensity: getIntensityCopy(animData, chapter),
+    };
+
+    Object.entries(fields).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || '';
+    });
+
+    document.querySelectorAll('.guided-chapter-marker, .story-chapter-marker, .timeline-chapter-marker').forEach((button) => {
+        const active = button.dataset.chapterId === chapter.id;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
 }
 
 function syncMapButtonLabel() {
@@ -304,6 +354,7 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
 
     if (summary) summary.textContent = summaryText;
     if (text) text.textContent = detailText;
+    syncGuidedCampaignReadout(phase, animData);
 
     updateRomanticQuote(phase.isoStart || '');
     updateDetailToggle(Boolean(detailText));
@@ -384,7 +435,15 @@ function bindMobileStoryInteractions() {
         }, { passive: true });
     }
 
-    document.querySelectorAll('.story-chapter-marker').forEach((button) => {
+    document.querySelectorAll('.story-chapter-marker, .guided-chapter-marker').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (mobileHandlers.onJumpToChapter) mobileHandlers.onJumpToChapter(button.dataset.startIso);
+        });
+    });
+}
+
+function bindDesktopCampaignInteractions() {
+    document.querySelectorAll('.guided-chapter-marker').forEach((button) => {
         button.addEventListener('click', () => {
             if (mobileHandlers.onJumpToChapter) mobileHandlers.onJumpToChapter(button.dataset.startIso);
         });
@@ -392,7 +451,6 @@ function bindMobileStoryInteractions() {
 }
 
 function renderMobileNarrationShell(phase, displayTitle, clean, icon) {
-    const chapters = getMobileStoryChapters();
     const badgeText = phase.mobilePriority === 'feature' ? 'Büyük Olay' : 'Hızlı Geçiş';
     return `
         <button class="story-sheet-handle" id="storySheetHandle" type="button" aria-label="Kart görünümünü değiştir">
@@ -410,6 +468,12 @@ function renderMobileNarrationShell(phase, displayTitle, clean, icon) {
             <div class="story-badge-row">
                 <span class="story-priority-badge" id="storyPriorityBadge" data-priority="${phase.mobilePriority || 'supporting'}">${badgeText}</span>
             </div>
+            <div class="story-campaign-readout">
+                <div><span>Kırılma</span><strong id="storyCampaignPromise">${escapeHtml(phase.guidedChapterPromise || '')}</strong></div>
+                <div><span>Ölçek</span><strong id="storyCampaignMetric">${escapeHtml(phase.guidedChapterMetric || '')}</strong></div>
+                <div><span>Baskı</span><strong id="storyCampaignIntensity">${escapeHtml(phase.guidedChapterCasualty || '')}</strong></div>
+                <div><span>Sonuç</span><strong id="storyCampaignOutcome">${escapeHtml(phase.guidedChapterOutcome || '')}</strong></div>
+            </div>
             <div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle}</div>
             <div class="story-summary" id="narrationSummary">${phase.mobileSummary || clean || ''}</div>
             <div class="story-media">
@@ -422,7 +486,7 @@ function renderMobileNarrationShell(phase, displayTitle, clean, icon) {
                 <button class="story-control-btn" id="storyNextBtn" type="button">İleri</button>
             </div>
             <div class="story-chapter-strip" aria-label="Bölüm seçimi">
-                ${chapters.map((chapter) => `<button class="story-chapter-marker" type="button" data-chapter-id="${chapter.id}" data-start-iso="${chapter.startIso}">${chapter.shortTitle}</button>`).join('')}
+                ${renderChapterButtons('story-chapter-marker')}
             </div>
             <button class="story-detail-toggle" id="storyDetailToggle" type="button">Detayı Aç</button>
             <div class="story-detail" id="storyDetail" hidden>
@@ -435,12 +499,25 @@ function renderMobileNarrationShell(phase, displayTitle, clean, icon) {
 }
 
 function renderDesktopNarrationShell(phase, displayTitle, clean, icon) {
+    const chapter = getGuidedCampaignChapter(phase.isoStart);
     return `
         <button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat">
             <span class="narration-toggle-icon">▼</span>
             <span class="narration-toggle-label">${displayTitle}</span>
         </button>
         <div class="narration-content" id="narrationContent">
+            <div class="guided-campaign-panel">
+                <div class="guided-campaign-kicker">Kampanya Akışı</div>
+                <div class="guided-chapter-strip" aria-label="Kampanya bölümleri">
+                    ${renderChapterButtons('guided-chapter-marker')}
+                </div>
+                <div class="guided-campaign-readout">
+                    <div><span>Kırılma</span><strong id="campaignPromise">${escapeHtml(phase.guidedChapterPromise || chapter.promise)}</strong></div>
+                    <div><span>Ölçek</span><strong id="campaignMetric">${escapeHtml(phase.guidedChapterMetric || chapter.metricLabel)}</strong></div>
+                    <div><span>Baskı</span><strong id="campaignIntensity">${escapeHtml(phase.guidedChapterCasualty || chapter.casualtyLabel)}</strong></div>
+                    <div><span>Sonuç</span><strong id="campaignOutcome">${escapeHtml(phase.guidedChapterOutcome || chapter.outcome)}</strong></div>
+                </div>
+            </div>
             <div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} <span class="narration-date">— ${phase.date}</span></div>
             <div class="narration-text" id="narrationText">${clean || ''}</div>
             <div class="event-image" id="eventImage" style="display:none"></div>
@@ -483,7 +560,9 @@ export function attachNarrationElements(container, phase, opts = {}) {
                 if (ic) ic.textContent = nb.classList.contains('is-collapsed') ? '▲' : '▼';
             });
         }
+        bindDesktopCampaignInteractions();
     }
 
     updateRomanticQuote(phase.isoStart || '');
+    syncGuidedCampaignReadout(phase, null);
 }

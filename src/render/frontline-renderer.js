@@ -76,8 +76,19 @@ export function renderLandCombatFX(campaignPhase, animData) {
         return;
     }
 
-    // Aktif cephe hatlarından FX noktaları oluştur
-    const activeFrontlines = FRONTLINES.filter((fl) => fl.phase.includes(campaignPhase.id));
+    // Aktif cephe hatlarından tek okunur temas noktası oluştur.
+    const frontName = Array.isArray(animData?.fronts) ? animData.fronts[0] : '';
+    const preferredFrontlineId = frontName === 'Arıburnu'
+        ? 'ariburnu-front'
+        : frontName === 'Seddülbahir'
+            ? 'seddulbahir-front'
+            : frontName === 'Anafartalar'
+                ? 'suvla-front'
+                : '';
+    const activeFrontlines = FRONTLINES
+        .filter((fl) => fl.phase.includes(campaignPhase.id))
+        .filter((fl) => !preferredFrontlineId || fl.id === preferredFrontlineId)
+        .slice(0, 1);
 
     const fxMarkup = activeFrontlines.map((fl) => {
         const fx = [];

@@ -6,7 +6,7 @@
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { getUnitIcon } from '../data/icon-registry.js';
 import { getCommanderPortrait } from '../data/commander-portraits.js';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260501-guided-r2';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 
 /** Faksiyon banner rengi — desatüre askeri tonlar */
@@ -21,8 +21,36 @@ function getFactionBanner(faction) {
 }
 
 function setPanelA11yState(panel, open) {
+    panel.hidden = !open;
     panel.toggleAttribute('inert', !open);
     panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
+function getFocusableElements(root) {
+    return [...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+        .filter((el) => !el.disabled && el.offsetParent !== null);
+}
+
+function trapPanelFocus(event, panel) {
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        hideUnitPanel();
+        return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusable = getFocusableElements(panel);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
 }
 
 function normalizeAnimUnitName(value) {
@@ -177,6 +205,8 @@ function initSwipeToClose() {
         }
         currentY = 0;
     });
+
+    panel.addEventListener('keydown', (event) => trapPanelFocus(event, panel));
 }
 // Initialize immediately since script is deferred or loaded dynamically
 if (typeof document !== 'undefined') {
@@ -209,5 +239,12 @@ export function attachUnitClicks(getCurrentPhaseIndex) {
         const currentIso = String(phase.isoStart || phase.date);
         const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso] || null;
         showUnitPanel(unit, phaseData, phase, animData);
+    });
+    tg.addEventListener('keydown', (ev) => {
+        if (ev.key !== 'Enter' && ev.key !== ' ') return;
+        const el = ev.target.closest('.unit-token');
+        if (!el) return;
+        ev.preventDefault();
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     });
 }

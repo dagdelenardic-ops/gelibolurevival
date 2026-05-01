@@ -10,8 +10,8 @@ import {
     unitSeed, getNarrativeNavalPosition,
     getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, isDestroyedPhaseData
 } from '../engine/position-engine.js?v=20260407-manual-r1';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260407-manual-r1';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js';
+import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260501-smoke-r1';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260501-guided-r2';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 import { getUnitIcon } from '../data/icon-registry.js';
 
@@ -77,7 +77,7 @@ function unitClassMarker(cx, cy, unitClass, cl) {
 /** Token şekli (harita üstü birlik sembolü) */
 function tokenShape(unit, phaseData, f, cx, cy) {
     const c = f.color, cl = f.colorLight;
-    if (unit.type === 'deniz') return navalTokenShape(unit, f, cx, cy, phaseData);
+    if (unit.type === 'deniz' || unit.entityType === 'landing_boat') return navalTokenShape(unit, f, cx, cy, phaseData);
     const r = getTokenRadius(unit.unitClass);
     const marker = unitClassMarker(cx, cy, unit.unitClass, cl);
     const ic = getUnitIcon(unit.id);

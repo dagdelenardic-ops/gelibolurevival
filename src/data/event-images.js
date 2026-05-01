@@ -110,7 +110,7 @@ export const EVENT_IMAGES = [
         caption:  'Nusret Mayın Gemisi — 1912 deniz denemesi',
         source:   'Wikimedia Commons, Public Domain',
         cropFocus: 'center',
-        context:  '7-8 Mart 1915 gecesi Nusret mayın gemisi, Kolağası Nazmi Bey komutasında Erenköy Koyu\'na 26 mayın döşedi. Bu mayınlar İtilaf donanmasının taramadığı bir hatta, kıyıya paralel yerleştirildi — 18 Mart felaketinin habercisiydi.',
+        context:  '7-8 Mart 1915 gecesi Nusret mayın gemisi, Kolağası Nazmi Bey komutasında Erenköy Koyu\'na paralel 26 mayınlık kritik hattı döşedi. Bu, Nusret\'in toplam faaliyeti değil, İtilaf donanmasının taramadığı gizli hattı oluşturan son ve en önemli seferdi.',
     },
     // ── 5. Mayın Temizleme / 18 Mart Öncesi ──
     {
@@ -130,7 +130,7 @@ export const EVENT_IMAGES = [
         caption:  'Bouvet zırhlısının batışı — 18 Mart 1915',
         source:   'TSK Arşivi, Wikimedia Commons',
         cropFocus: 'center',
-        context:  '18 Mart 1915: İtilaf\'ın en büyük deniz saldırısı. 18 savaş gemisi Boğaz\'a girdi. Nusret\'in mayınlarına çarpan Bouvet 2 dakikada battı (~640 şehit). Irresistible ve Ocean da mayına çarparak battı. İtilaf 3 zırhlı kaybetti, Boğaz geçilemeyeceği anlaşıldı.',
+        context:  '18 Mart 1915: İtilaf\'ın en büyük deniz saldırısı. 18 savaş gemisi Boğaz\'a girdi. Nusret\'in mayınlarına çarpan Bouvet yaklaşık 2 dakikada battı; kayıp sayısı kaynaklara göre değişmekle birlikte yaklaşık 640 olarak verilir. Irresistible ve Ocean da mayına çarparak battı. İtilaf 3 zırhlı kaybetti, Boğaz geçilemeyeceği anlaşıldı.',
     },
     // ── 7. 5. Ordu Kuruluşu — Savunma Hazırlığı ──
     {

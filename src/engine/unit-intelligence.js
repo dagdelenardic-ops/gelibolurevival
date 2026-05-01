@@ -121,10 +121,14 @@ function deriveActionKey(unit, statusText, objectiveText, outcomeText, animUnit,
     const eventType = normalizeText(animData && animData.eventType);
     const animState = normalizeText(animUnit && animUnit.state);
     const isShip = unit.type === 'deniz';
+    const isBattery = unit.entityType === 'artillery_battery';
 
     if (/tahliye|geri cekil|geri cek|cekil/.test(haystack)) return 'retreating';
-    if (/cikarma|karaya cik|sahile in/.test(haystack)) return 'landing';
+    if ((isShip || isBattery) && (eventType === 'bombardment' || animState === 'bombardment')) return 'bombarding';
     if (isShip && (/bombala|bombard|tabya|top atesi|yok et|sustur/.test(haystack) || animState === 'bombardment')) return 'bombarding';
+    if (!isShip && !isBattery && /cikarma|karaya cik|sahile in/.test(haystack)) {
+        return unit.faction === 'ottoman' ? 'defending' : 'landing';
+    }
     if (/savun|hat tut|mevzi|koru/.test(haystack)) return 'defending';
     if (/hazir|bekle|ihtiyat|yedek|egitim/.test(haystack)) return 'reserve';
     if (/taarruz|hucum|ilerle|gec|saldir/.test(haystack)) return 'advancing';

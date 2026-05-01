@@ -6,6 +6,7 @@
 import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260407-manual-r1';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { HISTORICAL_ANCHORS } from '../data/historical-anchors.js';
+import { GUIDED_CAMPAIGN_CHAPTERS, getGuidedCampaignChapter } from '../data/guided-campaign.js';
 import {
     isoToUTCDate, utcDateToISO, addUTCDateDays,
     formatISOToTR, dayDiffISO, normalizeValue, normalizeDateText
@@ -37,64 +38,7 @@ let PHASE_MAJOR_ORDER = [];
 let NAVAL_ERA_END_INDEX = 0;
 let WEEKLY_GUIDE = [];
 
-const MOBILE_STORY_CHAPTERS = [
-    {
-        id: 'opening',
-        title: 'Hazırlıklar',
-        shortTitle: '1914',
-        startIso: '1914-11-03',
-        endIso: '1915-02-18',
-        defaultLocations: ['gelibolu', 'bogaz', 'canakkale']
-    },
-    {
-        id: 'naval',
-        title: 'Deniz Harekâtı',
-        shortTitle: 'Deniz',
-        startIso: '1915-02-19',
-        endIso: '1915-03-17',
-        defaultLocations: ['bogaz', 'kilitbahir', 'canakkale']
-    },
-    {
-        id: 'march18',
-        title: '18 Mart',
-        shortTitle: '18 Mart',
-        startIso: '1915-03-18',
-        endIso: '1915-03-24',
-        defaultLocations: ['bogaz', 'kilitbahir', 'canakkale']
-    },
-    {
-        id: 'landings',
-        title: 'Çıkarmalar',
-        shortTitle: 'Çıkarma',
-        startIso: '1915-04-25',
-        endIso: '1915-05-18',
-        defaultLocations: ['ariburnu', 'seddulbahir', 'bigali']
-    },
-    {
-        id: 'trenches',
-        title: 'Siperler',
-        shortTitle: 'Siperler',
-        startIso: '1915-05-19',
-        endIso: '1915-08-05',
-        defaultLocations: ['ariburnu', 'conkbayiri', 'kirte', 'alcitepe']
-    },
-    {
-        id: 'anafartalar',
-        title: 'Anafartalar',
-        shortTitle: 'Anaf.',
-        startIso: '1915-08-06',
-        endIso: '1915-12-06',
-        defaultLocations: ['suvla', 'anafartalar', 'conkbayiri']
-    },
-    {
-        id: 'evacuation',
-        title: 'Tahliye',
-        shortTitle: 'Tahliye',
-        startIso: '1915-12-07',
-        endIso: '1916-01-09',
-        defaultLocations: ['ariburnu', 'suvla', 'seddulbahir']
-    }
-];
+const MOBILE_STORY_CHAPTERS = GUIDED_CAMPAIGN_CHAPTERS;
 
 const UNIT_CLASS_PRIORITY = {
     mine_layer: 6,
@@ -107,6 +51,20 @@ const UNIT_CLASS_PRIORITY = {
     ship: 4
 };
 
+const UNIT_AVAILABILITY_WINDOWS = {
+    'allied-minesweepers': { startIso: '1915-02-19', endIso: '1915-03-18' },
+    'hms-queen-elizabeth': { startIso: '1915-02-19', endIso: '1915-03-22' },
+    'hms-irresistible': { startIso: '1915-02-19', endIso: '1915-03-18' },
+    'hms-ocean': { startIso: '1915-02-19', endIso: '1915-03-18' },
+    'bouvet': { startIso: '1915-02-19', endIso: '1915-03-18' },
+    'suffren': { startIso: '1915-02-19', endIso: '1915-03-22' },
+    '29-div': { startIso: '1915-04-25', endIso: '1916-01-09' },
+    'ss-river-clyde': { startIso: '1915-04-25', endIso: '1915-05-01' },
+    'anzac-1div': { startIso: '1915-04-25', endIso: '1915-12-20' },
+    'nz-inf': { startIso: '1915-04-25', endIso: '1915-12-20' },
+    'fr-corps': { startIso: '1915-04-25', endIso: '1916-01-09' }
+};
+
 export function getUnitEntryPhaseIndex() { return UNIT_ENTRY_PHASE_INDEX; }
 export function getPhaseMajorOrder() { return PHASE_MAJOR_ORDER; }
 export function getNavalEraEndIndex() { return NAVAL_ERA_END_INDEX; }
@@ -114,9 +72,7 @@ export function getWeeklyGuide() { return WEEKLY_GUIDE; }
 export function getMobileStoryChapters() { return MOBILE_STORY_CHAPTERS; }
 
 export function getMobileStoryChapter(isoDate) {
-    const iso = String(isoDate || '');
-    const match = MOBILE_STORY_CHAPTERS.find((chapter) => iso >= chapter.startIso && iso <= chapter.endIso);
-    return match || MOBILE_STORY_CHAPTERS[0];
+    return getGuidedCampaignChapter(isoDate);
 }
 
 // ── Phase Blend Utilities ──
@@ -293,17 +249,37 @@ function getUnitDisplayScore(unit, phase, focusIds) {
     return score;
 }
 
-function deriveVisibleUnitIds(phase, locationIds) {
+function isUnitAvailableForPhase(unit, phase) {
+    const iso = String(phase?.isoStart || '');
+    const window = UNIT_AVAILABILITY_WINDOWS[unit.id];
+    if (!window || !iso) return true;
+    if (window.startIso && iso < window.startIso) return false;
+    if (window.endIso && iso > window.endIso) return false;
+    return true;
+}
+
+function deriveVisibleUnitIds(phase, locationIds, chapter) {
     const focusSet = new Set(locationIds.map((id) => getMapLocationId(id)));
     const scored = BATTLE_DATA.units
+        .filter((unit) => isUnitAvailableForPhase(unit, phase))
         .map((unit) => ({ unit, score: getUnitDisplayScore(unit, phase, focusSet) }))
         .filter((entry) => entry.score > 0)
         .sort((a, b) => b.score - a.score || a.unit.name.localeCompare(b.unit.name, 'tr'));
 
-    const visibleIds = [];
+    const visibleIds = [...(chapter?.primaryUnitIds || [])]
+        .filter((id) => {
+            const unit = BATTLE_DATA.units.find((item) => item.id === id);
+            return unit && isUnitAvailableForPhase(unit, phase);
+        });
     const factionCounts = new Map();
+    visibleIds.forEach((id) => {
+        const unit = BATTLE_DATA.units.find((item) => item.id === id);
+        if (unit) factionCounts.set(unit.faction, (factionCounts.get(unit.faction) || 0) + 1);
+    });
 
     for (const entry of scored) {
+        if (visibleIds.includes(entry.unit.id)) continue;
+        if (entry.score < 4) continue;
         const count = factionCounts.get(entry.unit.faction) || 0;
         if (count >= 3 && visibleIds.length >= 6) continue;
         visibleIds.push(entry.unit.id);
@@ -317,7 +293,10 @@ function deriveVisibleUnitIds(phase, locationIds) {
 function getAutoplayHoldMs(phase, chapter) {
     const iso = String(phase.isoStart || '');
     if (iso < '1915-02-19' && phase.importance !== 'major') return 900;
+    if (chapter.id === 'nusret') return phase.importance === 'major' ? 5600 : 2200;
     if (chapter.id === 'march18') return 5200;
+    if (chapter.id === 'landings' && phase.importance === 'major') return 6200;
+    if (chapter.id === 'august' && phase.importance === 'major') return 6800;
     if (phase.importance === 'major') return 4600;
     if (chapter.id === 'opening') return 1200;
     if (chapter.id === 'evacuation') return 1600;
@@ -335,10 +314,18 @@ function decoratePhasesForMobile() {
             mobileSummary: buildMobileSummary(phase.narration),
             autoplayHoldMs: getAutoplayHoldMs(phase, chapter),
             mapFocus,
+            guidedChapterId: chapter.id,
+            guidedChapterTitle: chapter.title,
+            guidedChapterShortTitle: chapter.shortTitle,
+            guidedChapterPromise: chapter.promise,
+            guidedChapterOutcome: chapter.outcome,
+            guidedChapterMetric: chapter.metricLabel,
+            guidedChapterCasualty: chapter.casualtyLabel,
+            guidedUnitIds: deriveVisibleUnitIds(phase, mapFocus.locationIds, chapter),
             mobileChapterId: chapter.id,
             mobileChapterTitle: chapter.title,
             mobileChapterShortTitle: chapter.shortTitle,
-            mobileVisibleUnitIds: deriveVisibleUnitIds(phase, mapFocus.locationIds)
+            mobileVisibleUnitIds: deriveVisibleUnitIds(phase, mapFocus.locationIds, chapter)
         };
     });
 }
@@ -452,6 +439,23 @@ function applyCanonicalPositions(phases) {
     }
 }
 
+function applyHistoricalAnchors(phases) {
+    const anchorsByIso = HISTORICAL_ANCHORS.reduce((acc, anchor) => {
+        acc[anchor.iso] = anchor;
+        return acc;
+    }, {});
+
+    for (const phase of phases) {
+        const anchor = anchorsByIso[phase.isoStart];
+        if (!anchor) continue;
+        phase.title = cleanPhaseTitle(anchor.title);
+        phase.narration = cleanNarrationText(anchor.narration);
+        phase.importance = 'major';
+        if (Array.isArray(anchor.locationIds)) phase.locationIds = anchor.locationIds;
+        if (anchor.locationByFaction) phase.locationByFaction = anchor.locationByFaction;
+    }
+}
+
 /** Phase genişletmeyi tetikle — kitap verisi varsa onu kullan, yoksa günlük phase üret */
 function cloneBasePhases() {
     return JSON.parse(JSON.stringify(BASE_PHASE_TEMPLATES));
@@ -467,6 +471,7 @@ function ensureExpandedPhases(options = {}) {
         BATTLE_DATA.phases = parsedPhases
             .map((p, idx) => ({ ...p, isoStart: p.isoStart || normalizeDateText(p.date, idx) }))
             .sort((a, b) => (a.isoStart < b.isoStart ? -1 : a.isoStart > b.isoStart ? 1 : 0));
+        applyHistoricalAnchors(BATTLE_DATA.phases);
         // Tarihsel kaynaklara dayalı pozisyon override
         applyCanonicalPositions(BATTLE_DATA.phases);
         return;
@@ -476,10 +481,12 @@ function ensureExpandedPhases(options = {}) {
         BATTLE_DATA.phases = BATTLE_DATA.phases
             .map((p, idx) => ({ ...p, isoStart: p.isoStart || normalizeDateText(p.date, idx), title: cleanPhaseTitle(p.title), narration: cleanNarrationText(p.narration) }))
             .sort((a, b) => (a.isoStart < b.isoStart ? -1 : a.isoStart > b.isoStart ? 1 : 0));
+        applyHistoricalAnchors(BATTLE_DATA.phases);
         return;
     }
 
     BATTLE_DATA.phases = buildDailyHistoricalPhases(BATTLE_DATA.phases);
+    applyHistoricalAnchors(BATTLE_DATA.phases);
 }
 
 /** Birim giriş indekslerini hesapla */
@@ -531,6 +538,7 @@ export function getFirstPhaseIndexForIso(isoDate) {
 
 /** Birim için minimum başlangıç ISO tarihini belirle */
 export function getMinimumStartIsoForUnit(unit) {
+    if (unit.id === 'allied-minesweepers') return '1915-02-19';
     if (unit.type === 'deniz' && unit.faction !== 'ottoman') return '1914-11-03';
     if (unit.faction !== 'ottoman') return '1915-04-25';
     return '1914-11-03';

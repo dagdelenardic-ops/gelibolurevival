@@ -19,6 +19,8 @@ const UNIT_ICONS = {
   'hms-queen-elizabeth': { icon: 'battleship',      size: 12 },
   'hms-irresistible': { icon: 'battleship',         size: 10 },
   'hms-ocean':       { icon: 'battleship',          size: 10 },
+  'allied-minesweepers': { icon: 'anchor',          size: 8  },
+  'ss-river-clyde':  { icon: 'anchor',              size: 8  },
   // ANZAC birimleri
   'anzac-1div':      { icon: 'soldier-man',         size: 9  },
   'nz-inf':          { icon: 'soldier-man',         size: 7  },

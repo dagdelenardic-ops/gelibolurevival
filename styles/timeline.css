@@ -44,6 +44,40 @@
     background: rgba(80, 75, 60, .25)
 }
 
+.timeline-chapters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 46vw;
+    overflow-x: auto;
+    scrollbar-width: none
+}
+
+.timeline-chapters::-webkit-scrollbar {
+    display: none
+}
+
+.timeline-chapter-marker {
+    flex: 0 0 auto;
+    border: 1px solid rgba(120, 100, 70, .32);
+    background: rgba(24, 22, 18, .86);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .03em;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, color .16s ease
+}
+
+.timeline-chapter-marker:hover,
+.timeline-chapter-marker.active {
+    background: rgba(201, 168, 76, .14);
+    border-color: rgba(201, 168, 76, .46);
+    color: #f3df9c
+}
+
 .timeline-track {
     flex: 1;
     position: relative;
@@ -186,6 +220,9 @@
     .timeline-controls{
         order:-1;
         width:100%
+    }
+    .timeline-chapters{
+        display:none
     }
     .timeline-btn{
         flex:1;

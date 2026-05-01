@@ -62,7 +62,12 @@ const RASTER_MAP_URL = 'assets/gallipoli-map.png';
 const RASTER_COAST_RADIUS = 18;
 const CLAMP_SEARCH_RADIUS = 260;
 const CLAMP_SEARCH_STEP = 6;
-const TERRAIN_RECT_OVERRIDES = [];
+const TERRAIN_RECT_OVERRIDES = [
+    // Manuel kalibrasyonda X Beach / İkiz Koyu / Seddülbahir kıyı şeridi
+    // raster renklendirmesinde yer yer deniz gibi okunuyor. Çıkarma token'ları
+    // bu sahilde kalmalı; aksi halde clamp onları Helles içine fazla iter.
+    { x1: 985, y1: 2315, x2: 1100, y2: 2420, terrain: 'coast' },
+];
 
 let rasterReady = false;
 let rasterData = null;

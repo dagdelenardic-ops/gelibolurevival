@@ -90,24 +90,26 @@ export const HISTORICAL_SOURCES = {
 };
 
 const LOC = {
-    suvla: { x: 1138, y: 1638 },
+    suvla: { x: 1143, y: 1632 },
     tuzgolu: { x: 1172, y: 1575 },
     kirectepe: { x: 1285, y: 1449 },
     anafartalar: { x: 1264, y: 1622 },
     bigali: { x: 1314, y: 1762 },
-    conkbayiri: { x: 1192, y: 1728 },
-    ariburnu: { x: 1064, y: 1778 },
+    conkbayiri: { x: 1236, y: 1744 },
+    ariburnu: { x: 1246, y: 1788 },
     kabatepe: { x: 1199, y: 1919 },
-    eceabat: { x: 1348, y: 1938 },
-    kilitbahir: { x: 1427, y: 2086 },
-    bogaz: { x: 1455, y: 2074 },
-    canakkale: { x: 1538, y: 2086 },
-    erenkoyu: { x: 1408, y: 2298 },
-    alcitepe: { x: 1158, y: 2198 },
+    eceabat: { x: 1404, y: 1958 },
+    kilitbahir: { x: 1451, y: 2091 },
+    bogaz: { x: 1475, y: 2103 },
+    canakkale: { x: 1508, y: 2102 },
+    erenkoyu: { x: 1196, y: 2532 },
+    alcitepe: { x: 1117, y: 2251 },
+    xBeach: { x: 1017, y: 2336 },
+    ikizKoyu: { x: 1039, y: 2325 },
     kirte: { x: 1112, y: 2246 },
-    seddulbahir: { x: 1019, y: 2365 },
-    morto: { x: 1195, y: 2350 },
-    kumkale: { x: 1320, y: 2526 }
+    seddulbahir: { x: 1033, y: 2399 },
+    morto: { x: 1063, y: 2358 },
+    kumkale: { x: 1061, y: 2509 }
 };
 
 export const HISTORICAL_CALIBRATION_POINTS = [
@@ -119,7 +121,8 @@ export const HISTORICAL_CALIBRATION_POINTS = [
     { id: 'ariburnu', label: 'Arıburnu / Anzac Cove', point: LOC.ariburnu, sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'], residualPx: 0 },
     { id: 'conkbayiri', label: 'Conkbayırı / Chunuk Bair', point: LOC.conkbayiri, sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'], residualPx: 12 },
     { id: 'suvla', label: 'Suvla Bay', point: LOC.suvla, sourceIds: ['awm-anzac-suvla-1915', 'nz-history-anzac-suvla'], residualPx: 12 },
-    { id: 'alcitepe', label: 'Alçıtepe / Achi Baba', point: LOC.alcitepe, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], residualPx: 16 }
+    { id: 'alcitepe', label: 'Alçıtepe / Achi Baba', point: LOC.alcitepe, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], residualPx: 16 },
+    { id: 'x-beach', label: 'X Beach / İkiz Koyu landing point', point: LOC.xBeach, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], residualPx: 0 }
 ];
 
 export const HISTORICAL_ROUTES = [
@@ -134,10 +137,10 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'],
         note: '7/8 Mart gecesi Erenköy koyuna paralel 26 mayınlık 11. hat.',
         points: [
-            { x: 1265, y: 2360 },
-            { x: 1325, y: 2338 },
-            { x: 1388, y: 2310 },
-            { x: 1435, y: 2285 }
+            { x: 1179, y: 2386 },
+            { x: 1200, y: 2405 },
+            { x: 1222, y: 2425 },
+            { x: 1244, y: 2446 }
         ]
     },
     {
@@ -152,10 +155,10 @@ export const HISTORICAL_ROUTES = [
         note: 'Ana muharebe hattı: dış yaklaşma, narrows bombardımanı, 18 Mart birinci hat.',
         points: [
             { x: 790, y: 2718 },
-            { x: 1040, y: 2548 },
-            { x: 1275, y: 2360 },
-            { x: 1440, y: 2200 },
-            { x: 1485, y: 2125 }
+            { x: 940, y: 2580 },
+            { x: 1070, y: 2490 },
+            { x: 1138, y: 2385 },
+            { x: 1260, y: 2415 }
         ]
     },
     {
@@ -169,8 +172,7 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['gdi-naval-campaign', 'britannica-naval-operations'],
         note: '18 Mart sonrası Boğaz dışına çekilme, Mayıs ayında denizaltı tehdidiyle tiyatrodan ayrılış.',
         points: [
-            { x: 1468, y: 2133 },
-            { x: 1315, y: 2350 },
+            { x: 1215, y: 2420 },
             { x: 1080, y: 2520 },
             { x: 880, y: 2710 }
         ]
@@ -187,10 +189,10 @@ export const HISTORICAL_ROUTES = [
         note: 'Fransız ikinci hattı, Erenköy dönüş bölgesinde ağır hasar.',
         points: [
             { x: 700, y: 2790 },
-            { x: 965, y: 2615 },
-            { x: 1190, y: 2455 },
-            { x: 1380, y: 2250 },
-            { x: 1468, y: 2228 }
+            { x: 980, y: 2700 },
+            { x: 1140, y: 2570 },
+            { x: 1250, y: 2460 },
+            { x: 1314, y: 2375 }
         ]
     },
     {
@@ -204,8 +206,8 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['gdi-naval-campaign'],
         note: 'Ağır hasarlı halde Boğaz dışına çekilme.',
         points: [
-            { x: 1396, y: 2198 },
-            { x: 1190, y: 2450 },
+            { x: 1314, y: 2375 },
+            { x: 1110, y: 2520 },
             { x: 930, y: 2685 }
         ]
     },
@@ -221,10 +223,10 @@ export const HISTORICAL_ROUTES = [
         note: 'Fransız hattı Erenköy dönüşü; 13:54 civarı mayın çarpması.',
         points: [
             { x: 665, y: 2805 },
-            { x: 920, y: 2650 },
-            { x: 1135, y: 2470 },
-            { x: 1325, y: 2315 },
-            { x: 1396, y: 2295 }
+            { x: 840, y: 2700 },
+            { x: 990, y: 2570 },
+            { x: 1148, y: 2472 },
+            { x: 1293, y: 2356 }
         ]
     },
     {
@@ -239,10 +241,10 @@ export const HISTORICAL_ROUTES = [
         note: 'İkinci/üçüncü hat dönüş bölgesi; Erenköy mayın hattında hasar.',
         points: [
             { x: 720, y: 2830 },
-            { x: 990, y: 2670 },
-            { x: 1160, y: 2520 },
-            { x: 1288, y: 2400 },
-            { x: 1320, y: 2368 }
+            { x: 860, y: 2720 },
+            { x: 1010, y: 2580 },
+            { x: 1164, y: 2542 },
+            { x: 1216, y: 2468 }
         ]
     },
     {
@@ -257,10 +259,27 @@ export const HISTORICAL_ROUTES = [
         note: 'Irresistible yardım girişimi ve aynı mayın sahasında kayıp.',
         points: [
             { x: 755, y: 2860 },
-            { x: 1030, y: 2690 },
-            { x: 1180, y: 2560 },
-            { x: 1265, y: 2470 },
-            { x: 1245, y: 2425 }
+            { x: 900, y: 2760 },
+            { x: 1050, y: 2650 },
+            { x: 1220, y: 2540 },
+            { x: 1335, y: 2490 }
+        ]
+    },
+    {
+        id: 'allied-minesweepers-night-sweeps',
+        unitIds: ['allied-minesweepers'],
+        start: '1915-02-19',
+        end: '1915-03-17',
+        kind: 'route',
+        confidence: 'medium',
+        tolerance: 170,
+        sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'],
+        note: 'Silahlı koruma altındaki trawler mayın tarama denemeleri; akıntı, ateş ve deneyimsiz sivil ekipler yüzünden hat açılamadı.',
+        points: [
+            { x: 1040, y: 2580 },
+            { x: 1125, y: 2500 },
+            { x: 1155, y: 2445 },
+            { x: 1130, y: 2380 }
         ]
     },
     {
@@ -274,10 +293,10 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'],
         note: 'Arıburnu/North Beach çıkarması ve dar Old Anzac tutunması.',
         points: [
-            { x: 820, y: 1855 },
-            { x: 970, y: 1815 },
-            { x: 1064, y: 1778 },
-            { x: 1110, y: 1750 }
+            { x: 1246, y: 1788 },
+            { x: 1260, y: 1780 },
+            { x: 1270, y: 1770 },
+            { x: 1280, y: 1765 }
         ]
     },
     {
@@ -291,10 +310,10 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps', 'nz-history-anzac-suvla'],
         note: 'Sarı Bayır/Conkbayırı taarruzu; Yeni Zelanda Tugayı zirveye ulaşır.',
         points: [
-            { x: 1064, y: 1778 },
-            { x: 1115, y: 1748 },
-            { x: 1160, y: 1738 },
-            { x: 1192, y: 1728 }
+            { x: 1246, y: 1788 },
+            { x: 1240, y: 1768 },
+            { x: 1238, y: 1755 },
+            { x: 1236, y: 1744 }
         ]
     },
     {
@@ -309,9 +328,9 @@ export const HISTORICAL_ROUTES = [
         note: 'Bigalı ihtiyatından Conkbayırı/Arıburnu karşı hareketi.',
         points: [
             { x: 1314, y: 1762 },
-            { x: 1245, y: 1738 },
-            { x: 1192, y: 1728 },
-            { x: 1085, y: 1765 }
+            { x: 1280, y: 1755 },
+            { x: 1236, y: 1744 },
+            { x: 1246, y: 1788 }
         ]
     },
     {
@@ -325,10 +344,10 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'],
         note: 'Eceabat/Maydos hattından Arıburnu ilk temas savunmasına hareket.',
         points: [
-            { x: 1348, y: 1938 },
-            { x: 1240, y: 1875 },
-            { x: 1130, y: 1805 },
-            { x: 1064, y: 1778 }
+            { x: 1404, y: 1958 },
+            { x: 1350, y: 1900 },
+            { x: 1300, y: 1830 },
+            { x: 1246, y: 1788 }
         ]
     },
     {
@@ -340,11 +359,11 @@ export const HISTORICAL_ROUTES = [
         confidence: 'high',
         tolerance: 210,
         sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'],
-        note: 'Cape Helles V/W Beach çıkarması ve Seddülbahir köprübaşı.',
+        note: 'Cape Helles çıkarması: X Beach ayrı iniş noktası, V/W Beach ve SS River Clyde hattı üzerinden Seddülbahir köprübaşı.',
         points: [
-            { x: 760, y: 2520 },
-            { x: 900, y: 2430 },
-            { x: 1019, y: 2365 },
+            { x: 1017, y: 2336 },
+            { x: 1033, y: 2399 },
+            { x: 1060, y: 2350 },
             { x: 1085, y: 2305 }
         ]
     },
@@ -359,9 +378,9 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'],
         note: 'Kumkale aldatma çıkarması ardından Helles sağ kanadına geçiş.',
         points: [
-            { x: 1320, y: 2526 },
-            { x: 1260, y: 2460 },
-            { x: 1195, y: 2350 },
+            { x: 1061, y: 2509 },
+            { x: 1080, y: 2460 },
+            { x: 1063, y: 2358 },
             { x: 1085, y: 2320 }
         ]
     },
@@ -376,10 +395,10 @@ export const HISTORICAL_ROUTES = [
         sourceIds: ['nz-history-anzac-suvla', 'anzac-portal-gallipoli-maps'],
         note: 'Anzac/Suvla cephesinden sahile sessiz tahliye.',
         points: [
-            { x: 1110, y: 1750 },
-            { x: 1064, y: 1778 },
-            { x: 940, y: 1815 },
-            { x: 820, y: 1860 }
+            { x: 1280, y: 1765 },
+            { x: 1246, y: 1788 },
+            { x: 1080, y: 1815 },
+            { x: 900, y: 1860 }
         ]
     },
     {
@@ -394,7 +413,7 @@ export const HISTORICAL_ROUTES = [
         note: 'Helles/Seddülbahir son tahliyesi.',
         points: [
             { x: 1085, y: 2305 },
-            { x: 1019, y: 2365 },
+            { x: 1033, y: 2399 },
             { x: 900, y: 2430 },
             { x: 760, y: 2520 }
         ]
@@ -403,14 +422,16 @@ export const HISTORICAL_ROUTES = [
 
 export const HISTORICAL_ANCHORS = [
     { id: 'cevat-pasha-narrows-command', unitId: 'mustahkem-mevki', start: '1914-11-03', end: '1916-01-09', kind: 'exact', confidence: 'high', tolerance: 120, point: LOC.kilitbahir, sourceIds: ['national-archives-map-series', 'dardanelles-defences-1915'], note: 'Çanakkale Müstahkem Mevki Komutanlığı, Narrows/kıyı bataryaları.' },
-    { id: 'nusret-erenkoy-patrol-before', unitId: 'nusret', start: '1914-11-03', end: '1915-03-06', kind: 'route', confidence: 'medium', tolerance: 180, point: { x: 1350, y: 2330 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Boğaz mayın savunması ve Erenköy çevresi devriye/operasyon alanı.' },
-    { id: 'nusret-erenkoy-watch-after-mines', unitId: 'nusret', start: '1915-03-09', end: '1916-01-09', kind: 'exact', confidence: 'medium', tolerance: 190, point: { x: 1518, y: 2180 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Mayın hattı döşendikten sonra Erenköy/Kephez savunma hattı.' },
+    { id: 'nusret-erenkoy-patrol-before', unitId: 'nusret', start: '1914-11-03', end: '1915-03-06', kind: 'route', confidence: 'medium', tolerance: 180, point: { x: 1475, y: 2103 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Boğaz mayın savunması ve Erenköy çevresi devriye/operasyon alanı.' },
+    { id: 'nusret-erenkoy-watch-after-mines', unitId: 'nusret', start: '1915-03-09', end: '1916-01-09', kind: 'exact', confidence: 'medium', tolerance: 190, point: { x: 1179, y: 2386 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Mayın hattı döşendikten sonra Erenköy/Kephez savunma hattı.' },
+    { id: 'trawlers-minesweeping-failed', unitId: 'allied-minesweepers', start: '1915-02-19', end: '1915-03-17', kind: 'route', confidence: 'medium', tolerance: 180, point: { x: 1130, y: 2380 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Mayın tarama trawlerları kıyı ateşi ve akıntı nedeniyle Erenköy hattını açamadı.' },
+    { id: 'trawlers-18-march-failed-screen', unitId: 'allied-minesweepers', exactDate: '1915-03-18', kind: 'route', confidence: 'medium', tolerance: 180, point: { x: 1130, y: 2380 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: '18 Mart sahnesinde, taarruzdan önce açılamayan mayın tarama hattının görsel özeti.' },
 
-    { id: 'bouvet-sunk-18-march', unitId: 'bouvet', exactDate: '1915-03-18', kind: 'exact', confidence: 'high', tolerance: 105, point: { x: 1396, y: 2295 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Erenköy dönüş hattında mayına çarpıp battı.' },
-    { id: 'irresistible-sunk-18-march', unitId: 'hms-irresistible', exactDate: '1915-03-18', kind: 'exact', confidence: 'high', tolerance: 105, point: { x: 1320, y: 2368 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Erenköy mayın hattında devre dışı kaldı.' },
-    { id: 'ocean-sunk-18-march', unitId: 'hms-ocean', exactDate: '1915-03-18', kind: 'exact', confidence: 'high', tolerance: 105, point: { x: 1245, y: 2425 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Irresistible yardım girişiminde mayına çarptı.' },
-    { id: 'suffren-damaged-18-march', unitId: 'suffren', exactDate: '1915-03-18', kind: 'exact', confidence: 'medium', tolerance: 120, point: { x: 1468, y: 2228 }, sourceIds: ['gdi-naval-campaign', 'dardanelles-defences-1915'], note: 'Erenköy dönüş bölgesinde ağır hasar aldı.' },
-    { id: 'queen-elizabeth-line-a-18-march', unitId: 'hms-queen-elizabeth', exactDate: '1915-03-18', kind: 'exact', confidence: 'medium', tolerance: 130, point: { x: 1485, y: 2125 }, sourceIds: ['gdi-naval-campaign', 'britannica-naval-operations'], note: 'Line A uzun menzil bombardıman hattı.' },
+    { id: 'bouvet-sunk-18-march', unitId: 'bouvet', exactDate: '1915-03-18', kind: 'exact', confidence: 'high', tolerance: 105, point: { x: 1293, y: 2356 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Erenköy dönüş hattında mayına çarpıp battı.' },
+    { id: 'irresistible-sunk-18-march', unitId: 'hms-irresistible', exactDate: '1915-03-18', kind: 'exact', confidence: 'high', tolerance: 105, point: { x: 1226, y: 2369 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Erenköy mayın hattında devre dışı kaldı.' },
+    { id: 'ocean-sunk-18-march', unitId: 'hms-ocean', exactDate: '1915-03-18', kind: 'exact', confidence: 'high', tolerance: 105, point: { x: 1273, y: 2410 }, sourceIds: ['dardanelles-defences-1915', 'gdi-naval-campaign'], note: 'Irresistible yardım girişiminde mayına çarptı.' },
+    { id: 'suffren-damaged-18-march', unitId: 'suffren', exactDate: '1915-03-18', kind: 'exact', confidence: 'medium', tolerance: 120, point: { x: 1314, y: 2375 }, sourceIds: ['gdi-naval-campaign', 'dardanelles-defences-1915'], note: 'Erenköy dönüş bölgesinde ağır hasar aldı.' },
+    { id: 'queen-elizabeth-line-a-18-march', unitId: 'hms-queen-elizabeth', exactDate: '1915-03-18', kind: 'exact', confidence: 'medium', tolerance: 130, point: { x: 1215, y: 2420 }, sourceIds: ['gdi-naval-campaign', 'britannica-naval-operations'], note: 'Line A uzun menzil bombardıman hattı.' },
 
     { id: '5-ordu-gelibolu-proxy', unitId: '5-ordu', start: '1915-03-24', end: '1916-01-09', kind: 'inferred', confidence: 'medium', tolerance: 420, point: LOC.bigali, sourceIds: ['national-archives-map-series', 'anzac-portal-gallipoli-maps'], note: 'Gelibolu karargahı harita dışında olduğundan Bigalı proxy noktası kullanılır.' },
     { id: '3-kolordu-bigali-reserve', unitId: '3-kolordu', start: '1914-11-03', end: '1915-04-24', kind: 'inferred', confidence: 'medium', tolerance: 260, point: LOC.bigali, sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'], note: 'Bigalı ihtiyat/karargah bölgesi.' },
@@ -418,47 +439,49 @@ export const HISTORICAL_ANCHORS = [
     { id: '3-kolordu-post-anzac-evacuation', unitId: '3-kolordu', start: '1915-12-20', end: '1916-01-09', kind: 'inferred', confidence: 'medium', tolerance: 420, point: LOC.bigali, sourceIds: ['nz-history-anzac-suvla'], note: 'Anzac tahliyesinden sonra kuzey cephe komutası geriye alınır.' },
 
     { id: '19-tumen-bigali-reserve', unitId: '19-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'inferred', confidence: 'medium', tolerance: 240, point: LOC.bigali, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Bigalı ihtiyatı.' },
-    { id: '19-tumen-ariburnu', unitId: '19-tumen', start: '1915-04-27', end: '1915-08-05', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 220, point: { x: 1135, y: 1755 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Arıburnu/Conkbayırı karşı savunma hattı.' },
+    { id: '19-tumen-ariburnu', unitId: '19-tumen', start: '1915-04-27', end: '1915-08-05', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 220, point: { x: 1240, y: 1768 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Arıburnu/Conkbayırı karşı savunma hattı.' },
     { id: '19-tumen-anafartalar', unitId: '19-tumen', start: '1915-08-06', end: '1915-12-19', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: LOC.anafartalar, sourceIds: ['awm-anzac-suvla-1915', 'nz-history-anzac-suvla'], note: 'Anafartalar/Suvla savunması.' },
     { id: '19-tumen-post-evac', unitId: '19-tumen', start: '1915-12-20', end: '1916-01-09', kind: 'inferred', confidence: 'medium', tolerance: 420, point: LOC.bigali, sourceIds: ['nz-history-anzac-suvla'], note: 'Tahliye sonrası geride kalan Osmanlı savunması.' },
 
     { id: '57-alay-bigali-reserve', unitId: '57-alay', start: '1914-11-03', end: '1915-04-24', kind: 'inferred', confidence: 'medium', tolerance: 240, point: LOC.bigali, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: '19. Tümen ihtiyatı.' },
-    { id: '57-alay-ariburnu-line', unitId: '57-alay', start: '1915-04-27', end: '1915-12-19', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 240, point: { x: 1125, y: 1768 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Arıburnu siper/karşı taarruz hattı.' },
+    { id: '57-alay-ariburnu-line', unitId: '57-alay', start: '1915-04-27', end: '1915-12-19', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 240, point: { x: 1242, y: 1780 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Arıburnu siper/karşı taarruz hattı.' },
     { id: '57-alay-post-evac', unitId: '57-alay', start: '1915-12-20', end: '1916-01-09', kind: 'inferred', confidence: 'medium', tolerance: 420, point: LOC.bigali, sourceIds: ['nz-history-anzac-suvla'], note: 'Tahliye sonrası yarımada içi savunma.' },
 
     { id: '27-alay-eceabat-defense', unitId: '27-alay', start: '1914-11-03', end: '1915-04-24', kind: 'inferred', confidence: 'medium', tolerance: 260, point: LOC.eceabat, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Maydos/Eceabat savunması.' },
-    { id: '27-alay-ariburnu-line', unitId: '27-alay', start: '1915-04-27', end: '1915-08-05', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 240, point: { x: 1140, y: 1788 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Arıburnu ilk savunma hattı.' },
+    { id: '27-alay-ariburnu-line', unitId: '27-alay', start: '1915-04-27', end: '1915-08-05', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 240, point: { x: 1260, y: 1788 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Arıburnu ilk savunma hattı.' },
     { id: '27-alay-conkbayiri-line', unitId: '27-alay', start: '1915-08-06', end: '1915-12-19', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 250, point: LOC.conkbayiri, sourceIds: ['awm-anzac-suvla-1915', 'nz-history-anzac-suvla'], note: 'Conkbayırı/Sarı Bayır savunması.' },
     { id: '27-alay-post-evac', unitId: '27-alay', start: '1915-12-20', end: '1916-01-09', kind: 'inferred', confidence: 'medium', tolerance: 420, point: LOC.bigali, sourceIds: ['nz-history-anzac-suvla'], note: 'Tahliye sonrası geride kalan savunma.' },
 
     { id: '7-tumen-seddulbahir-defense', unitId: '7-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'frontline', side: 'ottoman', confidence: 'medium', tolerance: 260, point: LOC.seddulbahir, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Güney yarımada kıyı savunması.' },
-    { id: '7-tumen-v-beach-defense', unitId: '7-tumen', start: '1915-04-25', end: '1915-06-30', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 220, point: { x: 1065, y: 2335 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir V/W Beach savunması.' },
+    { id: '7-tumen-v-beach-defense', unitId: '7-tumen', start: '1915-04-25', end: '1915-06-30', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 220, point: { x: 1033, y: 2399 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir V/W Beach savunması.' },
     { id: '7-tumen-alcitepe-line', unitId: '7-tumen', start: '1915-07-01', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: LOC.alcitepe, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Helles/Alçıtepe savunma hattı.' },
 
     { id: '9-tumen-kilitbahir-defense', unitId: '9-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'frontline', side: 'ottoman', confidence: 'medium', tolerance: 260, point: LOC.kilitbahir, sourceIds: ['national-archives-map-series', 'dardanelles-defences-1915'], note: 'Boğaz ve güney tahkimat savunması.' },
-    { id: '9-tumen-helles-line', unitId: '9-tumen', start: '1915-04-25', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1105, y: 2300 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir/Kirte savunması.' },
+    { id: '9-tumen-helles-line', unitId: '9-tumen', start: '1915-04-25', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1060, y: 2325 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir/Kirte savunması.' },
 
     { id: '5-tumen-eceabat-reserve', unitId: '5-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'inferred', confidence: 'medium', tolerance: 280, point: LOC.eceabat, sourceIds: ['national-archives-map-series', 'anzac-portal-gallipoli-maps'], note: 'Eceabat-Maydos güney savunma rezervi.' },
-    { id: '5-tumen-seddulbahir-line', unitId: '5-tumen', start: '1915-04-25', end: '1915-06-30', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1120, y: 2305 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir/Kirte muharebe hattı.' },
+    { id: '5-tumen-seddulbahir-line', unitId: '5-tumen', start: '1915-04-25', end: '1915-06-30', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1080, y: 2320 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir/Kirte muharebe hattı.' },
     { id: '5-tumen-kirte-line', unitId: '5-tumen', start: '1915-07-01', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: LOC.kirte, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Kirte/Alçıtepe siper hattı.' },
 
-    { id: '29-div-helles-front', unitId: '29-div', start: '1915-04-29', end: '1915-12-31', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1040, y: 2320 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Helles köprübaşı ve Kirte yönü.' },
+    { id: '29-div-x-beach-landing', unitId: '29-div', start: '1915-04-25', end: '1915-04-28', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 220, point: LOC.xBeach, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'X Beach/İkiz Koyu ayrı çıkarma noktası; V/W Beach ve River Clyde hattını tamamlayan Helles inişi.' },
+    { id: '29-div-helles-front', unitId: '29-div', start: '1915-04-29', end: '1915-12-31', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1039, y: 2325 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Helles köprübaşı ve Kirte yönü.' },
     { id: '29-div-final-evac-proxy', unitId: '29-div', start: '1916-01-09', end: '1916-01-09', kind: 'frontline', side: 'allied', confidence: 'medium', tolerance: 280, point: LOC.seddulbahir, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Helles son tahliye günü.' },
+    { id: 'ss-river-clyde-v-beach', unitId: 'ss-river-clyde', start: '1915-04-25', end: '1915-04-27', kind: 'exact', side: 'allied', confidence: 'high', tolerance: 90, point: { x: 1024, y: 2392 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'SS River Clyde V Beach önünde karaya oturtulan çıkarma platformu.' },
 
-    { id: 'anzac-old-anzac-front', unitId: 'anzac-1div', start: '1915-04-29', end: '1915-08-05', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 240, point: { x: 1075, y: 1785 }, sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'], note: 'Old Anzac dar cephe hattı.' },
-    { id: 'anzac-august-held-ground', unitId: 'anzac-1div', start: '1915-08-06', end: '1915-12-06', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1085, y: 1748 }, sourceIds: ['awm-anzac-suvla-1915', 'nz-history-anzac-suvla'], note: 'Ağustos sonrası Anzac-Suvla bağlantı cephesi.' },
+    { id: 'anzac-old-anzac-front', unitId: 'anzac-1div', start: '1915-04-29', end: '1915-08-05', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 240, point: { x: 1246, y: 1788 }, sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'], note: 'Old Anzac dar cephe hattı.' },
+    { id: 'anzac-august-held-ground', unitId: 'anzac-1div', start: '1915-08-06', end: '1915-12-06', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1238, y: 1755 }, sourceIds: ['awm-anzac-suvla-1915', 'nz-history-anzac-suvla'], note: 'Ağustos sonrası Anzac-Suvla bağlantı cephesi.' },
 
-    { id: 'nz-anzac-front-before-august', unitId: 'nz-inf', start: '1915-04-25', end: '1915-08-05', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 240, point: { x: 1088, y: 1762 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Anzac mevzileri; Ağustos taarruzuna kadar.' },
-    { id: 'nz-after-chunuk-bair', unitId: 'nz-inf', start: '1915-08-11', end: '1915-12-06', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1090, y: 1755 }, sourceIds: ['te-ara-gallipoli-map', 'nz-history-anzac-suvla'], note: 'Conkbayırı sonrası Anzac hattına dönüş.' },
+    { id: 'nz-anzac-front-before-august', unitId: 'nz-inf', start: '1915-04-25', end: '1915-08-05', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 240, point: { x: 1244, y: 1782 }, sourceIds: ['te-ara-gallipoli-map', 'anzac-portal-gallipoli-maps'], note: 'Anzac mevzileri; Ağustos taarruzuna kadar.' },
+    { id: 'nz-after-chunuk-bair', unitId: 'nz-inf', start: '1915-08-11', end: '1915-12-06', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1240, y: 1760 }, sourceIds: ['te-ara-gallipoli-map', 'nz-history-anzac-suvla'], note: 'Conkbayırı sonrası Anzac hattına dönüş.' },
 
-    { id: 'fr-corps-helles-right', unitId: 'fr-corps', start: '1915-04-29', end: '1915-12-31', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1125, y: 2335 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Helles sağ kanat Fransız sektörü.' },
+    { id: 'fr-corps-helles-right', unitId: 'fr-corps', start: '1915-04-29', end: '1915-12-31', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1063, y: 2358 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Helles sağ kanat Fransız sektörü.' },
     { id: 'fr-corps-final-evac-proxy', unitId: 'fr-corps', start: '1916-01-09', end: '1916-01-09', kind: 'frontline', side: 'allied', confidence: 'medium', tolerance: 280, point: LOC.seddulbahir, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Helles son tahliye günü.' }
 ];
 
 export const HISTORICAL_FRONTLINE_SNAPSHOTS = [
-    { id: 'old-anzac-april-august', start: '1915-04-25', end: '1915-08-05', side1: 'allied', side2: 'ottoman', sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'], points: [{ x: 1060, y: 1770 }, { x: 1110, y: 1750 }, { x: 1160, y: 1732 }] },
-    { id: 'anzac-suvla-august-december', start: '1915-08-06', end: '1915-12-20', side1: 'allied', side2: 'ottoman', sourceIds: ['awm-anzac-suvla-1915', 'nz-history-anzac-suvla'], points: [{ x: 1035, y: 1780 }, { x: 1110, y: 1728 }, { x: 1192, y: 1728 }, { x: 1264, y: 1622 }] },
-    { id: 'helles-april-january', start: '1915-04-25', end: '1916-01-09', side1: 'allied', side2: 'ottoman', sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], points: [{ x: 1019, y: 2365 }, { x: 1085, y: 2305 }, { x: 1158, y: 2198 }] }
+    { id: 'old-anzac-april-august', start: '1915-04-25', end: '1915-08-05', side1: 'allied', side2: 'ottoman', sourceIds: ['anzac-portal-gallipoli-maps', 'te-ara-gallipoli-map'], points: [{ x: 1246, y: 1788 }, { x: 1240, y: 1768 }, { x: 1236, y: 1744 }] },
+    { id: 'anzac-suvla-august-december', start: '1915-08-06', end: '1915-12-20', side1: 'allied', side2: 'ottoman', sourceIds: ['awm-anzac-suvla-1915', 'nz-history-anzac-suvla'], points: [{ x: 1246, y: 1788 }, { x: 1238, y: 1755 }, { x: 1236, y: 1744 }, { x: 1264, y: 1622 }] },
+    { id: 'helles-april-january', start: '1915-04-25', end: '1916-01-09', side1: 'allied', side2: 'ottoman', sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], points: [{ x: 1033, y: 2399 }, { x: 1085, y: 2305 }, { x: 1117, y: 2251 }] }
 ];
 
 function isoDay(iso) {

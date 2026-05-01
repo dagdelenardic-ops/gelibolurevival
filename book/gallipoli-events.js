@@ -176,7 +176,7 @@ export const BOOK_WEEKLY_GUIDE = [
     "endIso": "1915-03-08",
     "label": "02-08 Mart 1915",
     "title": "Nusret'in Kritik Seferi",
-    "narration": "7/8 Mart gecesi Nusret mayın gemisi, Kolağası Nazmi Bey komutasında Erenköy Koyu'na 26 karbonik mayın döşedi. İtilaf'ın 45 mayın tarama girişimi başarısız kalmıştı.",
+    "narration": "7/8 Mart gecesi Nusret mayın gemisi, Kolağası Nazmi Bey komutasında Erenköy Koyu'na paralel 26 karbonik mayınlık kritik hattı döşedi. Bu Nusret'in toplam faaliyeti değil, 18 Mart'ın kaderini belirleyen son ve en önemli seferdi. İtilaf'ın 45 mayın tarama girişimi başarısız kalmıştı.",
     "importance": "major"
   },
   {
@@ -186,7 +186,7 @@ export const BOOK_WEEKLY_GUIDE = [
     "endIso": "1915-03-15",
     "label": "09-15 Mart 1915",
     "title": "18 Mart Deniz Muharebesi",
-    "narration": "18 Mart'ta 18 savaş gemisiyle gelen İtilaf donanması, Nusret'in Erenköy mayın hattına ve Cevat Paşa'nın kıyı bataryalarına çarptı. Bouvet (655 kayıp), Irresistible ve Ocean batırıldı. Boğaz geçilemezdi.",
+    "narration": "18 Mart'ta 18 savaş gemisiyle gelen İtilaf donanması, Nusret'in Erenköy mayın hattına ve Cevat Paşa'nın kıyı bataryalarına çarptı. Bouvet'in kaybı kaynaklara göre değişmekle birlikte yaklaşık 640 olarak verilir; Irresistible ve Ocean da batırıldı. Boğaz geçilemezdi.",
     "importance": "major"
   },
   {
@@ -246,7 +246,7 @@ export const BOOK_WEEKLY_GUIDE = [
     "endIso": "1915-04-26",
     "label": "20-26 Nisan 1915",
     "title": "Büyük Kara Çıkarması",
-    "narration": "22-25 Nisan sürecinde Arıburnu ve Seddülbahir çıkarmaları başladı; karşı taarruzlarla ilerleme durduruldu.",
+    "narration": "22-25 Nisan sürecinde Arıburnu, X Beach/İkiz Koyu, V/W Beach ve Kumkale çıkarmaları başladı. SS River Clyde V Beach'te açık hedefe döndü; Mustafa Kemal'in Arıburnu karşı hamlesi ve Helles savunması ilerlemeyi durdurdu.",
     "importance": "major"
   },
   {
@@ -256,7 +256,7 @@ export const BOOK_WEEKLY_GUIDE = [
     "endIso": "1915-05-03",
     "label": "27 Nisan - 03 Mayıs 1915",
     "title": "Köprübaşı Mücadelesi",
-    "narration": "Nisan sonu - Mayıs başında kıyı köprübaşları için yoğun ve kayıplı çarpışmalar yaşandı.",
+    "narration": "Nisan sonu - Mayıs başında X Beach köprübaşı, V/W Beach ve Seddülbahir hattı birbirine bağlanmaya çalışıldı. River Clyde'ın ağır kayıplı çıkarması Helles'in ritmini belirledi; Alçıtepe yolu kapanmaya başladı.",
     "importance": "major"
   },
   {
@@ -396,7 +396,7 @@ export const BOOK_WEEKLY_GUIDE = [
     "endIso": "1915-08-09",
     "label": "03-09 Ağustos 1915",
     "title": "Anafartalar Çıkarması",
-    "narration": "6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi.",
+    "narration": "6-7 Ağustos'ta Suvla çıkarması, Lone Pine/Nek baskısı ve Sarı Bayır-Conkbayırı taarruzu birlikte başladı. Amaç Anzac ile Suvla'yı birleştirip yüksek sırtları almaktı; Osmanlı savunması ilerlemeyi frenledi.",
     "importance": "major"
   },
   {
@@ -405,8 +405,8 @@ export const BOOK_WEEKLY_GUIDE = [
     "startIso": "1915-08-10",
     "endIso": "1915-08-16",
     "label": "10-16 Ağustos 1915",
-    "title": "Ağustos Çarpışmaları",
-    "narration": "Ağustos ortasında kesintisiz temas ve karşı taarruz döngüsü sürdü.",
+    "title": "Conkbayırı Karşı Taarruzu",
+    "narration": "10 Ağustos'ta Mustafa Kemal'in yönettiği karşı taarruz Conkbayırı'nı geri aldı. Yeni Zelanda birliklerinin kısa süreli zirve tutunuşu çöktü; Suvla-Anzac birleşme umudu fiilen söndü.",
     "importance": "major"
   },
   {
@@ -415,8 +415,8 @@ export const BOOK_WEEKLY_GUIDE = [
     "startIso": "1915-08-17",
     "endIso": "1915-08-23",
     "label": "17-23 Ağustos 1915",
-    "title": "Conkbayırı Muharebesi",
-    "narration": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu.",
+    "title": "Anafartalar Son Hamleleri",
+    "narration": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük İtilaf hamleleri de sonuç vermedi. Conkbayırı geri alınmış, Suvla genişlemesi durdurulmuştu.",
     "importance": "major"
   },
   {
@@ -11355,16 +11355,16 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_010.html",
     "title": "Büyük Kara Çıkarması · EPUB Kaydı",
     "titleEn": "5 25 April: Landings at Anzac",
-    "narration": "Açık Olay: 25 Nisan 1915 günü EPUB kaydında 25 Nisan: ANZAC Çıkarması, 25 Nisan: Helles Çıkarması, Helles: Sahadaki Çatışma safhalarına bağlanan 3 açık tarihli kayıt bulundu. | Operasyon Durumu: Arıburnu ve Helles ekseninde köprübaşı mücadelesi ve yıpratma taarruzları yaşandı. | Haftalık Bağlam: 22-25 Nisan sürecinde Arıburnu ve Seddülbahir çıkarmaları başladı",
+    "narration": "Açık Olay: 25 Nisan 1915 günü ANZAC Arıburnu'na, 29. Tümen X Beach/İkiz Koyu ile V/W Beach hattına, Fransızlar Kumkale'ye çıktı. SS River Clyde V Beach'te karaya oturtuldu; açık kumsal ve Osmanlı ateşi ilk dalgaları ağır kayba uğrattı. | Operasyon Durumu: Arıburnu ve Helles ekseninde köprübaşı mücadelesi başladı. | Haftalık Bağlam: 22-25 Nisan sürecinde çıkarmalar başladı; karşı taarruzlarla ilerleme durduruldu",
     "date": "25 Nisan 1915",
     "type": "explicit",
     "dayType": "explicit",
     "source": "epub",
     "importance": "major",
     "detailParts": {
-      "explicit": "25 Nisan 1915 günü EPUB kaydında 25 Nisan: ANZAC Çıkarması, 25 Nisan: Helles Çıkarması, Helles: Sahadaki Çatışma safhalarına bağlanan 3 açık tarihli kayıt bulundu.",
-      "state": "Arıburnu ve Helles ekseninde köprübaşı mücadelesi ve yıpratma taarruzları yaşandı.",
-      "weekly": "22-25 Nisan sürecinde Arıburnu ve Seddülbahir çıkarmaları başladı"
+      "explicit": "ANZAC Arıburnu'na, 29. Tümen X Beach/İkiz Koyu ile V/W Beach hattına, Fransızlar Kumkale'ye çıktı.",
+      "state": "Arıburnu ve Helles ekseninde köprübaşı mücadelesi başladı.",
+      "weekly": "22-25 Nisan sürecinde çıkarmalar başladı; karşı taarruzlarla ilerleme durduruldu"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -11380,6 +11380,7 @@ export const BOOK_PHASE_EVENTS = [
     ],
     "locationIds": [
       "ariburnu",
+      "x-beach",
       "seddulbahir",
       "kirte",
       "bigali",
@@ -11399,7 +11400,8 @@ export const BOOK_PHASE_EVENTS = [
       "27-alay": "ariburnu",
       "anzac-1div": "ariburnu",
       "nz-inf": "ariburnu",
-      "29-div": "seddulbahir",
+      "29-div": "x-beach",
+      "ss-river-clyde": "seddulbahir",
       "hms-queen-elizabeth": "bogaz",
       "hms-irresistible": "bogaz",
       "hms-ocean": "bogaz",
@@ -11416,13 +11418,13 @@ export const BOOK_PHASE_EVENTS = [
     },
     "objectiveByFaction": {
       "ottoman": "ANZAC çıkarma hattını kuzeyden karşıla.",
-      "british": "Seddülbahir çıkarmasını sürdürülebilir halde tut.",
+      "british": "X Beach köprübaşını V/W Beach ve River Clyde hattıyla bağla.",
       "french": "Dış destek hattını hazırla.",
       "anzac": "Arıburnu’nda inişi tamamla."
     },
     "outcomeByFaction": {
       "ottoman": "Karşı taarruz hazırlıkları hızlandı.",
-      "british": "İlk deneme planların kaybı yükseldi.",
+      "british": "V Beach'te ağır kayıp verildi; X Beach köprübaşı tutundu.",
       "french": "Sahada birlik düzeni kuruldu.",
       "anzac": "Çıkış sonrası yayılma başladı."
     },
@@ -11433,16 +11435,16 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_010.html",
     "title": "Büyük Kara Çıkarması · Resmi Günlük Kayıt",
     "titleEn": "5 25 April: Landings at Anzac",
-    "narration": "Açık Olay: Anzak hattındaki Türk karşı taarruzları geri püskürtüldü | Operasyon Durumu: Arıburnu ve Helles ekseninde köprübaşı mücadelesi ve yıpratma taarruzları yaşandı. | Haftalık Bağlam: 22-25 Nisan sürecinde Arıburnu ve Seddülbahir çıkarmaları başladı; karşı taarruzlarla ilerleme durduruldu",
+    "narration": "Açık Olay: Arıburnu'nda Türk karşı taarruzları ANZAC ilerlemesini durdurdu; Helles'te V Beach/W Beach ağır kayıpla tutulmaya çalışıldı, X Beach köprübaşı Seddülbahir hattına bağlandı. | Operasyon Durumu: Arıburnu ve Helles ekseninde köprübaşı mücadelesi ve yıpratma başladı. | Haftalık Bağlam: 22-25 Nisan sürecinde çıkarmalar başladı; karşı taarruzlarla ilerleme durduruldu",
     "date": "26 Nisan 1915",
     "type": "explicit",
     "dayType": "explicit",
     "source": "internet",
     "importance": "major",
     "detailParts": {
-      "explicit": "Anzak hattındaki Türk karşı taarruzları geri püskürtüldü",
-      "state": "Arıburnu ve Helles ekseninde köprübaşı mücadelesi ve yıpratma taarruzları yaşandı.",
-      "weekly": "22-25 Nisan sürecinde Arıburnu ve Seddülbahir çıkarmaları başladı; karşı taarruzlarla ilerleme durduruldu"
+      "explicit": "Arıburnu'nda Türk karşı taarruzları ANZAC ilerlemesini durdurdu; Helles'te V/W Beach ve X Beach köprübaşları birleştirilmeye çalışıldı.",
+      "state": "Arıburnu ve Helles ekseninde köprübaşı mücadelesi ve yıpratma başladı.",
+      "weekly": "22-25 Nisan sürecinde çıkarmalar başladı; karşı taarruzlarla ilerleme durduruldu"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -11456,6 +11458,7 @@ export const BOOK_PHASE_EVENTS = [
     ],
     "locationIds": [
       "ariburnu",
+      "x-beach",
       "seddulbahir",
       "kirte",
       "bigali",
@@ -11477,7 +11480,8 @@ export const BOOK_PHASE_EVENTS = [
       "27-alay": "ariburnu",
       "anzac-1div": "ariburnu",
       "nz-inf": "ariburnu",
-      "29-div": "kabatepe",
+      "29-div": "x-beach",
+      "ss-river-clyde": "seddulbahir",
       "hms-queen-elizabeth": "bogaz",
       "hms-irresistible": "bogaz",
       "hms-ocean": "bogaz",
@@ -11494,13 +11498,13 @@ export const BOOK_PHASE_EVENTS = [
     },
     "objectiveByFaction": {
       "ottoman": "ANZAC çıkarma hattını kuzeyden karşıla.",
-      "british": "Seddülbahir çıkarmasını sürdürülebilir halde tut.",
+      "british": "V/W Beach ağır kayıplarına rağmen X Beach bağlantısını koru.",
       "french": "Dış destek hattını hazırla.",
       "anzac": "Arıburnu’nda inişi tamamla."
     },
     "outcomeByFaction": {
       "ottoman": "Kritik tepelerde tutunma başarıyla devam etti.",
-      "british": "İlk deneme planların kaybı yükseldi.",
+      "british": "Helles köprübaşı kuruldu fakat Alçıtepe yolu kapanmaya başladı.",
       "french": "Sahada birlik düzeni kuruldu.",
       "anzac": "Çıkış sonrası yayılma başladı."
     },
@@ -18746,7 +18750,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_017.html",
     "title": "Anafartalar Çıkarması · Resmi Günlük Kayıt",
     "titleEn": "12 New Beginnings: Hamilton’s Plans",
-    "narration": "Açık Olay: 13. Tümen Anzak bölgesine ulaştı | Operasyon Durumu: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Haftalık Bağlam: 6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi",
+    "narration": "Açık Olay: 13. Tümen Anzak bölgesine ulaştı | Operasyon Durumu: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Haftalık Bağlam: 6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi",
     "date": "03 Ağustos 1915",
     "type": "explicit",
     "dayType": "explicit",
@@ -18755,7 +18759,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "13. Tümen Anzak bölgesine ulaştı",
       "state": "Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı.",
-      "weekly": "6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi"
+      "weekly": "6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -18820,7 +18824,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_014.html",
     "title": "Anafartalar Çıkarması · EPUB Kaydı",
     "titleEn": "9 Anzac: The Holding Pen",
-    "narration": "Açık Olay: 04 Ağustos 1915 günü EPUB kaydı ANZAC: Mevziyi Sabitleme safhasına ait açık tarihli bir kayıt içeriyor. | Operasyon Durumu: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Haftalık Bağlam: 6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi",
+    "narration": "Açık Olay: 04 Ağustos 1915 günü EPUB kaydı ANZAC: Mevziyi Sabitleme safhasına ait açık tarihli bir kayıt içeriyor. | Operasyon Durumu: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Haftalık Bağlam: 6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi",
     "date": "04 Ağustos 1915",
     "type": "explicit",
     "dayType": "explicit",
@@ -18829,7 +18833,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "04 Ağustos 1915 günü EPUB kaydı ANZAC: Mevziyi Sabitleme safhasına ait açık tarihli bir kayıt içeriyor.",
       "state": "Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı.",
-      "weekly": "6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi"
+      "weekly": "6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -18896,7 +18900,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_017.html",
     "title": "Anafartalar Çıkarması · Haftalık Bağ",
     "titleEn": "12 New Beginnings: Hamilton’s Plans",
-    "narration": "Açık Olay: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Operasyon Durumu: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Haftalık Bağlam: 6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi",
+    "narration": "Açık Olay: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Operasyon Durumu: Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı. | Haftalık Bağlam: 6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi",
     "date": "05 Ağustos 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -18905,7 +18909,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı.",
       "state": "Siper hattı korunurken taraflar yeni taarruz dalgası için ikmal ve birlik kaydırdı.",
-      "weekly": "6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi"
+      "weekly": "6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -18970,15 +18974,15 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_018.html",
     "title": "Anafartalar Çıkarması · Resmi Günlük Kayıt",
     "titleEn": "13 August: Helles Sacrifice",
-    "narration": "Açık Olay: Ağustos taarruzu; Lone Pine, Nek ve Sari Bair saldırıları başladı | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti",
+    "narration": "Açık Olay: Ağustos taarruzu başladı; Lone Pine ve Nek baskıları Osmanlı dikkatini bağlarken Sarı Bayır-Conkbayırı tırmanışı ve Suvla çıkarması aynı plana bağlandı. | Operasyon Durumu: Amaç Anzac köprübaşını Suvla ile birleştirip yüksek sırtları almaktı. | Haftalık Bağlam: 6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti",
     "date": "06 Ağustos 1915",
     "type": "explicit",
     "dayType": "explicit",
     "source": "internet",
     "importance": "major",
     "detailParts": {
-      "explicit": "Ağustos taarruzu; Lone Pine, Nek ve Sari Bair saldırıları başladı",
-      "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
+      "explicit": "Ağustos taarruzu başladı; Lone Pine, Nek, Sarı Bayır-Conkbayırı ve Suvla hamleleri aynı plana bağlandı.",
+      "state": "Amaç Anzac köprübaşını Suvla ile birleştirip yüksek sırtları almaktı.",
       "weekly": "6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti"
     },
     "evidenceCodes": [
@@ -19113,16 +19117,16 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_018.html",
     "title": "Anafartalar Çıkarması · Resmi Günlük Kayıt",
     "titleEn": "13 August: Helles Sacrifice",
-    "narration": "Açık Olay: Wellington Taburu Chunuk Bair zirvesine ulaştı | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi",
+    "narration": "Açık Olay: Wellington Taburu ve Yeni Zelanda birlikleri Conkbayırı/Chunuk Bair zirvesine ulaştı. | Operasyon Durumu: Zirve kısa süreliğine İtilaf eline geçti ama Suvla'dan beklenen destek gecikti; dar sırt hattındaki birlikler topçu ve karşı taarruz baskısı altında eridi. | Haftalık Bağlam: 6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır taarruzu başladı",
     "date": "08 Ağustos 1915",
     "type": "explicit",
     "dayType": "explicit",
     "source": "internet",
     "importance": "major",
     "detailParts": {
-      "explicit": "Wellington Taburu Chunuk Bair zirvesine ulaştı",
-      "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi"
+      "explicit": "Wellington Taburu ve Yeni Zelanda birlikleri Conkbayırı/Chunuk Bair zirvesine ulaştı.",
+      "state": "Zirve kısa süreliğine İtilaf eline geçti ama Suvla'dan beklenen destek gecikti.",
+      "weekly": "6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır taarruzu başladı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -19185,7 +19189,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_018.html",
     "title": "Anafartalar Çıkarması · Resmi Günlük Kayıt",
     "titleEn": "13 August: Helles Sacrifice",
-    "narration": "Açık Olay: Gurkha birlikleri Hill Q-Chunuk Bair hattına temas etti | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi",
+    "narration": "Açık Olay: Gurkha birlikleri Hill Q-Chunuk Bair hattına temas etti | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi",
     "date": "09 Ağustos 1915",
     "type": "explicit",
     "dayType": "explicit",
@@ -19194,7 +19198,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Gurkha birlikleri Hill Q-Chunuk Bair hattına temas etti",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "6-7 Ağustos'ta Anafartalar çıkarması gerçekleşti; Osmanlı savunması ilerlemeyi frenledi"
+      "weekly": "6-7 Ağustos'ta Suvla çıkarması ve Sarı Bayır-Conkbayırı taarruzu başladı; Osmanlı savunması ilerlemeyi frenledi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -19257,16 +19261,16 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_018.html",
     "title": "Ağustos Çarpışmaları · Resmi Günlük Kayıt",
     "titleEn": "13 August: Helles Sacrifice",
-    "narration": "Açık Olay: Türk karşı taarruzu Chunuk Bair'da mevzileri geri aldı | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: Ağustos ortasında kesintisiz temas ve karşı taarruz döngüsü sürdü",
+    "narration": "Açık Olay: Mustafa Kemal'in yönettiği Osmanlı karşı taarruzu Conkbayırı/Chunuk Bair mevzilerini geri aldı. | Operasyon Durumu: Yeni Zelanda birliklerinin zirve tutunuşu kırıldı; yüksek zemin Osmanlı kontrolüne geçti. | Haftalık Bağlam: 10 Ağustos karşı taarruzu Suvla-Anzac birleşme umudunu fiilen söndürdü",
     "date": "10 Ağustos 1915",
     "type": "explicit",
     "dayType": "explicit",
     "source": "internet",
     "importance": "major",
     "detailParts": {
-      "explicit": "Türk karşı taarruzu Chunuk Bair'da mevzileri geri aldı",
-      "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "Ağustos ortasında kesintisiz temas ve karşı taarruz döngüsü sürdü"
+      "explicit": "Mustafa Kemal'in yönettiği Osmanlı karşı taarruzu Conkbayırı/Chunuk Bair mevzilerini geri aldı.",
+      "state": "Yeni Zelanda birliklerinin zirve tutunuşu kırıldı; yüksek zemin Osmanlı kontrolüne geçti.",
+      "weekly": "10 Ağustos karşı taarruzu Suvla-Anzac birleşme umudunu fiilen söndürdü"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -19766,7 +19770,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_019.html",
     "title": "Conkbayırı Muharebesi · Haftalık Bağ",
     "titleEn": "14 August: Anzac, Diversions and Breakout",
-    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu",
+    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi",
     "date": "17 Ağustos 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -19775,7 +19779,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu"
+      "weekly": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -19840,7 +19844,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_019.html",
     "title": "Conkbayırı Muharebesi · Haftalık Bağ",
     "titleEn": "14 August: Anzac, Diversions and Breakout",
-    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu",
+    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi",
     "date": "18 Ağustos 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -19849,7 +19853,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu"
+      "weekly": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -19914,7 +19918,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_019.html",
     "title": "Conkbayırı Muharebesi · Haftalık Bağ",
     "titleEn": "14 August: Anzac, Diversions and Breakout",
-    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu",
+    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi",
     "date": "19 Ağustos 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -19923,7 +19927,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu"
+      "weekly": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -19988,7 +19992,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_019.html",
     "title": "Conkbayırı Muharebesi · Haftalık Bağ",
     "titleEn": "14 August: Anzac, Diversions and Breakout",
-    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu",
+    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi",
     "date": "20 Ağustos 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -19997,7 +20001,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu"
+      "weekly": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -20062,7 +20066,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_021.html",
     "title": "Conkbayırı Muharebesi · EPUB Kaydı",
     "titleEn": "16 21 August 1915: A Useless Gesture",
-    "narration": "Açık Olay: 21 Ağustos 1915 günü EPUB kaydı 21 Ağustos: Etkisiz Bir Hamle safhasına ait açık tarihli bir kayıt içeriyor. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu",
+    "narration": "Açık Olay: 21 Ağustos 1915 günü EPUB kaydı 21 Ağustos: Etkisiz Bir Hamle safhasına ait açık tarihli bir kayıt içeriyor. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi",
     "date": "21 Ağustos 1915",
     "type": "explicit",
     "dayType": "explicit",
@@ -20071,7 +20075,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "21 Ağustos 1915 günü EPUB kaydı 21 Ağustos: Etkisiz Bir Hamle safhasına ait açık tarihli bir kayıt içeriyor.",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu"
+      "weekly": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -20136,7 +20140,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_021.html",
     "title": "Conkbayırı Muharebesi · Haftalık Bağ",
     "titleEn": "16 21 August 1915: A Useless Gesture",
-    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu",
+    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi",
     "date": "22 Ağustos 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -20145,7 +20149,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu"
+      "weekly": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -20208,7 +20212,7 @@ export const BOOK_PHASE_EVENTS = [
     "src": "index_split_021.html",
     "title": "Conkbayırı Muharebesi · Haftalık Bağ",
     "titleEn": "16 21 August 1915: A Useless Gesture",
-    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu",
+    "narration": "Açık Olay: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Operasyon Durumu: Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi. | Haftalık Bağlam: 21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi",
     "date": "23 Ağustos 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -20217,7 +20221,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
       "state": "Ağustos taarruzları, Suvla çıkarması ve kritik sırt muharebeleriyle cephe yeniden şekillendi.",
-      "weekly": "21 Ağustos'ta Conkbayırı hattı kritik bir muharebeye sahne oldu"
+      "weekly": "21 Ağustos'ta Scimitar Hill/Kireçtepe hattındaki son büyük hamleler de sonuç vermedi"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",

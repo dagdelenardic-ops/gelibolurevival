@@ -96,7 +96,7 @@ export const CANONICAL_POSITIONS = {
     'nusret': [
         // Kolağası Nazmi Bey komutasında mayın gemisi
         { start: '1914-11-03', end: '1915-03-07', location: 'erenkoyu', note: 'Erenköy Koyu civarında mayın döşeme operasyonları' },
-        { start: '1915-03-08', end: '1915-03-18', location: 'erenkoyu', note: '7-8 Mart gecesi Erenköy koyu hattına 26 mayın — kritik operasyon' },
+        { start: '1915-03-08', end: '1915-03-18', location: 'erenkoyu', note: '7/8 Mart gecesi Erenköy koyuna paralel 26 mayınlık kritik hat' },
         { start: '1915-03-19', end: '1916-01-09', location: 'erenkoyu', note: 'Boğaz mayın savunmasına devam' },
     ],
 
@@ -125,11 +125,18 @@ export const CANONICAL_POSITIONS = {
         { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı' },
     ],
 
+    'allied-minesweepers': [
+        // Trawler mayın tarama girişimleri — Boğaz harekatının kritik başarısızlığı
+        { start: '1915-02-19', end: '1915-03-17', location: 'erenkoyu', note: 'Gece mayın tarama denemeleri; kıyı ateşi ve akıntı yüzünden başarısız' },
+        { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart taarruzu öncesi açılamayan Erenköy mayın hattı' },
+        { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: 'Deniz harekatı kırıldıktan sonra ana görsel katmandan çıkarıldı' },
+    ],
+
     'bouvet': [
         // Fransız donanması
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Erenköy Koyu dönüşünde Nusret mayınına çarptı, 2 dakikada battı' },
-        { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı, ~640 şehit' },
+        { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı, yaklaşık 640 kayıp' },
     ],
 
     'suffren': [
@@ -145,10 +152,17 @@ export const CANONICAL_POSITIONS = {
     // ═══════════════════════════════════════════════
 
     '29-div': [
-        // İngiliz 29. Tümeni — V Beach / Seddülbahir çıkarması
-        { start: '1915-04-25', end: '1915-06-30', location: 'seddulbahir', note: 'V Beach çıkarması, Seddülbahir köprübaşı' },
+        // İngiliz 29. Tümeni — X/V/W Beach ve Seddülbahir çıkarması
+        { start: '1915-04-25', end: '1915-04-28', location: 'x-beach', note: 'X Beach/İkiz Koyu ve V/W Beach çıkarmalarının ilk köprübaşı' },
+        { start: '1915-04-29', end: '1915-06-30', location: 'seddulbahir', note: 'V Beach, W Beach ve Seddülbahir köprübaşı; River Clyde sonrası tutunma' },
         { start: '1915-07-01', end: '1915-12-31', location: 'seddulbahir', note: 'Helles cephesi' },
         { start: '1916-01-01', end: '1916-01-09', location: 'seddulbahir', note: 'Son tahliye' },
+    ],
+
+    'ss-river-clyde': [
+        // V Beach'e oturtulan çıkarma gemisi
+        { start: '1915-04-25', end: '1915-04-27', location: 'seddulbahir', note: 'V Beach önünde karaya oturtulmuş çıkarma platformu' },
+        { start: '1915-04-28', end: '1916-01-09', location: 'destroyed', note: 'İlk çıkarma sahnesinden sonra ana birlik katmanından çıkarıldı' },
     ],
 
     'anzac-1div': [

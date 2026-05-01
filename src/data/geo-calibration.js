@@ -72,19 +72,21 @@ function solveAffine(anchors) {
 // ══════════════════════════════════════════════════════════════
 // GROUND TRUTH ANCHORS
 // ══════════════════════════════════════════════════════════════
-// Bu dört nokta elle, haritaya bakarak doğrulanmıştır.
-// Kuzey, güney, batı, doğu uçlarını yayan — üçgen değil dörtgen
-// oluşturan nokta seçimi regresyonu sağlamlaştırır.
+// Bu çekirdek noktalar assets/reference-console.html üzerinde elle
+// doğrulanmıştır. Fortlar, kuzey lokasyonları ve deniz görselleri ayrı
+// manuel anchor olarak tutulur; hepsini tek affine fit'e sokmak raster
+// haritanın yerel deformasyonları yüzünden mesafeyi bozuyordu.
 //
-// Değerlerden birini değiştirirseniz, TÜM diğer lokasyonlar
-// matematiksel olarak yeniden hizalanır. Bu dosyayı yeniden
-// hesaplamak için `assets/calibrate.html` kullanın.
+// Değerlerden birini değiştirirseniz, manuel anchor olmayan diğer
+// lokasyonlar matematiksel olarak yeniden hizalanır. Yeni referans
+// üretmek için `assets/reference-console.html` kullanın.
 // ══════════════════════════════════════════════════════════════
 export const GROUND_TRUTH_ANCHORS = [
-    { id: 'kilitbahir',  lat: 40.1467789, lon: 26.3779734, cropX: 1427, cropY: 1306 },
-    { id: 'seddulbahir', lat: 40.0446676, lon: 26.1889171, cropX: 1019, cropY: 1585 },
-    { id: 'suvla',       lat: 40.2755,    lon: 26.2785,    cropX: 845,  cropY: 835  },
-    { id: 'kumkale',     lat: 39.9815943, lon: 26.2370257, cropX: 1320, cropY: 1746 }
+    { id: 'alcitepe',    lat: 40.09491,   lon: 26.2273,    cropX: 1117, cropY: 1471 },
+    { id: 'kilitbahir',  lat: 40.1467789, lon: 26.3779734, cropX: 1451, cropY: 1311 },
+    { id: 'x-beach',     lat: 40.06549,   lon: 26.17864,   cropX: 1017, cropY: 1556 },
+    { id: 'seddulbahir', lat: 40.0446676, lon: 26.1889171, cropX: 1033, cropY: 1619 },
+    { id: 'kumkale',     lat: 39.9815943, lon: 26.2370257, cropX: 1061, cropY: 1729 }
 ];
 
 export const AFFINE_TRANSFORM = solveAffine(GROUND_TRUTH_ANCHORS);
@@ -145,32 +147,34 @@ const RAW_LOCATIONS = [
     { id: 'gelibolu', name: 'Gelibolu', lat: 40.4100, lon: 26.6700, hiddenOnMap: true, mapProxyId: 'bigali' },
 
     // ── Kuzey ─────────────────────────────────────────
-    { id: 'suvla',        name: 'Suvla Koyu',         lat: 40.2755,    lon: 26.2785,    isAnchor: true, cropX: 1138, cropY: 858  },
+    { id: 'suvla',        name: 'Suvla Koyu',         lat: 40.2755,    lon: 26.2785,    isAnchor: true, cropX: 1143, cropY: 852  },
     { id: 'tuzgolu',      name: 'Tuz Gölü',           lat: 40.2962721, lon: 26.2592921, isAnchor: true, cropX: 1172, cropY: 795  },
     { id: 'kirectepe',    name: 'Kireçtepe',          lat: 40.3452146, lon: 26.2838787, isAnchor: true, cropX: 1285, cropY: 669  },
     { id: 'anafartalar',  name: 'Anafartalar',        lat: 40.2816240, lon: 26.3292410, isAnchor: true, cropX: 1264, cropY: 842  },
 
     // ── ANZAC Bölgesi ────────────────────────────────
     { id: 'bigali',       name: 'Bigalı',             lat: 40.2357180, lon: 26.3597320, isAnchor: true, cropX: 1314, cropY: 982  },
-    { id: 'conkbayiri',   name: 'Conkbayırı',         lat: 40.2525008, lon: 26.3081938, isAnchor: true, cropX: 1192, cropY: 948  },
-    { id: 'ariburnu',     name: 'Arıburnu (ANZAC Koyu)', lat: 40.2349804, lon: 26.2773514, isAnchor: true, cropX: 1064, cropY: 998  },
+    { id: 'conkbayiri',   name: 'Conkbayırı',         lat: 40.2525008, lon: 26.3081938, isAnchor: true, cropX: 1236, cropY: 964  },
+    { id: 'ariburnu',     name: 'Arıburnu (ANZAC Koyu)', lat: 40.2349804, lon: 26.2773514, isAnchor: true, cropX: 1246, cropY: 1008 },
     { id: 'kabatepe',     name: 'Kabatepe',           lat: 40.2128557, lon: 26.2779571, isAnchor: true, cropX: 1199, cropY: 1139 },
 
     // ── Boğaz / Narrows ──────────────────────────────
-    { id: 'eceabat',      name: 'Eceabat (Maidos)',   lat: 40.1852143, lon: 26.3590969, isAnchor: true, cropX: 1348, cropY: 1158 },
-    { id: 'kilitbahir',   name: 'Kilitbahir',         lat: 40.1467789, lon: 26.3779734, isAnchor: true, cropX: 1427, cropY: 1306 },
-    { id: 'bogaz',        name: 'Boğaz (Narrows)',    lat: 40.1465,    lon: 26.3904,    isAnchor: true, cropX: 1455, cropY: 1294 },
-    { id: 'canakkale',    name: 'Çanakkale',          lat: 40.1462710, lon: 26.4028892, isAnchor: true, cropX: 1538, cropY: 1306 },
-    { id: 'erenkoyu',     name: 'Erenköy Koyu',       lat: 40.0830,    lon: 26.3550,    isAnchor: true, cropX: 1408, cropY: 1518 },
+    { id: 'eceabat',      name: 'Eceabat (Maidos)',   lat: 40.1852143, lon: 26.3590969, isAnchor: true, cropX: 1404, cropY: 1178 },
+    { id: 'kilitbahir',   name: 'Kilitbahir',         lat: 40.1467789, lon: 26.3779734, isAnchor: true, cropX: 1451, cropY: 1311 },
+    { id: 'bogaz',        name: 'Boğaz (Narrows)',    lat: 40.1465,    lon: 26.3904,    isAnchor: true, cropX: 1475, cropY: 1323 },
+    { id: 'canakkale',    name: 'Çanakkale',          lat: 40.1462710, lon: 26.4028892, isAnchor: true, cropX: 1508, cropY: 1322 },
+    { id: 'erenkoyu',     name: 'Erenköy Koyu',       lat: 40.0830,    lon: 26.3550,    isAnchor: true, cropX: 1196, cropY: 1752 },
 
     // ── Güney / Helles ───────────────────────────────
-    { id: 'alcitepe',     name: 'Alçıtepe (Achi Baba)', lat: 40.0949140, lon: 26.2272995, isAnchor: true, cropX: 1158, cropY: 1418 },
+    { id: 'alcitepe',     name: 'Alçıtepe (Achi Baba)', lat: 40.09491,   lon: 26.2273,    isAnchor: true, cropX: 1117, cropY: 1471 },
     { id: 'kirte',        name: 'Kirte (Krithia)',    lat: 40.0805,    lon: 26.2140,    isAnchor: true, cropX: 1112, cropY: 1466 },
-    { id: 'seddulbahir',  name: 'Seddülbahir',        lat: 40.0446676, lon: 26.1889171, isAnchor: true, cropX: 1019, cropY: 1585 },
-    { id: 'morto-koyu',   name: 'Morto Koyu',         lat: 40.0458,    lon: 26.2325,    isAnchor: true, cropX: 1195, cropY: 1570 },
+    { id: 'x-beach',      name: 'X Beach landing point', lat: 40.06549, lon: 26.17864,   isAnchor: true, cropX: 1017, cropY: 1556 },
+    { id: 'ikiz-koyu',    name: 'İkiz Koyu merkezi',  lat: 40.05939,   lon: 26.16972,   isAnchor: true, cropX: 1039, cropY: 1545 },
+    { id: 'seddulbahir',  name: 'Seddülbahir',        lat: 40.0446676, lon: 26.1889171, isAnchor: true, cropX: 1033, cropY: 1619 },
+    { id: 'morto-koyu',   name: 'Morto Koyu',         lat: 40.0458,    lon: 26.2325,    isAnchor: true, cropX: 1063, cropY: 1578 },
 
     // ── Asya Yakası ──────────────────────────────────
-    { id: 'kumkale',      name: 'Kumkale',            lat: 39.9815943, lon: 26.2370257, isAnchor: true, cropX: 1320, cropY: 1746 }
+    { id: 'kumkale',      name: 'Kumkale',            lat: 39.9815943, lon: 26.2370257, isAnchor: true, cropX: 1061, cropY: 1729 }
 ];
 
 export const GEO_LOCATIONS = RAW_LOCATIONS.map(materialize);
@@ -183,22 +187,23 @@ export const GEO_LOCATION_BY_ID = GEO_LOCATIONS.reduce((acc, point) => {
 // ══════════════════════════════════════════════════════════════
 // KIYI TABYALARI (MAP_FORTS)
 // ══════════════════════════════════════════════════════════════
-// Tümü (lat, lon)'dan projekte edilir. Tabya konumları tarihsel
-// olarak çok hassas bilindiği için anchor'a gerek yok.
+// Tümü reference-console üzerinde elle işaretlenmiştir. Tabya ve batarya
+// noktaları çok sıkışık olduğundan affine projeksiyon yerine manuel piksel
+// anchor kullanıyoruz.
 // ══════════════════════════════════════════════════════════════
 const RAW_FORTS = [
-    { id: 'fort-kilitbahir',       name: 'Kilitbahir',  lat: 40.147744,  lon: 26.379760 },
-    { id: 'fort-rumeli-mecidiye',  name: 'R.Mecidiye',  lat: 40.1413687, lon: 26.3743242 },
-    { id: 'fort-namazgah',         name: 'Namazgah',    lat: 40.1451436, lon: 26.3800511 },
-    { id: 'fort-seddulbahir',      name: 'Seddülbahir', lat: 40.042039,  lon: 26.187887  },
-    { id: 'fort-anadolu-mecidiye', name: 'A.Mecidiye',  lat: 40.1632957, lon: 26.4047623 },
-    { id: 'fort-cimenlik',         name: 'Cimenlik',    lat: 40.1462808, lon: 26.3990363 },
-    { id: 'fort-hamidiye',         name: 'Hamidiye',    lat: 40.1374979, lon: 26.4027811 },
-    { id: 'fort-kephez',           name: 'Kephez',      lat: 40.0955068, lon: 26.3931331 },
-    { id: 'fort-dardanos',         name: 'Dardanos',    lat: 40.0841806, lon: 26.3665974 },
-    { id: 'fort-erenkeui',         name: 'Erenkeui',    lat: 40.0660,    lon: 26.3470    },
-    { id: 'fort-orhaniye',         name: 'Orhaniye',    lat: 39.9926267, lon: 26.1862048 },
-    { id: 'fort-kumkale',          name: 'Kumkale',     lat: 39.9815943, lon: 26.2370257 }
+    { id: 'fort-kilitbahir',       name: 'Kilitbahir',  lat: 40.147744,  lon: 26.379760,  isAnchor: true, cropX: 1432, cropY: 1313 },
+    { id: 'fort-rumeli-mecidiye',  name: 'R.Mecidiye',  lat: 40.1413687, lon: 26.3743242, isAnchor: true, cropX: 1541, cropY: 1297 },
+    { id: 'fort-namazgah',         name: 'Namazgah',    lat: 40.1451436, lon: 26.3800511, isAnchor: true, cropX: 1443, cropY: 1283 },
+    { id: 'fort-seddulbahir',      name: 'Seddülbahir', lat: 40.042039,  lon: 26.187887,  isAnchor: true, cropX: 1013, cropY: 1617 },
+    { id: 'fort-anadolu-mecidiye', name: 'A.Mecidiye',  lat: 40.1632957, lon: 26.4047623, isAnchor: true, cropX: 1438, cropY: 1339 },
+    { id: 'fort-cimenlik',         name: 'Cimenlik',    lat: 40.1462808, lon: 26.3990363, isAnchor: true, cropX: 1520, cropY: 1348 },
+    { id: 'fort-hamidiye',         name: 'Hamidiye',    lat: 40.1374979, lon: 26.4027811, isAnchor: true, cropX: 1433, cropY: 1269 },
+    { id: 'fort-kephez',           name: 'Kephez',      lat: 40.0955068, lon: 26.3931331, isAnchor: true, cropX: 1530, cropY: 1370 },
+    { id: 'fort-dardanos',         name: 'Dardanos',    lat: 40.0841806, lon: 26.3665974, isAnchor: true, cropX: 1545, cropY: 1196 },
+    { id: 'fort-erenkeui',         name: 'Erenköy',     lat: 40.0660,    lon: 26.3470,    isAnchor: true, cropX: 1547, cropY: 1419 },
+    { id: 'fort-orhaniye',         name: 'Orhaniye',    lat: 39.9926267, lon: 26.1862048, isAnchor: true, cropX: 1040, cropY: 1763 },
+    { id: 'fort-kumkale',          name: 'Kumkale',     lat: 39.9815943, lon: 26.2370257, isAnchor: true, cropX: 1106, cropY: 1741 }
 ];
 
 export const MAP_FORTS = RAW_FORTS.map(materialize);
@@ -212,10 +217,50 @@ export const MAP_SCENE_LABELS = [
     { id: 'naval-minefield', text: 'MAYIN HATTI', sceneGroup: 'naval', x: 1550, y: 1750, fill: '#8b3a3a', fontSize: 16, opacity: 0.6, strokeWidth: 2, subLabel: true },
     { id: 'anzac-cove', text: 'ARIBURNU KOYU', sceneGroup: 'anzac', x: 1220, y: 1480, fill: '#4a5a6a', fontSize: 18, opacity: 0.5, strokeWidth: 3, subLabel: false },
     { id: 'anzac-sari-bair', text: 'SARI BAYIR', sceneGroup: 'anzac', x: 1380, y: 1360, fill: '#4a5a6a', fontSize: 16, opacity: 0.4, strokeWidth: 2, subLabel: false },
-    { id: 'helles-v-beach', text: 'V PLAJI', sceneGroup: 'helles', x: 1110, y: 2875, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
-    { id: 'helles-w-beach', text: 'W PLAJI', sceneGroup: 'helles', x: 1025, y: 2850, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
-    { id: 'helles-achi-baba', text: 'ALÇITEPE', sceneGroup: 'helles', x: 1265, y: 2265, fill: '#4a5a6a', fontSize: 14, opacity: 0.4, strokeWidth: 2, subLabel: true }
+    { id: 'helles-x-beach', text: 'X PLAJI', sceneGroup: 'helles', x: 1017, y: 2336, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
+    { id: 'helles-v-beach', text: 'V PLAJI', sceneGroup: 'helles', x: 1033, y: 2399, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
+    { id: 'helles-w-beach', text: 'W PLAJI', sceneGroup: 'helles', x: 990, y: 2370, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
+    { id: 'helles-achi-baba', text: 'ALÇITEPE', sceneGroup: 'helles', x: 1117, y: 2251, fill: '#4a5a6a', fontSize: 14, opacity: 0.4, strokeWidth: 2, subLabel: true }
 ];
+
+export const MAP_SCENE_GUIDES = {
+    naval: {
+        mineLine: [
+            { x: 1179, y: 2386 },
+            { x: 1244, y: 2446 }
+        ],
+        strikeChain: [
+            { x: 1215, y: 2420 },
+            { x: 1293, y: 2356 },
+            { x: 1314, y: 2375 }
+        ],
+        strikePoints: [
+            { id: 'queen-elizabeth-line-a', label: 'Q.E.', x: 1215, y: 2420, style: 'flagship' },
+            { id: 'bouvet-hit', label: 'Bouvet', x: 1293, y: 2356, style: 'loss' },
+            { id: 'irresistible-hit', label: 'Irres.', x: 1226, y: 2369, style: 'loss' },
+            { id: 'ocean-hit', label: 'Ocean', x: 1273, y: 2410, style: 'loss' },
+            { id: 'suffren-damaged', label: 'Suffren', x: 1314, y: 2375, style: 'damage' }
+        ]
+    },
+    helles: {
+        xToVAxis: [
+            { x: 1017, y: 2336 },
+            { x: 1026, y: 2362 },
+            { x: 1033, y: 2399 }
+        ],
+        wToVAxis: [
+            { x: 990, y: 2370 },
+            { x: 1010, y: 2380 },
+            { x: 1033, y: 2399 }
+        ],
+        inlandAxis: [
+            { x: 1033, y: 2399 },
+            { x: 1085, y: 2305 },
+            { x: 1117, y: 2251 }
+        ],
+        riverClyde: { x: 1024, y: 2392 }
+    }
+};
 
 export const MAP_ORNAMENTS = [
     { id: 'compass', name: 'Pusula', x: 2350, y: 920, kind: 'compass' },

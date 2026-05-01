@@ -32,6 +32,34 @@ const CAMPAIGN_STATS = {
 
 let panelEl = null;
 
+function getFocusableElements(root) {
+    return [...root.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+        .filter((el) => !el.disabled && el.offsetParent !== null);
+}
+
+function trapStatsFocus(event) {
+    if (!panelEl || !panelEl.classList.contains('open')) return;
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        hideStatsPanel();
+        return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusable = getFocusableElements(panelEl);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
+}
+
 function createPanel() {
     const el = document.createElement('div');
     el.id = 'statsPanel';
@@ -40,6 +68,7 @@ function createPanel() {
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-hidden', 'true');
     el.setAttribute('inert', '');
+    el.hidden = true;
     el.innerHTML = `
         <div class="stats-panel-inner">
             <div class="stats-header">
@@ -73,12 +102,14 @@ function createPanel() {
 
     el.querySelector('.stats-close').addEventListener('click', hideStatsPanel);
     el.addEventListener('click', (e) => { if (e.target === el) hideStatsPanel(); });
+    el.addEventListener('keydown', trapStatsFocus);
 
     return el;
 }
 
 function setStatsPanelA11yState(open) {
     if (!panelEl) return;
+    panelEl.hidden = !open;
     panelEl.toggleAttribute('inert', !open);
     panelEl.setAttribute('aria-hidden', open ? 'false' : 'true');
 }

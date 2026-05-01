@@ -14,7 +14,7 @@ import {
     getHistoricalPlacementForUnit,
     getHistoricalSourcesForIds
 } from '../data/historical-map-data.js?v=20260407-manual-r1';
-import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260407-manual-r1';
+import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260501-smoke-r1';
 import {
     enforceCorridorSeparation,
     getClusterOffset,
@@ -36,6 +36,7 @@ const SCENE_LABEL_TRANSLATIONS = {
     'naval-minefield': 'MAYIN HATTI',
     'anzac-cove': 'ARIBURNU KOYU',
     'anzac-sari-bair': 'SARI BAYIR',
+    'helles-x-beach': 'X PLAJI',
     'helles-v-beach': 'V PLAJI',
     'helles-w-beach': 'W PLAJI',
     'helles-achi-baba': 'ALÇITEPE'
@@ -223,13 +224,16 @@ function analyzeAnchorDriftIssues(phases) {
     const samplePhases = phases.filter((phase, index) => index === 0 || phase.importance === 'major' || index % 28 === 0);
 
     for (const phase of samplePhases) {
+        const iso = String(phase.isoStart || '');
         for (const unit of BATTLE_DATA.units) {
             if (unit.type === 'deniz') continue;
+            if (isUnitDestroyed(unit.id, iso)) continue;
             const anchorId = firstLocationId(phase.locationByUnit && phase.locationByUnit[unit.id]) || unit.anchorRegion;
             const anchor = anchorId && getMapLocationById(anchorId);
             const point = unit.phases && unit.phases[phase.id];
+            if (isDestroyedPhaseData(point)) continue;
             if (!anchor || !hasPoint(point)) continue;
-            if (getHistoricalPlacementForUnit(unit, String(phase.isoStart || ''))) continue;
+            if (getHistoricalPlacementForUnit(unit, iso)) continue;
 
             const distance = Math.hypot(point.x - anchor.x, point.y - anchor.y);
             if (distance <= MAX_ANCHOR_DRIFT) continue;
@@ -403,6 +407,7 @@ function analyzeHistoricalPlacementIssues(phases) {
 }
 
 function inferExpectedLocationTerrain(location) {
+    if (location.id === 'ikiz-koyu') return ['land', 'coast', 'sea'];
     const name = `${location.id} ${location.name}`.toLowerCase();
     if (name.includes('koyu') || name.includes('boğaz') || name.includes('bogaz') || name.includes('suvla')) {
         return ['sea', 'coast'];

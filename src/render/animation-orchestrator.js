@@ -90,6 +90,20 @@ function dateSeed(dateStr) {
     return Math.abs(h);
 }
 
+function getPrimaryFronts(fronts, animData) {
+    const valid = (Array.isArray(fronts) ? fronts : []).filter((front) => FRONT_GEOMETRY[front]);
+    if (!valid.length) return [];
+
+    const eventType = animData?.eventType || '';
+    if ((eventType === 'BOMBARDMENT' || eventType === 'NAVAL_PATROL') && valid.includes('Deniz')) {
+        return ['Deniz'];
+    }
+
+    const preferred = ['Anafartalar', 'Arıburnu', 'Seddülbahir', 'Deniz'];
+    const match = preferred.find((front) => valid.includes(front));
+    return [match || valid[0]];
+}
+
 function normalizeUnitName(value) {
     return String(value || '')
         .toLowerCase()
@@ -144,7 +158,7 @@ export function orchestrateAnimations(animData, positions) {
 
     const eventType = animData.eventType || 'IDLE';
     const intensity = animData.intensity ?? 0;
-    const fronts = animData.fronts || [];
+    const fronts = getPrimaryFronts(animData.fronts || [], animData);
     const seed = dateSeed(animData.date);
 
     let routes = '';
@@ -195,15 +209,9 @@ function renderBombardment(animData, fronts, intensity, seed) {
                 { x: geo.allied.x + 20, y: geo.allied.y - 10 },
                 geo.ottoman
             );
-            if (intensity > 6) {
-                routes += renderArtilleryArc(
-                    { x: geo.allied.x + 10, y: geo.allied.y + 15 },
-                    { x: geo.ottoman.x - 10, y: geo.ottoman.y + 12 }
-                );
-            }
             // Yoğun bombardımanda baraj efekti
             if (intensity >= 7) {
-                fx += renderBarrage(geo.ottoman.x, geo.ottoman.y, 18, Math.ceil(intensity / 2), seed + fi);
+                fx += renderBarrage(geo.ottoman.x, geo.ottoman.y, 18, 2, seed + fi);
             }
             // Mayın patlaması (18 Mart vb.)
             if (intensity >= 8) {
@@ -212,14 +220,8 @@ function renderBombardment(animData, fronts, intensity, seed) {
         } else {
             // ── Kara bombardımanı ──
             routes += renderArtilleryArc(geo.allied, geo.ottoman);
-            if (intensity > 6) {
-                routes += renderArtilleryArc(
-                    { x: geo.allied.x + 8, y: geo.allied.y - 5 },
-                    { x: geo.ottoman.x - 5, y: geo.ottoman.y + 8 }
-                );
-            }
             // Baraj efekti
-            fx += renderBarrage(geo.center.x, geo.center.y, 15, Math.min(intensity - 3, 5), seed + fi);
+            fx += renderBarrage(geo.center.x, geo.center.y, 15, intensity >= 7 ? 2 : 1, seed + fi);
         }
 
         // Cephe nabzı
@@ -250,113 +252,73 @@ function renderCombat(animData, fronts, intensity, seed) {
         const alliedColor = FACTION_COLORS[geo.alliedFaction || 'allied'];
 
         if (geo.type === 'trench') {
-            // ═══════════════════════════════════
-            // SİPER SAVAŞI — zengin katmanlı
-            // ═══════════════════════════════════
-
             const flPoints = getFrontlinePoints(geo.frontlineId);
             const corridor = getFrontlineCorridor(geo.frontlineId);
 
-            // 1. Siper çifti (her zaman göster — cephe varlığını belirtir)
             if (flPoints) {
                 routes += renderTrenchPair(flPoints, corridor, FACTION_COLORS.ottoman, alliedColor);
-
-                // 2. No-man's land gerginliği (intensity > 4)
                 if (intensity > 4) {
                     fx += renderNoMansLand(flPoints, corridor * 0.6);
                 }
             }
 
-            // 3. Siper ateş alışverişi — yıpratma teması
             if (intensity >= 5) {
-                // Osmanlı → İtilaf ateşi
-                routes += renderTrenchExchange(geo.ottoman, geo.allied, intensity, seed + fi * 100);
-                // İtilaf → Osmanlı ateşi
-                routes += renderTrenchExchange(geo.allied, geo.ottoman, intensity, seed + fi * 100 + 50);
+                const from = alliedFighting && !ottomanFighting ? geo.allied : geo.ottoman;
+                const to = from === geo.allied ? geo.ottoman : geo.allied;
+                routes += renderTrenchExchange(from, to, Math.min(intensity, 7), seed + fi * 100);
             }
 
-            // 4. Keskin nişancı ateşi (düşük-orta yoğunlukta)
-            if (intensity >= 3 && intensity <= 6) {
+            if (intensity >= 3 && intensity < 5) {
                 routes += renderSniperFire(geo.ottoman, geo.allied, seed + fi * 30);
-                if (intensity >= 5) {
-                    routes += renderSniperFire(geo.allied, geo.ottoman, seed + fi * 30 + 17);
-                }
             }
 
-            // 5. Taarruz dalgaları (yüksek intensity, fighting state)
             if (ottomanFighting && intensity >= 7) {
-                routes += renderAssaultWave(geo.ottoman, geo.center, FACTION_COLORS.ottoman,
-                    intensity >= 8 ? 3 : 2);
-            }
-            if (alliedFighting && intensity >= 7) {
-                routes += renderAssaultWave(geo.allied, geo.center, alliedColor,
-                    intensity >= 8 ? 3 : 2);
+                routes += renderAssaultWave(geo.ottoman, geo.center, FACTION_COLORS.ottoman, 2);
+            } else if (alliedFighting && intensity >= 7) {
+                routes += renderAssaultWave(geo.allied, geo.center, alliedColor, 2);
             }
 
-            // 6. Topçu desteği (bombardment state olan birimler varsa)
             if (alliedBombarding && intensity >= 6) {
                 routes += renderArtilleryArc(
                     { x: geo.allied.x - 15, y: geo.allied.y + 10 },
                     { x: geo.ottoman.x + 5, y: geo.ottoman.y - 5 }
                 );
-            }
-            if (intensity >= 7) {
-                // Osmanlı topçu cevabı
+            } else if (intensity >= 8) {
                 routes += renderArtilleryArc(
                     { x: geo.ottoman.x + 15, y: geo.ottoman.y - 10 },
                     { x: geo.allied.x, y: geo.allied.y + 5 }
                 );
             }
 
-            // 7. Baraj efekti (çok yoğun çatışma)
             if (intensity >= 8) {
-                fx += renderBarrage(geo.center.x, geo.center.y, 12, 4, seed + fi * 200);
+                fx += renderBarrage(geo.center.x, geo.center.y, 12, 2, seed + fi * 200);
             }
 
-            // 8. Cephe nabzı
             const pressureLevel = intensity >= 8 ? 'high' : intensity >= 5 ? 'medium' : 'low';
             fx += renderFrontlinePressure(geo.center.x, geo.center.y, pressureLevel);
 
-            // 9. Kayıp göstergesi
             if (intensity >= 7) {
                 const casualtyLevel = getFrontCasualtyLevel(animData, frontName, intensity);
-                fx += renderCasualtyIndicator(
-                    geo.center.x + (fi % 2 === 0 ? -8 : 8),
-                    geo.center.y + 10,
-                    casualtyLevel
-                );
+                fx += renderCasualtyIndicator(geo.center.x, geo.center.y + 10, casualtyLevel);
             }
 
-            // 10. Geri çekilme (baskı altında — düşük intensity ama fighting var)
             if (intensity <= 4 && ottomanFighting) {
                 routes += renderRetreatArrow(geo.center, geo.allied, alliedColor);
-            }
-            if (intensity <= 4 && alliedFighting) {
+            } else if (intensity <= 4 && alliedFighting) {
                 routes += renderRetreatArrow(geo.center, geo.ottoman, FACTION_COLORS.ottoman);
             }
 
         } else {
-            // ═══════════════════════════════════
-            // DENİZ MUHAREBESİ
-            // ═══════════════════════════════════
-
             if (ottomanFighting && intensity > 4) {
                 routes += renderAdvanceArrow(geo.ottoman, geo.center, FACTION_COLORS.ottoman);
-            }
-            if (alliedFighting && intensity > 4) {
+            } else if (alliedFighting && intensity > 4) {
                 routes += renderAdvanceArrow(geo.allied, geo.center, FACTION_COLORS.allied);
             }
 
-            // Topçu düellosu
             if (intensity > 5) {
                 routes += renderArtilleryArc(geo.allied, geo.ottoman);
-                routes += renderArtilleryArc(
-                    { x: geo.ottoman.x, y: geo.ottoman.y - 8 },
-                    { x: geo.allied.x, y: geo.allied.y + 5 }
-                );
             }
 
-            // Deniz mayını
             if (intensity >= 8) {
                 fx += renderMineExplosion(geo.center.x + 8, geo.center.y - 5, true);
             }

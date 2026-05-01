@@ -500,7 +500,7 @@ export const ROMANTIC_ENTRIES = [
         type: 'witness',
         faction: 'ottoman',
         source: 'Nazmi Bey Günlüğü, 18 Mart 1915',
-        text: 'Saat 13:58 — Bouvet, Erenköy hattındaki mayına çarptı. Nazmi Bey: "Müthiş bir infilak oldu. Bouvet sancak tarafına yattı. İki dakika içinde 721 kişilik mürettebatıyla denizin dibini boyladı. Sadece 66 kişi kurtulabildi."',
+        text: 'Saat 13:58 — Bouvet, Erenköy hattındaki mayına çarptı. Nazmi Bey anlatısında patlama ve geminin çok kısa sürede batışı öne çıkar; kayıp sayısı kaynaklara göre değişmekle birlikte modern özetlerde yaklaşık 640 olarak verilir.',
         emoji: '💥',
     },
 

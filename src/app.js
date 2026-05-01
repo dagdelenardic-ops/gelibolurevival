@@ -9,11 +9,11 @@ import { waitForTerrainSampler } from './data/terrain-zones.js';
 import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js';
 import { isUnitDestroyed } from './data/canonical-positions.js';
 import { normalizeDateText } from './engine/date-utils.js';
-import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260407-manual-r1';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260501-smoke-r1';
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
 import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation } from './engine/position-engine.js?v=20260407-manual-r1';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260407-manual-r1';
-import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260428-vital-adornment';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260430-scene-guides-r3';
+import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260501-guided-r1';
 import { renderBattleEffects } from './render/effects-renderer.js';
 import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js';
 import { animateCamera } from './render/camera.js?v=20260428-camera-safe';
@@ -22,7 +22,7 @@ import { initTouchZoom } from "./engine/touch-zoom.js?v=20260407-manual-r1";
 import { orchestrateAnimations } from './render/animation-orchestrator.js';
 import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js';
 import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js';
-import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js';
+import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js?v=20260501-guided-r1';
 import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay } from './ui/autoplay-controller.js';
 import { initOnboarding } from './ui/onboarding.js?v=20260428-deeplink-skip';
 import { toggleStatsPanel } from './ui/stats-panel.js';
@@ -272,6 +272,8 @@ function buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData) {
         if (target) return { ...target, reason: 'active-units' };
     }
 
+    if (phase?.mapFocus) return { ...phase.mapFocus, reason: 'guided-campaign' };
+
     if (Array.isArray(phase?.locationIds) && phase.locationIds.length) {
         const locationPoints = phase.locationIds
             .map((id) => getMapLocationById(id))
@@ -287,7 +289,6 @@ function buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData) {
         if (target) return { ...target, reason: 'phase-locations' };
     }
 
-    if (phase?.mapFocus) return { ...phase.mapFocus, reason: 'phase-map-focus' };
     return campaignPhase.camera || { x: 0, y: MAP_CROP_TOP, w: MAP_WIDTH, h: MAP_VIEW_HEIGHT, reason: 'campaign' };
 }
 
@@ -312,6 +313,38 @@ function focusStoryMapForPhase(phase, focusOverride = null) {
         focus.y + focus.h / 2,
         focus.w
     );
+}
+
+function updatePhaseLiveRegion(phase) {
+    const live = document.getElementById('phaseLiveRegion');
+    if (!live || !phase) return;
+    live.textContent = `${phase.date}: ${cleanPhaseTitle(phase.title)}. ${phase.guidedChapterTitle || phase.mobileChapterTitle || ''}`;
+}
+
+function applyGuidedFocus(phase) {
+    if (!phase) return;
+    const focusIds = new Set((phase.mapFocus?.locationIds || phase.locationIds || []).filter(Boolean));
+    const guidedUnitIds = new Set((phase.guidedUnitIds || phase.mobileVisibleUnitIds || []).filter(Boolean));
+    const hasGuidedUnits = guidedUnitIds.size > 0;
+
+    document.querySelectorAll('.location-group').forEach((el) => {
+        const active = focusIds.has(el.dataset.locationId);
+        el.classList.toggle('is-highlighted', active);
+        el.classList.toggle('is-current-location', active);
+    });
+
+    document.querySelectorAll('.unit-token').forEach((el) => {
+        const active = guidedUnitIds.has(el.dataset.unitId);
+        el.classList.toggle('is-referenced', active);
+        el.classList.toggle('is-story-passive', hasGuidedUnits && !active);
+        if (isMobile && hasGuidedUnits && !active) {
+            el.setAttribute('aria-hidden', 'true');
+            el.setAttribute('tabindex', '-1');
+        } else {
+            el.removeAttribute('aria-hidden');
+            el.setAttribute('tabindex', '0');
+        }
+    });
 }
 
 function getStoryHandlers() {
@@ -363,7 +396,7 @@ async function initMapEditorIfRequested() {
 async function initMapDoctorIfRequested() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('doctor') !== '1') return;
-    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260407-manual-r1');
+    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260430-doctor-r2');
     initMapDoctorPanel();
 }
 
@@ -391,6 +424,7 @@ function setActivePhase(i) {
     const p = BATTLE_DATA.phases[nextIndex];
     const currentIso = String(p.isoStart || normalizeDateText(p.date, nextIndex));
     const quiet = isMobile && isQuietPeriod(currentIso);
+    updatePhaseLiveRegion(p);
 
     // ── MOBİL SESSIZ DÖNEM: Tarih chip + narration güncelle (fotoğraf değiştiğinde) ──
     if (quiet) {
@@ -401,6 +435,7 @@ function setActivePhase(i) {
         if (ind) ind.textContent = formatPhaseIndicator(p);
         updateMapDateIndicator(p.date);
         updateMapSceneState(p, animData, cameraTarget);
+        applyGuidedFocus(p);
         if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p, cameraTarget);
         // Her 3 fazda narration güncelle — fotoğraflar da değişebilsin
         if (nextIndex % 3 === 0) {
@@ -478,6 +513,7 @@ function setActivePhase(i) {
     if (isMobile) {
         if (animData) triggerPhaseSfx(animData, campaignPhase.id);
         updateMapSceneState(p, animData, cameraTarget);
+        applyGuidedFocus(p);
         if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p, cameraTarget);
     } else {
         renderBattleEffects(nextIndex);
@@ -501,6 +537,7 @@ function setActivePhase(i) {
             renderTransition('');
         }
         updateMapSceneState(p, animData, cameraTarget);
+        applyGuidedFocus(p);
     }
 
     // ── Info card ──

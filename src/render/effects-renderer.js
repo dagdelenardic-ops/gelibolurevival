@@ -5,7 +5,7 @@
 
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { MAP_FORTS } from '../data/geo-calibration.js?v=20260407-manual-r1';
-import { isNavalEraPhaseIndex, getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260407-manual-r1';
+import { isNavalEraPhaseIndex, getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260501-smoke-r1';
 import { getNarrativeNavalPosition, isDestroyedPhaseData } from '../engine/position-engine.js?v=20260407-manual-r1';
 
 const BATTERY_FORT_IDS = ['fort-kilitbahir', 'fort-cimenlik', 'fort-hamidiye', 'fort-rumeli-mecidiye'];
@@ -27,6 +27,10 @@ export function renderBattleEffects(phaseIndex) {
 
     const batteries = BATTERY_FORT_IDS.map(id => FORT_BY_ID[id]).filter(Boolean);
     const UNIT_ENTRY = getUnitEntryPhaseIndex();
+    const iso = String(phase.isoStart || '');
+    const primaryTargetOrder = iso === '1915-03-18'
+        ? ['bouvet', 'hms-irresistible', 'hms-ocean', 'hms-queen-elizabeth']
+        : ['hms-queen-elizabeth', 'suffren', 'bouvet', 'hms-irresistible', 'hms-ocean'];
     const shipTargets = BATTLE_DATA.units
         .filter((u) => u.type === 'deniz' && u.faction !== 'ottoman')
         .filter((u) => (UNIT_ENTRY[u.id] ?? 0) <= phaseIndex)
@@ -36,7 +40,13 @@ export function renderBattleEffects(phaseIndex) {
             const target = phaseData || getNarrativeNavalPosition(u, phaseIndex);
             return { unit: u, target, idx };
         })
-        .filter((entry) => entry.target);
+        .filter((entry) => entry.target)
+        .sort((a, b) => {
+            const ai = primaryTargetOrder.indexOf(a.unit.id);
+            const bi = primaryTargetOrder.indexOf(b.unit.id);
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        })
+        .slice(0, 1);
 
     layer.innerHTML = shipTargets.map((entry) => {
         const battery = batteries[entry.idx % batteries.length];

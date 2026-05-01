@@ -3,7 +3,7 @@
 // Adaptive hız: major fazlar 6s, minor fazlar 2.5s, narration uzunluğuna göre ek süre
 // ══════════════════════════════════════════════════════════════
 
-import { isMajorPhase } from '../engine/phase-engine.js?v=20260407-manual-r1';
+import { isMajorPhase } from '../engine/phase-engine.js?v=20260501-smoke-r1';
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -63,8 +63,8 @@ function getAdaptiveInterval(phaseIndex) {
     const phase = BATTLE_DATA.phases[phaseIndex];
     if (!phase) return MINOR_INTERVAL;
 
-    if (isMobile && Number.isFinite(phase.autoplayHoldMs)) {
-        return phase.autoplayHoldMs;
+    if (Number.isFinite(phase.autoplayHoldMs)) {
+        return isMobile ? phase.autoplayHoldMs : Math.max(1200, Math.round(phase.autoplayHoldMs * 0.95));
     }
 
     const iso = phase.isoStart || '';

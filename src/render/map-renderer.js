@@ -5,18 +5,29 @@
 
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260407-manual-r1';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260430-scene-guides-r1';
 import { renderTokens } from './token-renderer.js';
 import { renderBattleEffects } from './effects-renderer.js';
 import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js';
 
-function getSceneKey(phase, animData) {
+function getActiveSceneGroups(phase, animData) {
     const iso = String(phase && phase.isoStart || '');
     const fronts = Array.isArray(animData && animData.fronts) ? animData.fronts : [];
-    if (iso <= '1915-03-19' || (fronts.length === 1 && fronts[0] === 'Deniz')) return 'naval';
-    if (fronts.length === 1 && fronts[0] === 'Arıburnu') return 'anzac';
-    if (fronts.length === 1 && fronts[0] === 'Seddülbahir') return 'helles';
-    return 'general';
+    if (iso <= '1915-03-19' || (fronts.length === 1 && fronts[0] === 'Deniz')) return ['naval'];
+    if (iso === '1915-04-25') return ['anzac', 'helles'];
+
+    const activeGroups = new Set();
+    if (fronts.includes('Deniz')) activeGroups.add('naval');
+    if (fronts.includes('Arıburnu')) activeGroups.add('anzac');
+    if (fronts.includes('Seddülbahir')) activeGroups.add('helles');
+
+    return activeGroups.size ? [...activeGroups] : ['general'];
+}
+
+function getSceneKey(phase, animData) {
+    const activeGroups = getActiveSceneGroups(phase, animData);
+    if (activeGroups.length !== 1) return 'general';
+    return activeGroups[0];
 }
 
 // ── Cached DOM references (her fazda querySelectorAll yapmamak için) ──
@@ -34,6 +45,7 @@ export function updateMapSceneState(phase, animData, cameraTarget = null) {
     if (!svg || !ctr) return;
 
     const sceneKey = getSceneKey(phase, animData);
+    const activeSceneGroups = new Set(getActiveSceneGroups(phase, animData).filter((group) => group !== 'general'));
     const preferredFocusIds = Array.isArray(cameraTarget?.locationIds) && cameraTarget.locationIds.length
         ? cameraTarget.locationIds
         : (Array.isArray(phase?.mapFocus?.locationIds) ? phase.mapFocus.locationIds.slice(0, 5) : []);
@@ -75,7 +87,10 @@ export function updateMapSceneState(phase, animData, cameraTarget = null) {
     });
 
     cachedAnnotationGroups.forEach((el) => {
-        el.classList.toggle('is-scene-hidden', el.dataset.sceneGroup !== sceneKey);
+        const isActive = activeSceneGroups.size === 0
+            ? el.dataset.sceneGroup === sceneKey
+            : activeSceneGroups.has(el.dataset.sceneGroup);
+        el.classList.toggle('is-scene-hidden', !isActive);
     });
 
     if (cachedMinefields) cachedMinefields.classList.toggle('is-scene-dimmed', sceneKey !== 'naval');
@@ -158,6 +173,21 @@ function renderEditableFort(item) {
 }
 
 function renderSceneAnnotations() {
+    const routePath = (points = []) => points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+    const renderGuidePath = (points, className) => {
+        if (!Array.isArray(points) || points.length < 2) return '';
+        return `<path class="${className}" d="${routePath(points)}"/>`;
+    };
+    const renderGuidePoint = (point) => {
+        const labelDx = point.style === 'flagship' ? 18 : 14;
+        const labelDy = point.style === 'loss' ? -12 : -10;
+        return `<g class="scene-guide-point scene-guide-point-${point.style || 'default'}" data-guide-id="${escapeSvgText(point.id)}">
+            <circle cx="${point.x}" cy="${point.y}" r="${point.style === 'flagship' ? 8 : 6}" class="scene-guide-ring"/>
+            <circle cx="${point.x}" cy="${point.y}" r="${point.style === 'loss' ? 2.8 : 2.2}" class="scene-guide-core"/>
+            <text x="${point.x + labelDx}" y="${point.y + labelDy}" class="scene-guide-caption">${escapeSvgText(point.label)}</text>
+        </g>`;
+    };
+
     return ['naval', 'anzac', 'helles'].map((sceneGroup) => {
         const labels = MAP_SCENE_LABELS
             .filter((label) => label.sceneGroup === sceneGroup)
@@ -167,8 +197,28 @@ function renderSceneAnnotations() {
               paint-order="stroke" stroke="rgba(18,15,12,.78)" stroke-width="${label.strokeWidth || 2}"
               font-family="var(--mono)" font-weight="${label.subLabel ? 600 : 800}">${escapeSvgText(label.text)}</text>`)
             .join('');
+        const guides = MAP_SCENE_GUIDES[sceneGroup] || {};
+        const extras = sceneGroup === 'naval'
+            ? [
+                renderGuidePath(guides.mineLine, 'scene-guide-route scene-guide-route-mine'),
+                renderGuidePath(guides.strikeChain, 'scene-guide-route scene-guide-route-strike'),
+                ...(guides.strikePoints || []).map(renderGuidePoint)
+            ].join('')
+            : sceneGroup === 'helles'
+                ? [
+                    renderGuidePath(guides.xToVAxis, 'scene-guide-route scene-guide-route-landing'),
+                    renderGuidePath(guides.wToVAxis, 'scene-guide-route scene-guide-route-landing'),
+                    renderGuidePath(guides.inlandAxis, 'scene-guide-route scene-guide-route-inland'),
+                    guides.riverClyde
+                        ? `<g class="scene-guide-point scene-guide-point-river-clyde" data-guide-id="river-clyde">
+                            <rect x="${guides.riverClyde.x - 7}" y="${guides.riverClyde.y - 7}" width="14" height="14" rx="2.5" class="scene-guide-core-box" transform="rotate(45,${guides.riverClyde.x},${guides.riverClyde.y})"/>
+                            <text x="${guides.riverClyde.x + 18}" y="${guides.riverClyde.y - 8}" class="scene-guide-caption">R. Clyde</text>
+                        </g>`
+                        : ''
+                ].join('')
+                : '';
 
-        return `<g class="scene-annotation-group" data-scene-group="${sceneGroup}">${labels}</g>`;
+        return `<g class="scene-annotation-group" data-scene-group="${sceneGroup}">${labels}${extras}</g>`;
     }).join('');
 }
 

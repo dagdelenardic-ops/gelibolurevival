@@ -81,7 +81,7 @@
 
 <!-- Styles -->
 <link rel="stylesheet" href="styles/base.css?v=20260321-story-shell-r2">
-<link rel="stylesheet" href="styles/map.css?v=20260403-editor-r5">
+    <link rel="stylesheet" href="styles/map.css?v=20260430-scene-guides-r3">
 <link rel="stylesheet" href="styles/timeline.css?v=20260321-story-shell-r2">
 <link rel="stylesheet" href="styles/panel.css?v=20260321-map-intent-r1">
 <script>
@@ -105,7 +105,7 @@
     return window.ANIMATION_EVENTS_READY;
   };
 </script>
-<script type="module" src="src/app.js?v=20260428-vital-pass-r1"></script>
+    <script type="module" src="src/app.js?v=20260501-guided-r2"></script>
 <!-- Vercel Analytics -->
 <script>
 if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
@@ -133,7 +133,8 @@ if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
 <header class="topbar"></header>
 <main class="map-container"></main>
 <footer class="timeline"></footer>
-<aside id="unitPanel" class="unit-panel" aria-label="Birim detay paneli" aria-hidden="true" inert>
+<div id="phaseLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<aside id="unitPanel" class="unit-panel" role="dialog" aria-modal="true" aria-label="Birim detay paneli" aria-hidden="true" inert hidden>
   <div id="panelBanner" class="panel-banner"></div>
   <div id="panelPortrait" class="panel-portrait" style="display:none"></div>
   <div class="unit-panel-title">

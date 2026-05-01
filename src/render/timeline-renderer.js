@@ -5,7 +5,7 @@
 
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
 import { normalizeDateText } from '../engine/date-utils.js';
-import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter } from '../engine/phase-engine.js?v=20260407-manual-r1';
+import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260501-smoke-r1';
 
 const isMobileTimeline = typeof window !== 'undefined' && window.innerWidth <= 768;
 
@@ -22,6 +22,7 @@ export function renderTimeline(setActivePhase, toggleAutoPlay) {
     }
 
     const WEEKLY_GUIDE = getWeeklyGuide();
+    const chapters = getMobileStoryChapters();
     const guideEntries = WEEKLY_GUIDE.length
         ? WEEKLY_GUIDE
         : BATTLE_DATA.phases.map((p, i) => ({
@@ -36,6 +37,9 @@ export function renderTimeline(setActivePhase, toggleAutoPlay) {
     document.querySelector('.timeline').innerHTML = `
     <div class="timeline-label">Olay Akışı Kronolojisi</div>
     <div class="timeline-controls"><button class="timeline-btn" id="playPauseBtn" type="button" aria-label="Animasyonu başlat">Başlat</button></div>
+    <div class="timeline-chapters" aria-label="Kampanya bölümleri">
+      ${chapters.map((chapter) => `<button class="timeline-chapter-marker" type="button" data-chapter-id="${chapter.id}" data-start-iso="${chapter.startIso}" aria-label="${chapter.title} bölümüne git">${chapter.shortTitle}</button>`).join('')}
+    </div>
     <div class="timeline-track"><div class="timeline-line"></div><div class="timeline-phases">
       ${guideEntries.map((w, i) => `<button class="phase-marker ${w.importance === 'major' ? 'major' : 'minor'}" type="button" data-week-index="${i}" data-start-iso="${w.startIso}" aria-label="${w.label}">
         <span class="phase-dot"></span>
@@ -51,6 +55,10 @@ export function renderTimeline(setActivePhase, toggleAutoPlay) {
         const startIso = el.dataset.startIso;
         setActivePhase(getPhaseIndexByIso(startIso));
     }));
+    document.querySelectorAll('.timeline-chapter-marker').forEach((el) => el.addEventListener('click', () => {
+        const startIso = el.dataset.startIso;
+        setActivePhase(getPhaseIndexByIso(startIso));
+    }));
 }
 
 /** Aktif timeline marker'ını güncelle */
@@ -59,9 +67,15 @@ let lastActiveWeekIndex = -1;
 let lastActiveChapterId = '';
 
 export function updateTimelineActiveState(currentPhaseIndex) {
+    const phase = BATTLE_DATA.phases[currentPhaseIndex];
+    const chapter = getMobileStoryChapter(phase?.isoStart);
+    document.querySelectorAll('.timeline-chapter-marker, .story-chapter-marker, .guided-chapter-marker').forEach((el) => {
+        const active = !!chapter && el.dataset.chapterId === chapter.id;
+        el.classList.toggle('active', active);
+        el.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+
     if (isMobileTimeline) {
-        const phase = BATTLE_DATA.phases[currentPhaseIndex];
-        const chapter = getMobileStoryChapter(phase?.isoStart);
         if (!chapter || chapter.id === lastActiveChapterId) return;
         lastActiveChapterId = chapter.id;
         cachedPhaseMarkers = [...document.querySelectorAll('.story-chapter-marker')];
