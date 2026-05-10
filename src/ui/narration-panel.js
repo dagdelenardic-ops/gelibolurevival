@@ -7,7 +7,7 @@ import { getNarrationIcon } from '../data/icon-registry.js';
 import { getRandomRomanticEntry } from '../data/romantic-layer.js';
 import { getEventImage } from '../data/event-images.js';
 import { getEventVideo } from '../data/event-videos.js';
-import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260501-scene-r2';
+import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260508-sprint-r1';
 import { getGuidedCampaignChapter } from '../data/guided-campaign.js';
 
 const isMobileNarration = typeof window !== 'undefined' && window.innerWidth <= 768;

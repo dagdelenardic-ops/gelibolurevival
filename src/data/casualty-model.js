@@ -75,6 +75,12 @@ const CASUALTY_PROFILES = {
         baseDailyRate: 0.0014,
         peakDates: ['1915-04-25', '1915-06-04', '1915-06-28'],
     },
+    'ix-corps': {
+        // Suvla çıkarması ve Ağustos taarruzları
+        totalLossRatio: 0.38,
+        baseDailyRate: 0.001,
+        peakDates: ['1915-08-06', '1915-08-21'],
+    },
     'anzac-1div': {
         totalLossRatio: 0.55,
         baseDailyRate: 0.0013,

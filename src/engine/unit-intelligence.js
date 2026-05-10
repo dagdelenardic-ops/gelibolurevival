@@ -3,7 +3,7 @@
 // Faz ve animasyon verisinden birlik niyeti/odağı türetir
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, LOCATION_BY_ID } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA, LOCATION_BY_ID } from '../data/battle-data.js?v=20260508-sprint-r1';
 
 export const ACTION_META = {
     defending: { label: 'Savunma hattında', badge: 'SAV', color: '#cdb67a' },
@@ -37,6 +37,8 @@ function buildLocationAliasIndex() {
         seddulbahir: ['seddulbahir', 'seddulbahir', 'helles'],
         conkbayiri: ['conkbayiri', 'conk bayiri', 'sari bair'],
         anafartalar: ['anafartalar', 'suvla ovasi'],
+        'scimitar-hill': ['scimitar hill', 'yusufcuktepe', 'yusufcuk tepe'],
+        'hill-60': ['hill 60', 'kaiajik aghala', 'kavak tepe'],
         alcitepe: ['alcitepe', 'achi baba'],
         kirte: ['kirte', 'krithia'],
         kumkale: ['kumkale'],

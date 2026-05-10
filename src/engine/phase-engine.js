@@ -3,7 +3,7 @@
 // Günlük faz üretimi, faz yönetimi, timeline veri hazırlığı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { HISTORICAL_ANCHORS } from '../data/historical-anchors.js';
 import { GUIDED_CAMPAIGN_CHAPTERS, getGuidedCampaignChapter } from '../data/guided-campaign.js';
@@ -11,7 +11,7 @@ import {
     isoToUTCDate, utcDateToISO, addUTCDateDays,
     formatISOToTR, dayDiffISO, normalizeValue, normalizeDateText
 } from './date-utils.js';
-import { unitSeed } from './position-engine.js?v=20260407-manual-r1';
+import { unitSeed } from './position-engine.js?v=20260508-sprint-r1';
 // Dynamic import — 1.1MB dosyayı ana modül parse'ını bloklamadan yükle
 let BOOK_PHASE_EVENTS = [];
 let BOOK_WEEKLY_GUIDE = [];
@@ -59,6 +59,7 @@ const UNIT_AVAILABILITY_WINDOWS = {
     'bouvet': { startIso: '1915-02-19', endIso: '1915-03-18' },
     'suffren': { startIso: '1915-02-19', endIso: '1915-03-22' },
     '29-div': { startIso: '1915-04-25', endIso: '1916-01-09' },
+    'ix-corps': { startIso: '1915-08-06', endIso: '1915-12-20' },
     'ss-river-clyde': { startIso: '1915-04-25', endIso: '1915-05-01' },
     'anzac-1div': { startIso: '1915-04-25', endIso: '1915-12-20' },
     'nz-inf': { startIso: '1915-04-25', endIso: '1915-12-20' },
@@ -555,6 +556,7 @@ export function getFirstPhaseIndexForIso(isoDate) {
 /** Birim için minimum başlangıç ISO tarihini belirle */
 export function getMinimumStartIsoForUnit(unit) {
     if (unit.id === 'allied-minesweepers') return '1915-02-19';
+    if (unit.id === 'ix-corps') return '1915-08-06';
     if (unit.type === 'deniz' && unit.faction !== 'ottoman') return '1914-11-03';
     if (unit.faction !== 'ottoman') return '1915-04-25';
     return '1914-11-03';

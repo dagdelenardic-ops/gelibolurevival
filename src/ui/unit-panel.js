@@ -3,10 +3,10 @@
 // Birim tıklayınca açılan sağ panel — komutan portresi dahil
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { getUnitIcon } from '../data/icon-registry.js';
 import { getCommanderPortrait } from '../data/commander-portraits.js';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260501-guided-r2';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260508-sprint-r1';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 
 /** Faksiyon banner rengi — desatüre askeri tonlar */

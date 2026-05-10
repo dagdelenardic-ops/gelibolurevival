@@ -3,7 +3,7 @@ const path = require('path');
 
 const inputPath = process.argv[2] || path.join(__dirname, '..', 'book', 'gallipoli-events.js');
 const outputPath = process.argv[3] || path.join(__dirname, '..', 'book', 'animation-events.json');
-const battleUiPath = path.join(__dirname, '..', 'canakkale-1915.html');
+const battleUiPath = path.join(__dirname, '..', 'archive', 'canakkale-1915.html');
 
 const EVENT_TYPES = [
   'BOMBARDMENT',
@@ -57,7 +57,7 @@ const UNIT_CATALOG = {
   },
   'Anafartalar': {
     ottoman: '3. Kolordu',
-    allied: 'Yeni Zelanda Tugayı'
+    allied: 'IX Kolordusu (Suvla)'
   },
   'Deniz': {
     ottoman: 'Nusret Mayın Gemisi',
@@ -86,10 +86,21 @@ const SCENE_UNIT_CATALOG = {
     { name: 'Yeni Zelanda Tugayı', side: 'allied', front: 'Arıburnu', state: 'bombardment' }
   ],
   helles: [
+    { name: '7. Tümen', side: 'ottoman', front: 'Seddülbahir', state: 'fighting' },
     { name: '9. Tümen', side: 'ottoman', front: 'Seddülbahir', state: 'fighting' },
-    { name: '5. Ordu Karargâhı', side: 'ottoman', front: 'Seddülbahir', state: 'marching' },
+    { name: '5. Tümen', side: 'ottoman', front: 'Seddülbahir', state: 'fighting' },
     { name: '29. Tümen', side: 'allied', front: 'Seddülbahir', state: 'bombardment' },
+    { name: 'SS River Clyde', side: 'allied', front: 'Seddülbahir', state: 'bombardment' },
     { name: 'Fransız Sefer Kuvveti', side: 'allied', front: 'Seddülbahir', state: 'bombardment' }
+  ],
+  august: [
+    { name: '5. Ordu Karargâhı', side: 'ottoman', front: 'Anafartalar', state: 'marching' },
+    { name: '3. Kolordu', side: 'ottoman', front: 'Anafartalar', state: 'fighting' },
+    { name: '19. Tümen', side: 'ottoman', front: 'Anafartalar', state: 'fighting' },
+    { name: '27. Alay', side: 'ottoman', front: 'Anafartalar', state: 'fighting' },
+    { name: 'IX Kolordusu (Suvla)', side: 'allied', front: 'Anafartalar', state: 'fighting' },
+    { name: '1. Avustralya Tümeni', side: 'allied', front: 'Anafartalar', state: 'fighting' },
+    { name: 'Yeni Zelanda Tugayı', side: 'allied', front: 'Anafartalar', state: 'fighting' }
   ]
 };
 
@@ -104,7 +115,14 @@ const SPECIAL_SCENE_DATES = {
   '1915-05-01': 'helles',
   '1915-05-06': 'helles',
   '1915-05-19': 'anzac',
-  '1915-06-04': 'helles'
+  '1915-06-04': 'helles',
+  '1915-06-28': 'helles',
+  '1915-08-06': 'august',
+  '1915-08-07': 'august',
+  '1915-08-08': 'august',
+  '1915-08-09': 'august',
+  '1915-08-10': 'august',
+  '1915-08-21': 'august'
 };
 
 const MONTH_TR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -371,6 +389,9 @@ function resolveSceneKey(day, date, eventType) {
     if (hasAny(text, ['anzac', 'ariburnu', 'kabatepe', 'conkbayiri', 'sari bair', 'mustafa kemal', '19 mayis'])) return 'anzac';
     if (hasAny(text, ['helles', 'seddulbahir', 'kirte', 'krithia', 'alcitepe', 'achi baba', 'v beach', 'w beach', 'x beach', 'y beach', 's beach'])) return 'helles';
   }
+  if (date >= '1915-08-06' && date <= '1915-08-21') {
+    if (hasAny(text, ['anafartalar', 'conkbayiri', 'chunuk bair', 'suvla', 'kirectepe', 'scimitar', 'hill 60', 'sari bair'])) return 'august';
+  }
   return 'general';
 }
 
@@ -381,6 +402,7 @@ function normalizeFrontsForScene(fronts, date, sceneKey) {
   if (sceneKey === 'naval') return ['Deniz'];
   if (sceneKey === 'anzac') return ['Arıburnu'];
   if (sceneKey === 'helles') return ['Seddülbahir'];
+  if (sceneKey === 'august') return ['Anafartalar'];
 
   if (date < '1915-04-25') {
     set.delete('Arıburnu');
@@ -505,12 +527,27 @@ function buildSceneAwareUnitActivity(date, sceneKey, fallback, intensity, dataQu
   }
   if (sceneKey === 'helles') {
     if (date === '1915-04-26') {
-      return `${mark} ${trDate} günü Helles çıkarması S, V, W, X ve Y sahillerinde dağınık biçimde sürerken 29. Tümen emir ve koordinasyon eksikliğiyle avantajını kullanamadı.`;
+      return `${mark} ${trDate} günü Helles çıkarması S, V, W, X ve Y sahillerinde dağınık biçimde sürerken SS River Clyde ateş altında kaldı; 7., 9. ve 5. Osmanlı tümenleri Alçıtepe yolunu kapattı.`;
     }
-    if (date === '1915-04-28' || date === '1915-05-06' || date === '1915-06-04') {
+    if (date === '1915-04-28' || date === '1915-05-06' || date === '1915-06-04' || date === '1915-06-28') {
       return `${mark} ${trDate} günü Seddülbahir-Krithia-Achi Baba hattında yoğun topçu hazırlığına rağmen İtilaf hücumu Osmanlı savunmasını yaramadı.`;
     }
     return `${mark} ${trDate} günü Helles cephesinde plaj başları, Krithia yaklaşmaları ve Achi Baba eteğinde ağır kayıplı yıpratma çatışmaları yaşandı.`;
+  }
+  if (sceneKey === 'august') {
+    if (date === '1915-08-06') {
+      return `${mark} ${trDate} günü IX Kolordusu Suvla'ya çıkarken Anzac birlikleri Sarı Bayır-Conkbayırı hattına tırmandı; Osmanlı ihtiyatları Anafartalar yönüne çevrildi.`;
+    }
+    if (date === '1915-08-08' || date === '1915-08-09') {
+      return `${mark} ${trDate} günü Yeni Zelanda birlikleri Conkbayırı zirvesine tutunmaya çalıştı; Suvla'daki gecikme yüksek sırtların kalıcı biçimde alınmasını engelledi.`;
+    }
+    if (date === '1915-08-10') {
+      return `${mark} ${trDate} günü Mustafa Kemal'in yönettiği karşı taarruz Conkbayırı zirvesini geri aldı ve Suvla-Anzac birleşme ihtimalini kırdı.`;
+    }
+    if (date === '1915-08-21') {
+      return `${mark} ${trDate} günü Scimitar Hill/Kireçtepe ve Hill 60 çevresindeki son büyük hamle de kırıldı; Anafartalar cephesi tahliyeye kadar kilitlendi.`;
+    }
+    return `${mark} ${trDate} günü Suvla, Anafartalar ve Conkbayırı üçgeninde taraflar yüksek sırtlar için son büyük taarruz temposunu sürdürdü.`;
   }
   return fallback;
 }
@@ -533,7 +570,15 @@ function buildSceneTransition(date, sceneKey, currentRow, nextRow) {
     if (date === '1915-04-28') return 'Krithia denemesi yarıda kesiliyor; Helles hattı siper savaşına sertçe geçiyor.';
     if (date === '1915-05-06') return 'Achi Baba ve Krithia için yeni hücum ağır kayıpla yavaşlıyor.';
     if (date === '1915-06-04') return 'Son büyük Helles saldırısı da kırılıyor; cephe yeniden siper dengesine dönüyor.';
+    if (date === '1915-06-28') return 'Zığındere kayıpları Helles cephesinin yıpratma savaşına kilitlendiğini gösteriyor.';
     return 'Seddülbahir-Krithia hattında emir ve koordinasyon eksikliği ilerlemeyi törpülüyor.';
+  }
+  if (sceneKey === 'august') {
+    if (date === '1915-08-06') return 'Suvla çıkarması ile Sarı Bayır taarruzu aynı sahnede birleşiyor; zaman Osmanlı ihtiyatlarının lehine akıyor.';
+    if (date === '1915-08-08') return 'Conkbayırı kısa süreliğine İtilaf eline geçiyor; Suvla desteği yetişmediği için zirve savunmasız kalıyor.';
+    if (date === '1915-08-10') return 'Conkbayırı geri alınıyor; Ağustos taarruzunun stratejik momentumu kırılıyor.';
+    if (date === '1915-08-21') return 'Anafartalar son büyük hamleyi de durduruyor; cephe artık tahliye kararını bekleyen bir çıkmaza dönüşüyor.';
+    return 'Anafartalar hattında yüksek sırtlar için baskı sürüyor.';
   }
   return currentRow.sceneTransition;
 }

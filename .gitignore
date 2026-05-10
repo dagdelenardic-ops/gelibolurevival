@@ -11,5 +11,9 @@ node_modules/
 /local-run*.png
 /map-check-*.png
 /verification-overlay*.png
+/suvla-fix-check*.png
+/aug-1915-*.png
+/weird-sea-anim-*.png
+/assets/reference-console.html
 /test-results/
 /playwright-report/

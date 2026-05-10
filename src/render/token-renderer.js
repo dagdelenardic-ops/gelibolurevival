@@ -3,15 +3,15 @@
 // Birlik token SVG oluşturma, animasyon, highlight
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { normalizeValue } from '../engine/date-utils.js';
 import {
     unitSeed, getNarrativeNavalPosition,
     getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, isDestroyedPhaseData
-} from '../engine/position-engine.js?v=20260407-manual-r1';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260501-scene-r2';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260501-guided-r2';
+} from '../engine/position-engine.js?v=20260508-sprint-r1';
+import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260508-sprint-r1';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260508-sprint-r1';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 import { getUnitIcon } from '../data/icon-registry.js';
 

@@ -3,10 +3,10 @@
 // Terrain, çakışma ve label sorunlarını ölçen geliştirici aracı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA, getMapLocationById } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { ENTITY_TYPES } from '../data/entity-types.js';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { MAP_SCENE_LABELS } from '../data/geo-calibration.js?v=20260407-manual-r1';
+import { MAP_SCENE_LABELS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
 import { getTerrainAtPoint, clampToAllowedTerrain, waitForTerrainSampler } from '../data/terrain-zones.js';
 import { isUnitDestroyed } from '../data/canonical-positions.js';
 import {
@@ -14,14 +14,14 @@ import {
     getHistoricalPlacementForUnit,
     getHistoricalSourcesForIds
 } from '../data/historical-map-data.js?v=20260407-manual-r1';
-import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260501-scene-r2';
+import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260508-sprint-r1';
 import {
     enforceCorridorSeparation,
     getClusterOffset,
     getNarrativeNavalPosition,
     getTerrainSafePointForUnit,
     isDestroyedPhaseData
-} from './position-engine.js?v=20260407-manual-r1';
+} from './position-engine.js?v=20260508-sprint-r1';
 import { resolveCampaignPhase } from './campaign-state-machine.js';
 
 const COLLISION_RADIUS = 64;

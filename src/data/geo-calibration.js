@@ -150,6 +150,8 @@ const RAW_LOCATIONS = [
     { id: 'suvla',        name: 'Suvla Koyu',         lat: 40.2755,    lon: 26.2785,    isAnchor: true, cropX: 1143, cropY: 852  },
     { id: 'tuzgolu',      name: 'Tuz Gölü',           lat: 40.2962721, lon: 26.2592921, isAnchor: true, cropX: 1172, cropY: 795  },
     { id: 'kirectepe',    name: 'Kireçtepe',          lat: 40.3452146, lon: 26.2838787, isAnchor: true, cropX: 1285, cropY: 669  },
+    { id: 'scimitar-hill', name: 'Scimitar Hill / Yusufçuktepe', lat: 40.2908, lon: 26.2987, isAnchor: true, cropX: 1225, cropY: 820 },
+    { id: 'hill-60',      name: 'Hill 60 / Kaiajik Aghala', lat: 40.2549, lon: 26.2866, isAnchor: true, cropX: 1212, cropY: 915 },
     { id: 'anafartalar',  name: 'Anafartalar',        lat: 40.2816240, lon: 26.3292410, isAnchor: true, cropX: 1264, cropY: 842  },
 
     // ── ANZAC Bölgesi ────────────────────────────────
@@ -220,7 +222,12 @@ export const MAP_SCENE_LABELS = [
     { id: 'helles-x-beach', text: 'X PLAJI', sceneGroup: 'helles', x: 1017, y: 2336, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
     { id: 'helles-v-beach', text: 'V PLAJI', sceneGroup: 'helles', x: 1033, y: 2399, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
     { id: 'helles-w-beach', text: 'W PLAJI', sceneGroup: 'helles', x: 990, y: 2370, fill: '#4a5a6a', fontSize: 16, opacity: 0.5, strokeWidth: 2, subLabel: false },
-    { id: 'helles-achi-baba', text: 'ALÇITEPE', sceneGroup: 'helles', x: 1117, y: 2251, fill: '#4a5a6a', fontSize: 14, opacity: 0.4, strokeWidth: 2, subLabel: true }
+    { id: 'helles-achi-baba', text: 'ALÇITEPE', sceneGroup: 'helles', x: 1117, y: 2251, fill: '#4a5a6a', fontSize: 14, opacity: 0.4, strokeWidth: 2, subLabel: true },
+    { id: 'august-suvla', text: 'SUVLA', sceneGroup: 'august', x: 1128, y: 1648, fill: '#4a5a6a', fontSize: 18, opacity: 0.5, strokeWidth: 3, subLabel: false },
+    { id: 'august-anafartalar', text: 'ANAFARTALAR', sceneGroup: 'august', x: 1264, y: 1622, fill: '#4a5a6a', fontSize: 16, opacity: 0.45, strokeWidth: 2, subLabel: false },
+    { id: 'august-conkbayiri', text: 'CONKBAYIRI', sceneGroup: 'august', x: 1236, y: 1744, fill: '#4a5a6a', fontSize: 14, opacity: 0.45, strokeWidth: 2, subLabel: true },
+    { id: 'august-hill-60', text: 'HILL 60', sceneGroup: 'august', x: 1212, y: 1695, fill: '#6a5535', fontSize: 13, opacity: 0.55, strokeWidth: 2, subLabel: true },
+    { id: 'august-scimitar', text: 'SCIMITAR', sceneGroup: 'august', x: 1225, y: 1600, fill: '#6a5535', fontSize: 13, opacity: 0.55, strokeWidth: 2, subLabel: true }
 ];
 
 export const MAP_SCENE_GUIDES = {
@@ -259,6 +266,29 @@ export const MAP_SCENE_GUIDES = {
             { x: 1117, y: 2251 }
         ],
         riverClyde: { x: 1024, y: 2392 }
+    },
+    august: {
+        suvlaAxis: [
+            { x: 1143, y: 1632 },
+            { x: 1225, y: 1600 },
+            { x: 1264, y: 1622 }
+        ],
+        conkbayiriAxis: [
+            { x: 1246, y: 1788 },
+            { x: 1236, y: 1744 },
+            { x: 1264, y: 1622 }
+        ],
+        finalAssaultAxis: [
+            { x: 1143, y: 1632 },
+            { x: 1212, y: 1695 },
+            { x: 1236, y: 1744 }
+        ],
+        keyPoints: [
+            { id: 'august-suvla-bay', label: 'Suvla', x: 1143, y: 1632, style: 'default' },
+            { id: 'august-scimitar-hill', label: 'Scimitar', x: 1225, y: 1600, style: 'damage' },
+            { id: 'august-hill-60', label: 'Hill 60', x: 1212, y: 1695, style: 'damage' },
+            { id: 'august-chunuk-bair', label: 'Conkbayırı', x: 1236, y: 1744, style: 'loss' }
+        ]
     }
 };
 

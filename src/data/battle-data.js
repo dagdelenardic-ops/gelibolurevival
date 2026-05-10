@@ -3,7 +3,7 @@
 // Faksiyonlar, askeri birimler, savaş fazları, konum bilgileri
 // ══════════════════════════════════════════════════════════════
 
-import { GEO_LOCATIONS } from './geo-calibration.js?v=20260407-manual-r1';
+import { GEO_LOCATIONS } from './geo-calibration.js?v=20260508-sprint-r1';
 
 export const BATTLE_DATA = {
     factions: {
@@ -145,6 +145,13 @@ export const BATTLE_DATA = {
             commander: "Tümg. Hunter-Weston", strength: 17000,
             description: "Seddülbahir (Cape Helles) çıkarmasının ana İngiliz kuvveti. Tümgeneral Hunter-Weston komutasında 25 Nisan 1915'te V, W, X ve Y sahillerinden eşzamanlı çıkarma yaptı. En ağır kayıplar V Beach'te: SS River Clyde sahile oturtularak askerler teknenin yanlarındaki kapılardan çıkmaya çalışırken Osmanlı makineli tüfek ateşiyle biçildi. Üç Kirte (Krithia) taarruzu (28 Nisan, 6-8 Mayıs, 4-6 Haziran 1915) kanlı başarısızlıklarla sonuçlandı. Helles cephesinde aylarca siper savaşı yürüttükten sonra 1-9 Ocak 1916'da son tahliyeyi gerçekleştirdi.",
             phases: { "naval-assault": { x: 1017, y: 2336, status: "hazır", objective: "Seddülbahir ve X Beach çıkarması planlaması", outcome: "Nisan çıkarması için hazırlandı" } }
+        },
+        {
+            id: "ix-corps", name: "IX Kolordusu (Suvla)", faction: "british", type: "kolordu",
+            entityType: "infantry_unit", unitClass: "corps", side: "allied", anchorRegion: "suvla",
+            commander: "Korg. Sir Frederick Stopford", strength: 25000,
+            description: "Ağustos 1915'te Suvla Koyu çıkarmasını yöneten İngiliz IX Kolordusu. General Sir Frederick Stopford komutasındaki kuvvet, Anzac köprübaşını Suvla ile birleştirip Kocaçimen-Conkbayırı sırtlarına baskı kurmak için getirildi. Çıkarma ilk saatlerde düşük dirençle ilerleyebilecek durumdayken emir gecikmeleri, su sıkıntısı ve komuta tereddüdü yüzünden Anafartalar yükseltileri hızla tutulamadı. Bu yavaşlık Mustafa Kemal'in Anafartalar savunmasını örgütlemesine zaman kazandırdı; Suvla harekâtı kampanyanın son büyük fırsatını tüketti.",
+            phases: {}
         },
         {
             id: "ss-river-clyde", name: "SS River Clyde", faction: "british", type: "çıkarma",

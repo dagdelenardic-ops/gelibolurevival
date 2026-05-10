@@ -3,11 +3,11 @@
 // Birim konumlandırma, trail hesaplama, cluster yönetimi
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, BASE_PHASE_ID, PHASE_TOKEN_SPREAD, getMapLocationById } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA, BASE_PHASE_ID, PHASE_TOKEN_SPREAD, getMapLocationById } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { ENTITY_TYPES } from '../data/entity-types.js';
-import { FRONTLINES } from '../data/frontlines.js?v=20260501-suvla-r7';
-import { MAP_FORTS } from '../data/geo-calibration.js?v=20260501-suvla-r7';
+import { FRONTLINES } from '../data/frontlines.js?v=20260508-sprint-r1';
+import { MAP_FORTS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
 import { getTerrainAtPoint, clampToAllowedTerrain } from '../data/terrain-zones.js';
 import { getHistoricalPlacementForUnit } from '../data/historical-map-data.js?v=20260407-manual-r1';
 import { normalizeValue } from './date-utils.js';
@@ -15,7 +15,7 @@ import {
     getUnitEntryPhaseIndex, isMajorPhase,
     isNavalEraPhaseIndex, getNavalEraProgress,
     getMinimumStartIsoForUnit, getFirstPhaseIndexForIso
-} from './phase-engine.js?v=20260501-scene-r2';
+} from './phase-engine.js?v=20260508-sprint-r1';
 
 const BASE_PHASE_DESTRUCTION_ISO = '1915-03-18';
 const COLLISION_SAFE_DISTANCE = 92;

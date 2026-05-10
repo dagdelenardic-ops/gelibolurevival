@@ -3,9 +3,9 @@
 // Timeline UI oluşturma, aktif marker yönetimi
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { normalizeDateText } from '../engine/date-utils.js';
-import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260501-scene-r2';
+import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260508-sprint-r1';
 
 const isMobileTimeline = typeof window !== 'undefined' && window.innerWidth <= 768;
 

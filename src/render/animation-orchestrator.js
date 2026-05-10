@@ -4,8 +4,8 @@
 // → eventType + intensity + unit states → zengin savaş animasyonları
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
-import { FRONTLINES } from '../data/frontlines.js?v=20260501-suvla-r7';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
+import { FRONTLINES } from '../data/frontlines.js?v=20260508-sprint-r1';
 import { COORD_SCALE } from '../data/coordinate-map.js';
 import { getUnitVitals } from '../data/casualty-model.js';
 import {

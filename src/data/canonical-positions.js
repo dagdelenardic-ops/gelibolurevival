@@ -159,6 +159,13 @@ export const CANONICAL_POSITIONS = {
         { start: '1916-01-01', end: '1916-01-09', location: 'seddulbahir', note: 'Son tahliye' },
     ],
 
+    'ix-corps': [
+        // İngiliz IX Kolordusu — Suvla çıkarması ve Anafartalar
+        { start: '1915-08-06', end: '1915-08-20', location: 'suvla', note: 'Suvla Koyu çıkarması; Anafartalar yükseltileri için geciken ilerleme' },
+        { start: '1915-08-21', end: '1915-12-20', location: 'suvla', note: 'Scimitar Hill/Kireçtepe sonrası Suvla köprübaşında savunma' },
+        { start: '1915-12-21', end: '1916-01-09', location: 'destroyed', note: 'Suvla tahliyesi tamamlandı' },
+    ],
+
     'ss-river-clyde': [
         // V Beach'e oturtulan çıkarma gemisi
         { start: '1915-04-25', end: '1915-04-27', location: 'seddulbahir', note: 'V Beach önünde karaya oturtulmuş çıkarma platformu' },

@@ -3,27 +3,27 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260508-sprint-r1';
 import { ENTITY_TYPES } from './data/entity-types.js';
 import { waitForTerrainSampler } from './data/terrain-zones.js';
 import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js';
 import { isUnitDestroyed } from './data/canonical-positions.js';
 import { normalizeDateText } from './engine/date-utils.js';
-import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260501-scene-r2';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260508-sprint-r1';
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
-import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation } from './engine/position-engine.js?v=20260501-suvla-r7';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260501-suvla-r8';
-import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260501-guided-r1';
-import { renderBattleEffects } from './render/effects-renderer.js';
-import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260501-suvla-r7';
+import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation } from './engine/position-engine.js?v=20260508-sprint-r1';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260508-sprint-r2';
+import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260508-sprint-r1';
+import { renderBattleEffects } from './render/effects-renderer.js?v=20260508-sprint-r1';
+import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260508-sprint-r1';
 import { animateCamera } from './render/camera.js?v=20260428-camera-safe';
 import { initTouchZoom } from "./engine/touch-zoom.js?v=20260407-manual-r1";
 
-import { orchestrateAnimations } from './render/animation-orchestrator.js?v=20260501-suvla-r7';
-import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js';
-import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js?v=20260501-guided-r1';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay } from './ui/autoplay-controller.js';
+import { orchestrateAnimations } from './render/animation-orchestrator.js?v=20260508-sprint-r1';
+import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260508-sprint-r1';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260508-sprint-r1';
+import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js?v=20260508-sprint-r1';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay } from './ui/autoplay-controller.js?v=20260508-sprint-r1';
 import { initOnboarding } from './ui/onboarding.js?v=20260428-deeplink-skip';
 import { toggleStatsPanel } from './ui/stats-panel.js';
 import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260501-audio-r1';
@@ -389,7 +389,7 @@ async function initMapEditorIfRequested() {
         return;
     }
 
-    const { initMapEditor } = await import('./ui/map-editor.js?v=20260407-manual-r1');
+    const { initMapEditor } = await import('./ui/map-editor.js?v=20260508-sprint-r1');
     initMapEditor();
 }
 

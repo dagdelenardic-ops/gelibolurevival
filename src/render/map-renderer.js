@@ -3,12 +3,12 @@
 // Historically grounded military cartography with modern UI clarity
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260430-scene-guides-r1';
-import { renderTokens } from './token-renderer.js';
-import { renderBattleEffects } from './effects-renderer.js';
-import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
+import { renderTokens } from './token-renderer.js?v=20260508-sprint-r1';
+import { renderBattleEffects } from './effects-renderer.js?v=20260508-sprint-r1';
+import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260508-sprint-r1';
 
 function getActiveSceneGroups(phase, animData) {
     const iso = String(phase && phase.isoStart || '');
@@ -20,6 +20,7 @@ function getActiveSceneGroups(phase, animData) {
     if (fronts.includes('Deniz')) activeGroups.add('naval');
     if (fronts.includes('Arıburnu')) activeGroups.add('anzac');
     if (fronts.includes('Seddülbahir')) activeGroups.add('helles');
+    if (fronts.includes('Anafartalar')) activeGroups.add('august');
 
     return activeGroups.size ? [...activeGroups] : ['general'];
 }
@@ -66,6 +67,7 @@ export function updateMapSceneState(phase, animData, cameraTarget = null) {
         naval: new Set(['bogaz', 'canakkale', 'kilitbahir', 'kumkale', 'seddulbahir', 'gelibolu']),
         anzac: new Set(['ariburnu', 'kabatepe', 'conkbayiri', 'bigali', 'kirectepe', 'anafartalar', 'kilitbahir']),
         helles: new Set(['seddulbahir', 'kirte', 'alcitepe', 'morto-koyu', 'kumkale', 'kilitbahir']),
+        august: new Set(['suvla', 'tuzgolu', 'scimitar-hill', 'hill-60', 'kirectepe', 'anafartalar', 'conkbayiri', 'ariburnu', 'bigali']),
         general: null
     };
     const visible = visibleByScene[sceneKey] || null;
@@ -188,7 +190,7 @@ function renderSceneAnnotations() {
         </g>`;
     };
 
-    return ['naval', 'anzac', 'helles'].map((sceneGroup) => {
+    return ['naval', 'anzac', 'helles', 'august'].map((sceneGroup) => {
         const labels = MAP_SCENE_LABELS
             .filter((label) => label.sceneGroup === sceneGroup)
             .map((label) => `<text x="${label.x}" y="${label.y}" class="scene-label${label.subLabel ? ' scene-label-sub' : ''} map-overlay-item"
@@ -216,6 +218,13 @@ function renderSceneAnnotations() {
                         </g>`
                         : ''
                 ].join('')
+                : sceneGroup === 'august'
+                    ? [
+                        renderGuidePath(guides.suvlaAxis, 'scene-guide-route scene-guide-route-landing'),
+                        renderGuidePath(guides.conkbayiriAxis, 'scene-guide-route scene-guide-route-inland'),
+                        renderGuidePath(guides.finalAssaultAxis, 'scene-guide-route scene-guide-route-strike'),
+                        ...(guides.keyPoints || []).map(renderGuidePoint)
+                    ].join('')
                 : '';
 
         return `<g class="scene-annotation-group" data-scene-group="${sceneGroup}">${labels}${extras}</g>`;
