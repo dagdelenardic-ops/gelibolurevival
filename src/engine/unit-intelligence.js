@@ -3,7 +3,7 @@
 // Faz ve animasyon verisinden birlik niyeti/odağı türetir
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, LOCATION_BY_ID } from '../data/battle-data.js?v=20260508-sprint-r1';
+import { BATTLE_DATA, LOCATION_BY_ID, BASE_PHASE_ID } from '../data/battle-data.js?v=20260508-sprint-r1';
 
 export const ACTION_META = {
     defending: { label: 'Savunma hattında', badge: 'SAV', color: '#cdb67a' },
@@ -103,6 +103,13 @@ function matchLocationIdFromText(value) {
 
 function getPhaseField(phase, unit, phaseData, key) {
     if (phaseData && typeof phaseData[key] === 'string' && phaseData[key].trim()) return phaseData[key].trim();
+    // Deniz birimleri faction-level kara metnini miras almaz; pişmemiş
+    // phaseData gelse bile kendi naval-assault meta'sına düşer.
+    if (unit.type === 'deniz') {
+        const base = unit.phases && unit.phases[BASE_PHASE_ID];
+        const value = base && base[key];
+        return (typeof value === 'string' && value.trim()) ? value.trim() : '';
+    }
     const factionField = phase && phase[`${key}ByFaction`];
     if (factionField && typeof factionField[unit.faction] === 'string' && factionField[unit.faction].trim()) {
         return factionField[unit.faction].trim();

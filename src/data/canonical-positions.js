@@ -10,7 +10,11 @@
  * Format: { unitId: [ { start, end, location, note? } ] }
  *
  * Kurallar:
- * - `destroyed` location = birim yok edildi, artık render edilmemeli
+ * - Harita-dışı (off-map) sentinel'leri — birim artık render edilmemeli,
+ *   ama semantik ayrı tutulur (panel/istatistik/anlatı için):
+ *     · `sunk`      = battı (Bouvet, Irresistible, Ocean)
+ *     · `withdrawn` = tiyatrodan çekildi (QE denizaltı tehdidi, Suffren onarım)
+ *     · `evacuated` = tahliye edildi (ANZAC, NZ Tugayı, IX Kolordusu)
  * - Son segment'in `end`'i yoksa kampanya sonuna kadar geçerli
  * - Segment'ler kronolojik sırada ve boşluksuz olmalı
  */
@@ -108,35 +112,35 @@ export const CANONICAL_POSITIONS = {
         // Amiral de Robeck'in bayrak gemisi
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz bombardımanları' },
         { start: '1915-03-18', end: '1915-05-12', location: 'bogaz', note: '18 Mart muharebesi, hasar almadı' },
-        { start: '1915-05-13', end: '1916-01-09', location: 'destroyed', note: 'Denizaltı tehdidi nedeniyle Akdenize çekildi (Mayıs 1915)' },
+        { start: '1915-05-13', end: '1916-01-09', location: 'withdrawn', note: 'Denizaltı tehdidi nedeniyle Akdenize çekildi (Mayıs 1915)' },
     ],
 
     'hms-irresistible': [
         // Captain Douglas Dent (Albay) komutasında
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Erenköy dönüş havzasında mayına çarptı' },
-        { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı' },
+        { start: '1915-03-19', end: '1916-01-09', location: 'sunk', note: '18 Mart 1915\'te battı' },
     ],
 
     'hms-ocean': [
         // Captain (Albay) Hayes-Sadler komutasında
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Irresistible\'ı kurtarmaya çalışırken Erenköy mayın hattında mayına çarptı' },
-        { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı' },
+        { start: '1915-03-19', end: '1916-01-09', location: 'sunk', note: '18 Mart 1915\'te battı' },
     ],
 
     'allied-minesweepers': [
         // Trawler mayın tarama girişimleri — Boğaz harekatının kritik başarısızlığı
         { start: '1915-02-19', end: '1915-03-17', location: 'erenkoyu', note: 'Gece mayın tarama denemeleri; kıyı ateşi ve akıntı yüzünden başarısız' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart taarruzu öncesi açılamayan Erenköy mayın hattı' },
-        { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: 'Deniz harekatı kırıldıktan sonra ana görsel katmandan çıkarıldı' },
+        { start: '1915-03-19', end: '1916-01-09', location: 'withdrawn', note: 'Deniz harekatı kırıldıktan sonra ana görsel katmandan çıkarıldı' },
     ],
 
     'bouvet': [
         // Fransız donanması
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Erenköy Koyu dönüşünde Nusret mayınına çarptı, 2 dakikada battı' },
-        { start: '1915-03-19', end: '1916-01-09', location: 'destroyed', note: '18 Mart 1915\'te battı, yaklaşık 640 kayıp' },
+        { start: '1915-03-19', end: '1916-01-09', location: 'sunk', note: '18 Mart 1915\'te battı, yaklaşık 640 kayıp' },
     ],
 
     'suffren': [
@@ -144,7 +148,7 @@ export const CANONICAL_POSITIONS = {
         { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart\'ta Erenköy dönüş bölgesinde ağır hasar aldı' },
         { start: '1915-03-19', end: '1915-04-24', location: 'bogaz', note: 'Ağır hasarlı halde Boğaz dışına çekildi, tamir edildi' },
-        { start: '1915-04-25', end: '1916-01-09', location: 'destroyed', note: 'Çanakkale\'den çekildi' },
+        { start: '1915-04-25', end: '1916-01-09', location: 'withdrawn', note: 'Çanakkale\'den çekildi' },
     ],
 
     // ═══════════════════════════════════════════════
@@ -163,20 +167,20 @@ export const CANONICAL_POSITIONS = {
         // İngiliz IX Kolordusu — Suvla çıkarması ve Anafartalar
         { start: '1915-08-06', end: '1915-08-20', location: 'suvla', note: 'Suvla Koyu çıkarması; Anafartalar yükseltileri için geciken ilerleme' },
         { start: '1915-08-21', end: '1915-12-20', location: 'suvla', note: 'Scimitar Hill/Kireçtepe sonrası Suvla köprübaşında savunma' },
-        { start: '1915-12-21', end: '1916-01-09', location: 'destroyed', note: 'Suvla tahliyesi tamamlandı' },
+        { start: '1915-12-21', end: '1916-01-09', location: 'evacuated', note: 'Suvla tahliyesi tamamlandı' },
     ],
 
     'ss-river-clyde': [
         // V Beach'e oturtulan çıkarma gemisi
         { start: '1915-04-25', end: '1915-04-27', location: 'seddulbahir', note: 'V Beach önünde karaya oturtulmuş çıkarma platformu' },
-        { start: '1915-04-28', end: '1916-01-09', location: 'destroyed', note: 'İlk çıkarma sahnesinden sonra ana birlik katmanından çıkarıldı' },
+        { start: '1915-04-28', end: '1916-01-09', location: 'withdrawn', note: 'İlk çıkarma sahnesinden sonra ana birlik katmanından çıkarıldı' },
     ],
 
     'anzac-1div': [
         // Avustralya-Yeni Zelanda 1. Tümeni
         { start: '1915-04-25', end: '1915-08-05', location: 'ariburnu', note: 'ANZAC Koyu çıkarması, Arıburnu siperleri' },
         { start: '1915-08-06', end: '1915-12-19', location: 'ariburnu', note: 'Ağustos taarruzu, Arıburnu siperleri' },
-        { start: '1915-12-20', end: '1916-01-09', location: 'destroyed', note: 'Arıburnu tahliyesi tamamlandı' },
+        { start: '1915-12-20', end: '1916-01-09', location: 'evacuated', note: 'Arıburnu tahliyesi tamamlandı' },
     ],
 
     'nz-inf': [
@@ -184,7 +188,7 @@ export const CANONICAL_POSITIONS = {
         { start: '1915-04-25', end: '1915-08-05', location: 'ariburnu', note: 'ANZAC Koyu, Arıburnu' },
         { start: '1915-08-06', end: '1915-08-10', location: 'conkbayiri', note: 'Conkbayırı taarruzu — zirveye ulaştı' },
         { start: '1915-08-11', end: '1915-12-19', location: 'ariburnu', note: 'Geri çekilme, siper savunması' },
-        { start: '1915-12-20', end: '1916-01-09', location: 'destroyed', note: 'Arıburnu tahliyesi' },
+        { start: '1915-12-20', end: '1916-01-09', location: 'evacuated', note: 'Arıburnu tahliyesi' },
     ],
 
     'fr-corps': [
@@ -211,10 +215,24 @@ export function getCanonicalPosition(unitId, isoDate) {
     return null;
 }
 
+/** Harita-dışı (render edilmeyen) son-durum sentinel'leri */
+export const OFF_MAP_LOCATIONS = new Set(['sunk', 'withdrawn', 'evacuated']);
+
 /**
- * Birim belirtilen tarihte yok edilmiş mi?
+ * Birim belirtilen tarihte haritadan çıkmış mı? (battı / çekildi / tahliye)
+ * Üçü de render dışıdır; semantik ayrımı için getUnitEndState kullan.
  */
-export function isUnitDestroyed(unitId, isoDate) {
+export function isUnitOffMap(unitId, isoDate) {
     const pos = getCanonicalPosition(unitId, isoDate);
-    return pos ? pos.location === 'destroyed' : false;
+    return pos ? OFF_MAP_LOCATIONS.has(pos.location) : false;
+}
+
+/**
+ * Birimin o tarihteki son-durumu: 'sunk' | 'withdrawn' | 'evacuated' | null.
+ * Panel/istatistik/anlatı doğru etiket için bunu kullanmalı ("yok edildi"
+ * yerine "çekildi"/"tahliye edildi").
+ */
+export function getUnitEndState(unitId, isoDate) {
+    const pos = getCanonicalPosition(unitId, isoDate);
+    return pos && OFF_MAP_LOCATIONS.has(pos.location) ? pos.location : null;
 }

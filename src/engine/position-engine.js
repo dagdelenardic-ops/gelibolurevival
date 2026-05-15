@@ -179,6 +179,14 @@ function separateUnitTrails(phaseIds) {
 
 /** Phase meta bilgisi al (status, objective, outcome) */
 export function resolvePhaseMetaText(phase, unit, key) {
+    // Deniz birimleri faction-level kara hedefini miras almaz; kendi
+    // el-yazımı naval-assault meta'sını korur. Aksi halde gemiler
+    // ("25 Nisan ortak çıkarmaya odaklan." gibi) kara objektifleri alır.
+    if (unit.type === 'deniz') {
+        const base = unit.phases && unit.phases[BASE_PHASE_ID];
+        const value = base && base[key];
+        return (typeof value === 'string' && value.trim()) ? value.trim() : null;
+    }
     const byFaction = phase && phase[`${key}ByFaction`];
     if (byFaction && byFaction[unit.faction]) return byFaction[unit.faction];
     return null;

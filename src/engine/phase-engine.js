@@ -28,7 +28,7 @@ export async function loadBookData() {
         console.warn('Kitap verisi yüklenemedi:', err);
     }
 }
-import { CANONICAL_POSITIONS, getCanonicalPosition } from '../data/canonical-positions.js';
+import { CANONICAL_POSITIONS, getCanonicalPosition, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js';
 
 const BASE_PHASE_TEMPLATES = JSON.parse(JSON.stringify(BATTLE_DATA.phases));
 
@@ -374,13 +374,16 @@ function buildDailyHistoricalPhases(templatePhases = []) {
         const d = addUTCDateDays(start, i);
         const iso = utcDateToISO(d);
         while (pointer + 1 < parsed.length && parsed[pointer + 1].isoStart <= iso) pointer += 1;
-        const active = parsed[pointer] || parsed[0] || {};
-        const next = parsed[pointer + 1] || active;
+        // İlk template fazından önceki günler (3 Kas 1914 – 17 Mar 1915) naval-assault'ı
+        // miras almaz; nötr "hazırlık" günü olur (yoksa "4 Kasım = 18 Mart Deniz Harekâtı")
+        const beforeFirst = parsed.length > 0 && iso < (parsed[0].isoStart || iso);
+        const active = beforeFirst ? {} : (parsed[pointer] || parsed[0] || {});
+        const next = beforeFirst ? {} : (parsed[pointer + 1] || active);
         const span = Math.max(1, dayDiffISO(active.isoStart || iso, next.isoStart || iso));
         const ratio = normalizeValue(dayDiffISO(active.isoStart || iso, iso) / span, 0, 1);
         const exactParsed = parsedByIso[iso] || null;
         const anchor = anchorsByIso[iso] || null;
-        const base = exactParsed || active;
+        const base = beforeFirst ? {} : (exactParsed || active);
 
         daily.push({
             id: `gun-${String(i + 1).padStart(4, '0')}`,
@@ -443,8 +446,8 @@ function applyCanonicalPositions(phases) {
             const canon = getCanonicalPosition(unitId, iso);
             if (!canon) continue;
 
-            if (canon.location === 'destroyed') {
-                // Batmış/çekilmiş birim — locationByUnit'ten kaldır
+            if (OFF_MAP_LOCATIONS.has(canon.location)) {
+                // Batmış/çekilmiş/tahliye edilmiş birim — locationByUnit'ten kaldır
                 delete phase.locationByUnit[unitId];
             } else {
                 // Kanonik pozisyonu uygula (mevcut gürültülü veriyi override et)
@@ -555,9 +558,15 @@ export function getFirstPhaseIndexForIso(isoDate) {
 
 /** Birim için minimum başlangıç ISO tarihini belirle */
 export function getMinimumStartIsoForUnit(unit) {
+    // Küratörlü availability penceresi varsa onu kullan (İtilaf filosu
+    // 3 Kasım 1914'te değil, 19 Şubat 1915 Boğaz harekâtında sahneye girer)
+    const window = UNIT_AVAILABILITY_WINDOWS[unit.id];
+    if (window && window.startIso) return window.startIso;
     if (unit.id === 'allied-minesweepers') return '1915-02-19';
     if (unit.id === 'ix-corps') return '1915-08-06';
-    if (unit.type === 'deniz' && unit.faction !== 'ottoman') return '1914-11-03';
+    // Pencere tablosunda olmayan İtilaf deniz birimi için güvenlik ağı:
+    // ilk ciddi Boğaz harekâtı 19 Şubat 1915'te başladı (Hart, 2011)
+    if (unit.type === 'deniz' && unit.faction !== 'ottoman') return '1915-02-19';
     if (unit.faction !== 'ottoman') return '1915-04-25';
     return '1914-11-03';
 }

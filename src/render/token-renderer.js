@@ -114,10 +114,6 @@ function isNavalUnit(unit) {
     return unit.type === 'deniz' || unit.entityType === 'landing_boat';
 }
 
-function shouldHideDestroyedNavalUnit(unit, phaseData) {
-    return unit?.type === 'deniz' && isDestroyedPhaseData(phaseData);
-}
-
 function getNavalVisualProfile(unit) {
     if (unit.id === 'hms-queen-elizabeth') return NAVAL_VISUAL_PROFILES.flagship;
     if (unit.id === 'nusret') return NAVAL_VISUAL_PROFILES.minelayer;
@@ -693,7 +689,9 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         if (!targetBase) return ''; // Yok olan veya henüz girmeyen birlik
 
         const phaseData = u.phases[pid];
-        if (shouldHideDestroyedNavalUnit(u, phaseData)) return '';
+        // Batış GÜNÜ gemi hâlâ görünür (isSunk siluet + efekt = batış sahnesi);
+        // off-map (battı/çekildi/tahliye sonrası) zaten app.js gate'inde nextPositions
+        // dışında kaldığı için buraya hiç gelmez.
         const intent = deriveUnitIntent(u, phase, phaseData || null, animData);
         const vitals = getTokenVitals(u, isoDate, animData);
         const vitalClass = getVitalClass(vitals);

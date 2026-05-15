@@ -4,6 +4,8 @@
 // Toplam kayıp: Osmanlı ~250.000, İtilaf ~265.000 (Peter Hart, 2011)
 // ══════════════════════════════════════════════════════════════
 
+import { CANONICAL_POSITIONS } from './canonical-positions.js';
+
 /**
  * Tarihsel kayıp profilleri — birim başına kampanya boyunca kümülatif kayıp oranı.
  * `peakLossDate`: en yoğun kayıp günü
@@ -110,6 +112,18 @@ function daysBetween(isoA, isoB) {
 }
 
 /**
+ * Birimin sahaya konuşlandığı tarih — kümülatif kayıp bu tarihten
+ * itibaren hesaplanır. Küratörlü canonical-positions'ın ilk segmenti
+ * ground-truth deployment tarihidir (örn. 29. Tümen 1915-04-25, IX
+ * Kolordusu 1915-08-06). Böylece birlik sahaya çıkmadan kayıp yemez.
+ */
+function getDeploymentIso(unitId) {
+    const segments = CANONICAL_POSITIONS[unitId];
+    const firstStart = Array.isArray(segments) && segments[0] && segments[0].start;
+    return firstStart && firstStart > CAMPAIGN_START ? firstStart : CAMPAIGN_START;
+}
+
+/**
  * Günlük kayıp çarpanı hesapla.
  * - `fighting` state: ×3
  * - `bombardment` state: ×1.5
@@ -181,11 +195,14 @@ export function getUnitStrength(unitId, isoDate, intensity, unitState, baseStren
         }
     }
 
-    // Cache kontrolü
-    const cacheKey = `${unitId}:${isoDate}`;
+    // Cache kontrolü — intensity/unitState/baseStrength anahtara dahil;
+    // animasyon verisi sonradan yüklenince bayat düşük-yoğunluk sonucu dönmesin
+    const cacheKey = `${unitId}:${isoDate}:${intensity}:${unitState}:${baseStrength}`;
     if (strengthCache[cacheKey]) return strengthCache[cacheKey];
 
-    const dayNum = daysBetween(CAMPAIGN_START, isoDate);
+    // Kümülatif kayıp birimin sahaya konuşlandığı tarihten itibaren —
+    // kampanya başından değil (29. Tümen çıkarmadan kayıp yemesin)
+    const dayNum = daysBetween(getDeploymentIso(unitId), isoDate);
     if (dayNum <= 0) {
         const result = { current: baseStrength, loss: 0, ratio: 1 };
         strengthCache[cacheKey] = result;

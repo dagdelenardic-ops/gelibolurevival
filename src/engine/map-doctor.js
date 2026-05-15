@@ -8,7 +8,7 @@ import { ENTITY_TYPES } from '../data/entity-types.js';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { MAP_SCENE_LABELS, calibrationReport } from '../data/geo-calibration.js?v=20260508-sprint-r1';
 import { getTerrainAtPoint, clampToAllowedTerrain, waitForTerrainSampler } from '../data/terrain-zones.js';
-import { isUnitDestroyed } from '../data/canonical-positions.js';
+import { isUnitOffMap, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js';
 import {
     getHistoricalDataDiagnostics,
     getHistoricalPlacementForUnit,
@@ -53,7 +53,7 @@ function hasPoint(value) {
 
 function firstLocationId(value) {
     const ids = Array.isArray(value) ? value : [value];
-    return ids.find((id) => id && id !== 'destroyed') || '';
+    return ids.find((id) => id && !OFF_MAP_LOCATIONS.has(id)) || '';
 }
 
 function clampMapPoint(x, y) {
@@ -96,7 +96,7 @@ function getRenderedPhaseEntries(phase, phaseIndex) {
     for (const unit of BATTLE_DATA.units) {
         const entryIndex = unitEntry[unit.id] ?? 0;
         if (phaseIndex < entryIndex) continue;
-        if (isUnitDestroyed(unit.id, String(phase.isoStart || ''))) continue;
+        if (isUnitOffMap(unit.id, String(phase.isoStart || ''))) continue;
 
         const typeDef = ENTITY_TYPES[unit.entityType];
         if (typeDef && !typeDef.allowedPhases.includes(campaignPhase.id)) continue;
@@ -230,7 +230,7 @@ function analyzeAnchorDriftIssues(phases) {
         const iso = String(phase.isoStart || '');
         for (const unit of BATTLE_DATA.units) {
             if (unit.type === 'deniz') continue;
-            if (isUnitDestroyed(unit.id, iso)) continue;
+            if (isUnitOffMap(unit.id, iso)) continue;
             const anchorId = firstLocationId(phase.locationByUnit && phase.locationByUnit[unit.id]) || unit.anchorRegion;
             const anchor = anchorId && getMapLocationById(anchorId);
             const point = unit.phases && unit.phases[phase.id];

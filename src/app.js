@@ -7,11 +7,11 @@ import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=2026050
 import { ENTITY_TYPES } from './data/entity-types.js';
 import { waitForTerrainSampler } from './data/terrain-zones.js';
 import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js';
-import { isUnitDestroyed } from './data/canonical-positions.js';
+import { isUnitOffMap } from './data/canonical-positions.js';
 import { normalizeDateText } from './engine/date-utils.js';
 import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260508-sprint-r1';
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
-import { expandUnitTrails, getNarrativeNavalPosition, isDestroyedPhaseData, enforceCorridorSeparation } from './engine/position-engine.js?v=20260508-sprint-r1';
+import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation } from './engine/position-engine.js?v=20260508-sprint-r1';
 import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260508-sprint-r2';
 import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260508-sprint-r1';
 import { renderBattleEffects } from './render/effects-renderer.js?v=20260508-sprint-r1';
@@ -140,16 +140,13 @@ function formatPhaseIndicator(phase) {
 }
 
 // ── Başlangıç Konumları ──
-function isDestroyedNavalUnitAtPhase(unit, phaseData) {
-    return unit?.type === 'deniz' && isDestroyedPhaseData(phaseData);
-}
-
 function initPositions() {
-    const firstPhase = BATTLE_DATA.phases[currentPhaseIndex]?.id;
-    if (!firstPhase) return;
+    const startPhase = BATTLE_DATA.phases[currentPhaseIndex];
+    if (!startPhase?.id) return;
+    const iso = String(startPhase.isoStart || '');
     BATTLE_DATA.units.forEach((u) => {
-        const d = u.phases[firstPhase];
-        if (isDestroyedNavalUnitAtPhase(u, d)) return;
+        if (isUnitOffMap(u.id, iso)) return;
+        const d = u.phases[startPhase.id];
         if (d) currentPositions[u.id] = { x: d.x, y: d.y };
     });
 }
@@ -489,16 +486,17 @@ function setActivePhase(i) {
         const entryIndex = UNIT_ENTRY[u.id] ?? 0;
         if (nextIndex < entryIndex) return;
 
-        // ── DESTROYED GATE: Batmış/çekilmiş birim render edilmez ──
-        if (isUnitDestroyed(u.id, currentIso)) return;
+        // ── OFF-MAP GATE: battı/çekildi/tahliye birim render edilmez ──
+        // (canonical tek otorite; batış GÜNÜ gemi hâlâ erenköy'de görünür,
+        //  ertesi gün 'sunk' olur — batış sahnesi siluetle birlikte oynar)
+        if (isUnitOffMap(u.id, currentIso)) return;
 
         // ── PHASE GATE: Entity tipi bu campaign fazında izinli mi? ──
         const typeDef = ENTITY_TYPES[u.entityType];
         if (typeDef && !typeDef.allowedPhases.includes(campaignPhase.id)) return;
 
         const phaseData = u.phases[p.id];
-        if (isDestroyedNavalUnitAtPhase(u, phaseData)) return;
-        const pd = phaseData || (!isDestroyedPhaseData(phaseData) ? getNarrativeNavalPosition(u, nextIndex) : null);
+        const pd = phaseData || getNarrativeNavalPosition(u, nextIndex);
         if (!pd) return;
 
         // Terrain clamping zaten expandUnitTrails()'de uygulanıyor — burada tekrar yapma
@@ -617,7 +615,9 @@ async function init() {
     initPinchZoom();
     initMapEditorIfRequested();
     initMapDoctorIfRequested();
-    setActivePhase(0);
+    // ?date=… deep-link'i koru — sıfıra fl yapma (applyRequestedStartPhase
+    // currentPhaseIndex'i zaten ayarladı; deep-link yoksa 0)
+    setActivePhase(currentPhaseIndex);
     refreshAutoPlayButton();
     refreshTerrainSafeTrails();
     loadAnimationEventsInBackground();

@@ -3,14 +3,17 @@
 // Kampanya geneli toplam kayıp özeti
 // ══════════════════════════════════════════════════════════════
 
+// Peter Hart, Gallipoli (2011) konsolide seti. Toplam = bileşenlerin
+// toplamı (şehit + yaralı + kayıp + hastalık/sevk) — hardcoded değil.
+// Gelibolu'nun tanımlayıcı dizanteri/hastalık tahliyesi 'sick' olarak ayrı.
 const CAMPAIGN_STATS = {
     ottoman: {
         name: 'Osmanlı Devleti',
         deployed: 315000,
-        killed: 86692,
-        wounded: 164617,
+        killed: 56643,
+        wounded: 107007,
         missing: 11178,
-        total: 253000,
+        sick: 76000,
         color: 'var(--ottoman)'
     },
     allied: {
@@ -19,7 +22,7 @@ const CAMPAIGN_STATS = {
         killed: 44092,
         wounded: 97037,
         missing: 12000,
-        total: 265000,
+        sick: 99000,
         subgroups: [
             { name: 'İngiliz', killed: 21255, wounded: 52230 },
             { name: 'ANZAC', killed: 11410, wounded: 23218 },
@@ -29,6 +32,11 @@ const CAMPAIGN_STATS = {
         color: 'var(--british)'
     }
 };
+
+/** Toplam kayıp = şehit + yaralı + kayıp/esir + hastalık/sevk */
+function sideTotal(side) {
+    return (side.killed || 0) + (side.wounded || 0) + (side.missing || 0) + (side.sick || 0);
+}
 
 let panelEl = null;
 
@@ -83,7 +91,7 @@ function createPanel() {
             </div>
             <div class="stats-total">
                 <span>Toplam Kayıp (her iki taraf)</span>
-                <strong>${(CAMPAIGN_STATS.ottoman.total + CAMPAIGN_STATS.allied.total).toLocaleString('tr-TR')}+</strong>
+                <strong>${(sideTotal(CAMPAIGN_STATS.ottoman) + sideTotal(CAMPAIGN_STATS.allied)).toLocaleString('tr-TR')}+</strong>
             </div>
             ${CAMPAIGN_STATS.allied.subgroups ? `
             <div class="stats-subgroups">
@@ -115,6 +123,8 @@ function setStatsPanelA11yState(open) {
 }
 
 function renderSide(side) {
+    const total = sideTotal(side);
+    const pct = Math.round(total / side.deployed * 100);
     return `
         <div class="stats-side">
             <div class="stats-side-name" style="color:${side.color}">${side.name}</div>
@@ -122,11 +132,12 @@ function renderSide(side) {
             <div class="stats-row"><span>Şehit / Ölü</span><span>${side.killed.toLocaleString('tr-TR')}</span></div>
             <div class="stats-row"><span>Yaralı</span><span>${side.wounded.toLocaleString('tr-TR')}</span></div>
             <div class="stats-row"><span>Kayıp / Esir</span><span>${side.missing.toLocaleString('tr-TR')}</span></div>
-            <div class="stats-row stats-row-total"><span>Toplam Kayıp</span><span>~${side.total.toLocaleString('tr-TR')}</span></div>
+            <div class="stats-row"><span>Hastalık / Sevk</span><span>${(side.sick || 0).toLocaleString('tr-TR')}</span></div>
+            <div class="stats-row stats-row-total"><span>Toplam Kayıp</span><span>~${total.toLocaleString('tr-TR')}</span></div>
             <div class="stats-bar">
-                <div class="stats-bar-fill" style="width:${Math.round(side.total/side.deployed*100)}%;background:${side.color}"></div>
+                <div class="stats-bar-fill" style="width:${pct}%;background:${side.color}"></div>
             </div>
-            <div class="stats-bar-label">${Math.round(side.total/side.deployed*100)}% kayıp oranı</div>
+            <div class="stats-bar-label">${pct}% kayıp oranı</div>
         </div>
     `;
 }
