@@ -4,6 +4,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import { GEO_LOCATIONS } from './geo-calibration.js?v=20260508-sprint-r1';
+import { getDefaultVisualProfileId } from './unit-visual-profiles.js';
 
 export const BATTLE_DATA = {
     factions: {
@@ -239,6 +240,13 @@ export const BATTLE_DATA = {
 
 /** Location ID → konum objesi look-up tablosu */
 export const LOCATION_BY_ID = BATTLE_DATA.locations.reduce((acc, l) => { acc[l.id] = l; return acc; }, {});
+
+BATTLE_DATA.units.forEach((unit) => {
+    const visualProfileId = unit.visualProfileId || getDefaultVisualProfileId(unit);
+    unit.visualProfileId = visualProfileId;
+    unit.spriteSetId = unit.spriteSetId || visualProfileId;
+    unit.symbolMode = unit.symbolMode || (visualProfileId === 'naval-symbol' ? 'symbol' : 'hybrid');
+});
 
 /** Harita üzerinde kullanılacak vekil konumu çözümle */
 export function getMapLocationById(locationId) {

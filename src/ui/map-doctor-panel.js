@@ -78,11 +78,12 @@ function getIssueMeta(issue) {
 
 function renderSummary(report) {
     const s = report.summary;
-    const isClean = s.totalIssues === 0;
+    const isClean = s.qaGatePass;
+    const gateLabel = s.qaGatePass ? 'QA Geçti' : 'QA Kapısı Kapalı';
     return `
         <div class="map-doctor-health ${isClean ? 'is-clean' : 'is-alert'}">
-            <span>${isClean ? 'Temiz Yerleşim' : 'Müdahale Gerekli'}</span>
-            <strong>${isClean ? 'Tüm zemin, çakışma, anchor ve tarihsel kaynak kontrolleri geçti.' : 'Önce kritik zemin, çakışma ve kaynak bulgularını düzelt.'}</strong>
+            <span>${gateLabel}</span>
+            <strong>${s.qaGatePass ? 'P0 zemin, kalibrasyon ve kaynaklı rota kapıları geçiyor.' : 'Önce P0 zemin, kalibrasyon RMS veya kaynaklı rota sapmalarını düzelt.'}</strong>
         </div>
         <div class="map-doctor-score">
             <div>
@@ -105,9 +106,13 @@ function renderSummary(report) {
                 <strong>${s.historicalIssues || 0}</strong>
                 <span>Tarihsel</span>
             </div>
+            <div>
+                <strong>${s.calibrationRms}</strong>
+                <span>RMS px</span>
+            </div>
         </div>
         <div class="map-doctor-note">
-            ${s.phaseCount} faz ve ${s.unitCount} birim tarandı. Kritik hedef: P0/P1 zemin, çakışma ve kaynak sapmalarını sıfırda tutmak.
+            ${s.phaseCount} faz ve ${s.unitCount} birim tarandı. Kabul kapısı: P0=0, rota sapması=0, kalibrasyon RMS≤${report.thresholds.maxCalibrationRms}px.
         </div>
     `;
 }

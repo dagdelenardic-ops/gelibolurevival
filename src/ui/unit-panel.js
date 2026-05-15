@@ -8,6 +8,8 @@ import { getUnitIcon } from '../data/icon-registry.js';
 import { getCommanderPortrait } from '../data/commander-portraits.js';
 import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260508-sprint-r1';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
+import { getUnitDossier } from '../data/unit-dossiers.js';
+import { getHistoricalSourcesForIds } from '../data/historical-map-data.js?v=20260407-manual-r1';
 
 /** Faksiyon banner rengi — desatüre askeri tonlar */
 function getFactionBanner(faction) {
@@ -61,6 +63,15 @@ function normalizeAnimUnitName(value) {
         .replace(/[^a-z0-9\s.-]/g, '').replace(/\s+/g, ' ').trim();
 }
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function getAnimatedUnitState(unit, animData) {
     let unitState = 'idle';
     let intensity = 0;
@@ -100,10 +111,77 @@ function renderVitals(unit, phase, animData) {
         </div>`;
 }
 
+function ensurePanelExtensions(panel) {
+    if (document.getElementById('panelDossier')) return;
+    const title = panel.querySelector('.unit-panel-title');
+    if (!title) return;
+    title.insertAdjacentHTML('afterend', `
+        <section id="panelDossier" class="panel-dossier"></section>
+        <section id="panelEvidence" class="panel-evidence"></section>
+        <section id="panelDossierMedia" class="panel-dossier-media"></section>
+    `);
+}
+
+function confidenceLabel(value) {
+    const key = String(value || '').toLowerCase();
+    if (key === 'high') return 'Yüksek güven';
+    if (key === 'medium') return 'Orta güven';
+    if (key === 'low') return 'Düşük güven';
+    return 'Kaynak yok';
+}
+
+function evidenceLabel(value) {
+    const key = String(value || '').toLowerCase();
+    if (key === 'exact') return 'Kesin anchor';
+    if (key === 'route') return 'Kaynaklı rota';
+    if (key === 'frontline') return 'Cephe hattı';
+    if (key === 'inferred') return 'Tarihsel çıkarım';
+    return 'Kanıt yok';
+}
+
+function renderEvidence(d) {
+    const sourceIds = Array.isArray(d?.historicalSourceIds) ? d.historicalSourceIds : [];
+    const sources = getHistoricalSourcesForIds(sourceIds);
+    const sourceMarkup = sources.length
+        ? sources.map((source) => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)}</a>`).join('')
+        : '<span>Kaynak kaydı yok; konum fallback veriden geliyor.</span>';
+    return `
+        <div class="panel-section-title">Konum Kanıtı</div>
+        <div class="panel-evidence-grid">
+            <span>${evidenceLabel(d?.historicalEvidence)}</span>
+            <strong>${confidenceLabel(d?.historicalConfidence)}</strong>
+        </div>
+        ${d?.historicalReferenceId ? `<div class="panel-evidence-ref">${escapeHtml(d.historicalReferenceId)}</div>` : ''}
+        ${d?.historicalNote ? `<p>${escapeHtml(d.historicalNote)}</p>` : ''}
+        <div class="panel-source-list">${sourceMarkup}</div>
+    `;
+}
+
+function renderDossier(dossier) {
+    const notes = Array.isArray(dossier.timelineNotes) ? dossier.timelineNotes : [];
+    return `
+        <div class="panel-section-title">Birim Dosyası</div>
+        <p>${escapeHtml(dossier.summary)}</p>
+        ${notes.length ? `<ul>${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}</ul>` : ''}
+    `;
+}
+
+function renderDossierMedia(dossier) {
+    const media = Array.isArray(dossier.media) ? dossier.media.filter((item) => item.type === 'image').slice(0, 2) : [];
+    if (!media.length) return '';
+    return media.map((item) => `
+        <figure class="panel-media-card">
+            <img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption)}" loading="lazy" onerror="this.closest('figure').style.display='none'">
+            <figcaption>${escapeHtml(item.caption)}<span>${escapeHtml(item.credit || '')}</span></figcaption>
+        </figure>
+    `).join('');
+}
+
 /** Birim detay panelini aç */
 export function showUnitPanel(u, d, phase, animData) {
     const panel = document.getElementById('unitPanel');
     if (!panel || !u) return;
+    ensurePanelExtensions(panel);
 
     // Faction banner
     const banner = getFactionBanner(u.faction);
@@ -135,6 +213,14 @@ export function showUnitPanel(u, d, phase, animData) {
 
     // Derive intent data (action, location, target, contact)
     const intent = deriveUnitIntent(u, phase || null, d || null, animData || null);
+    const dossier = getUnitDossier(u.id);
+    const dossierEl = document.getElementById('panelDossier');
+    const evidenceEl = document.getElementById('panelEvidence');
+    const mediaEl = document.getElementById('panelDossierMedia');
+
+    if (dossierEl) dossierEl.innerHTML = renderDossier(dossier);
+    if (evidenceEl) evidenceEl.innerHTML = renderEvidence(d || {});
+    if (mediaEl) mediaEl.innerHTML = renderDossierMedia(dossier);
 
     document.getElementById('panelUnitName').textContent = u.name || '-';
     document.getElementById('panelUnitCommander').textContent = u.commander || '-';

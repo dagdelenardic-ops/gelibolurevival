@@ -6,7 +6,6 @@
 
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { FRONTLINES } from '../data/frontlines.js?v=20260508-sprint-r1';
-import { COORD_SCALE } from '../data/coordinate-map.js';
 import { getUnitVitals } from '../data/casualty-model.js';
 import {
     renderAdvanceArrow,
@@ -22,33 +21,32 @@ import {
     renderSniperFire,
     renderMineExplosion,
     renderCasualtyIndicator,
+    renderEngagementContact,
 } from './animation-language.js';
 
 /**
  * Cephe adı → harita geometrisi eşleştirmesi.
  * ottoman/allied pozisyonları + frontline referansı
  */
-/** Ölçeklenmiş koordinatlar (eski 720×560 → yeni 2451×3467 viewport) */
-const S = COORD_SCALE; // 3.4
 const FRONT_GEOMETRY = {
     'Deniz': {
-        center: { x: Math.round(445 * S), y: Math.round(338 * S) },
-        ottoman: { x: Math.round(408 * S), y: Math.round(348 * S) },
-        allied: { x: Math.round(480 * S), y: Math.round(330 * S) },
+        center: { x: 1245, y: 2388 },
+        ottoman: { x: 1451, y: 2091 },
+        allied: { x: 1215, y: 2420 },
         type: 'naval',
     },
     'Arıburnu': {
-        center: { x: Math.round(240 * S), y: Math.round(250 * S) },
-        ottoman: { x: Math.round(270 * S), y: Math.round(240 * S) },
-        allied: { x: Math.round(222 * S), y: Math.round(258 * S) },
+        center: { x: 1242, y: 1780 },
+        ottoman: { x: 1280, y: 1762 },
+        allied: { x: 1210, y: 1815 },
         frontlineId: 'ariburnu-front',
         type: 'trench',
         alliedFaction: 'anzac',
     },
     'Seddülbahir': {
-        center: { x: Math.round(310 * S), y: Math.round(440 * S) },
-        ottoman: { x: Math.round(305 * S), y: Math.round(420 * S) },
-        allied: { x: Math.round(315 * S), y: Math.round(460 * S) },
+        center: { x: 1040, y: 2388 },
+        ottoman: { x: 1080, y: 2320 },
+        allied: { x: 1017, y: 2399 },
         frontlineId: 'seddulbahir-front',
         type: 'trench',
         alliedFaction: 'allied',
@@ -148,6 +146,104 @@ function getFrontCasualtyLevel(animData, frontName, fallbackIntensity) {
     return 'light';
 }
 
+function isLandModelUnit(unit) {
+    if (!unit) return false;
+    return unit.type !== 'deniz' && unit.entityType !== 'ship' && unit.entityType !== 'landing_boat';
+}
+
+function getAnimSide(animUnit, modelUnit) {
+    const raw = String(animUnit?.side || modelUnit?.side || '').toLowerCase();
+    if (raw === 'ottoman' || modelUnit?.faction === 'ottoman') return 'ottoman';
+    if (raw === 'allied' || ['british', 'anzac', 'french'].includes(modelUnit?.faction)) return 'allied';
+    return raw || 'allied';
+}
+
+function getSideState(entries, side) {
+    return entries
+        .filter((entry) => entry.side === side)
+        .some((entry) => ['fighting', 'bombardment', 'marching'].includes(String(entry.state || '').toLowerCase()));
+}
+
+function getContactLabel(ottoman, allied, frontName) {
+    const alliedLabel = allied.model.faction === 'anzac'
+        ? 'ANZAC'
+        : allied.model.faction === 'french'
+            ? 'Fransız'
+            : 'İtilaf';
+    return `${frontName}: Osmanlı - ${alliedLabel} teması`;
+}
+
+function inferAttacker(animData, contactEntries) {
+    const vectorSide = String(animData?.movementVector?.side || '').toLowerCase();
+    if (vectorSide === 'ottoman' || vectorSide === 'allied') return vectorSide;
+    if (vectorSide === 'both') return 'both';
+
+    const ottomanActive = getSideState(contactEntries, 'ottoman');
+    const alliedActive = getSideState(contactEntries, 'allied');
+    if (ottomanActive && !alliedActive) return 'ottoman';
+    if (alliedActive && !ottomanActive) return 'allied';
+    return 'both';
+}
+
+function buildPositionContacts(animData, positions, frontName, seed) {
+    if (!positions || !Array.isArray(animData?.units)) return [];
+
+    const activeEntries = animData.units
+        .filter((animUnit) => !frontName || animUnit.front === frontName)
+        .map((animUnit) => {
+            const model = findModelUnit(animUnit);
+            const point = model && positions[model.id];
+            if (!isLandModelUnit(model) || !point) return null;
+            return {
+                animUnit,
+                model,
+                point,
+                side: getAnimSide(animUnit, model),
+                state: String(animUnit.state || '').toLowerCase()
+            };
+        })
+        .filter(Boolean);
+
+    const ottomans = activeEntries.filter((entry) => entry.side === 'ottoman');
+    const allies = activeEntries.filter((entry) => entry.side === 'allied');
+    if (!ottomans.length || !allies.length) return [];
+
+    const usedAllies = new Set();
+    const pairs = [];
+    const maxPairs = 3;
+    const maxDistance = 720;
+
+    ottomans
+        .slice()
+        .sort((a, b) => {
+            const af = a.state === 'fighting' ? 0 : 1;
+            const bf = b.state === 'fighting' ? 0 : 1;
+            return af - bf || a.model.name.localeCompare(b.model.name, 'tr');
+        })
+        .forEach((ottoman, index) => {
+            if (pairs.length >= maxPairs) return;
+            const nearest = allies
+                .filter((allied) => !usedAllies.has(allied.model.id))
+                .map((allied) => ({
+                    allied,
+                    distance: Math.hypot(allied.point.x - ottoman.point.x, allied.point.y - ottoman.point.y)
+                }))
+                .sort((a, b) => a.distance - b.distance)[0];
+            if (!nearest || nearest.distance > maxDistance) return;
+            usedAllies.add(nearest.allied.model.id);
+            pairs.push({
+                ottoman,
+                allied: nearest.allied,
+                distance: nearest.distance,
+                seed: seed + index * 41,
+                attacker: inferAttacker(animData, [ottoman, nearest.allied]),
+                label: getContactLabel(ottoman, nearest.allied, frontName)
+            });
+        });
+
+    return pairs;
+}
+
 // ═══════════════════════════════════════════════════════════
 
 /**
@@ -169,7 +265,7 @@ export function orchestrateAnimations(animData, positions) {
             ({ routes, fx } = renderBombardment(animData, fronts, intensity, seed));
             break;
         case 'COMBAT':
-            ({ routes, fx } = renderCombat(animData, fronts, intensity, seed));
+            ({ routes, fx } = renderCombat(animData, fronts, intensity, seed, positions));
             break;
         case 'NAVAL_PATROL':
             ({ routes, fx } = renderPatrol(fronts, intensity, seed));
@@ -237,7 +333,7 @@ function renderBombardment(animData, fronts, intensity, seed) {
     return { routes, fx };
 }
 
-function renderCombat(animData, fronts, intensity, seed) {
+function renderCombat(animData, fronts, intensity, seed, positions) {
     let routes = '';
     let fx = '';
 
@@ -260,7 +356,20 @@ function renderCombat(animData, fronts, intensity, seed) {
                 }
             }
 
-            if (intensity >= 5) {
+            const contactPairs = buildPositionContacts(animData, positions, frontName, seed + fi * 73);
+            contactPairs.forEach((pair) => {
+                const pairAlliedColor = BATTLE_DATA.factions[pair.allied.model.faction]?.colorLight || alliedColor;
+                routes += renderEngagementContact(pair.ottoman.point, pair.allied.point, {
+                    intensity,
+                    seed: pair.seed,
+                    attacker: pair.attacker,
+                    ottomanColor: FACTION_COLORS.ottoman,
+                    alliedColor: pairAlliedColor,
+                    label: pair.label
+                });
+            });
+
+            if (intensity >= 5 && !contactPairs.length) {
                 const from = alliedFighting && !ottomanFighting ? geo.allied : geo.ottoman;
                 const to = from === geo.allied ? geo.ottoman : geo.allied;
                 routes += renderTrenchExchange(from, to, Math.min(intensity, 7), seed + fi * 100);

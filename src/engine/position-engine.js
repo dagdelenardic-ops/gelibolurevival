@@ -20,6 +20,7 @@ import {
 const BASE_PHASE_DESTRUCTION_ISO = '1915-03-18';
 const COLLISION_SAFE_DISTANCE = 92;
 const COLLISION_RELAX_PASSES = 6;
+const EVIDENCE_FIRST_DAILY_MOVEMENT = true;
 
 // ── Utility ──
 
@@ -197,6 +198,10 @@ function isoDay(iso) {
     return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) / 86400000;
 }
 
+function hasIsoDate(phase) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(phase?.isoStart || ''));
+}
+
 function dateProgress(iso, startIso, endIso) {
     const start = isoDay(startIso);
     const end = isoDay(endIso);
@@ -302,6 +307,35 @@ const ALLIED_NAVAL_LANES = {
 };
 
 const SUNK_ON_MARCH_18 = new Set(['bouvet', 'hms-irresistible', 'hms-ocean']);
+
+const NAVAL_DISPLAY_OFFSETS = {
+    'hms-queen-elizabeth': { x: -28, y: 78 },
+    suffren: { x: 96, y: 22 },
+    bouvet: { x: 70, y: -74 },
+    'hms-irresistible': { x: -26, y: -68 },
+    'hms-ocean': { x: 52, y: 72 },
+    'allied-minesweepers': { x: -134, y: -50 },
+    nusret: { x: -136, y: 78 },
+    'ss-river-clyde': { x: -24, y: 22 }
+};
+
+/**
+ * Deniz birimleri tarihsel anchorlarını korur, ama render sırasında okunurluk
+ * için Boğaz koridorunda küçük, deterministik vitrin ofsetleri alır.
+ */
+export function getNavalDisplayOffset(unit, phaseIndex = 0) {
+    if (!unit || (unit.type !== 'deniz' && unit.entityType !== 'landing_boat')) return { x: 0, y: 0 };
+    const base = NAVAL_DISPLAY_OFFSETS[unit.id] || { x: 0, y: 0 };
+    const iso = getPhaseIso(phaseIndex);
+    const activeNavalWindow = iso <= '1915-04-28';
+    const scale = activeNavalWindow ? 1 : .45;
+    const seed = unitSeed(unit.id);
+    const drift = activeNavalWindow ? 1 : .35;
+    return {
+        x: Math.round(base.x * scale + Math.sin((phaseIndex + seed) * .13) * 4 * drift),
+        y: Math.round(base.y * scale + Math.cos((phaseIndex + seed) * .16) * 3 * drift)
+    };
+}
 
 function getPhaseIso(phaseIndex) {
     return String(BATTLE_DATA.phases[phaseIndex]?.isoStart || '');
@@ -414,15 +448,20 @@ export function getNarrativeNavalPosition(unit, phaseIndex) {
 
 /** Üst üste binen birimleri radyal olarak dağıt */
 export function getClusterOffset(spreadState, x, y, unit, phaseIndex) {
-    const key = `${Math.round(x)}|${Math.round(y)}`;
+    const isNaval = unit.type === 'deniz' || unit.entityType === 'landing_boat';
+    const bucketSize = isNaval ? 96 : 78;
+    const key = `${Math.round(x / bucketSize)}|${Math.round(y / bucketSize)}`;
     const bucket = spreadState[key] || [];
     const idx = bucket.length;
     bucket.push(unit.id);
     spreadState[key] = bucket;
-    const ring = Math.floor(idx / 6);
-    const slot = idx % 6;
-    const radius = PHASE_TOKEN_SPREAD + ring * 12;
-    const angle = ((idx * 58 + unitSeed(unit.id)) % 360) * Math.PI / 180;
+    const slots = isNaval ? 8 : 7;
+    const ring = Math.floor(idx / slots);
+    const slot = idx % slots;
+    const radius = isNaval ? 42 + ring * 24 : PHASE_TOKEN_SPREAD + ring * 14;
+    const angleStep = isNaval ? 43 : 51;
+    const sideBias = unit.side === 'ottoman' ? -16 : unit.side === 'allied' ? 16 : 0;
+    const angle = ((idx * angleStep + unitSeed(unit.id) + sideBias) % 360) * Math.PI / 180;
     return {
         x: Math.round(Math.cos(angle) * (slot === 0 ? 1 : radius)),
         y: Math.round(Math.sin(angle) * (slot === 0 ? 1 : radius))
@@ -601,7 +640,9 @@ export function expandUnitTrails() {
                         x = normalizeValue(200 + (seed % 4) * 70, VP_MIN_X, VP_MAX_X);
                         y = normalizeValue(1800 + (seed % 3) * 70, VP_MIN_Y, VP_MAX_Y);
                     } else {
-                        const hinted = resolvePhaseLocation(phase, unit, i);
+                        const hinted = EVIDENCE_FIRST_DAILY_MOVEMENT && hasIsoDate(phase)
+                            ? null
+                            : resolvePhaseLocation(phase, unit, i);
                         if (hinted) {
                             x = hinted.x;
                             y = hinted.y;

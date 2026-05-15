@@ -6,7 +6,7 @@
 import { BATTLE_DATA, getMapLocationById } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { ENTITY_TYPES } from '../data/entity-types.js';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { MAP_SCENE_LABELS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
+import { MAP_SCENE_LABELS, calibrationReport } from '../data/geo-calibration.js?v=20260508-sprint-r1';
 import { getTerrainAtPoint, clampToAllowedTerrain, waitForTerrainSampler } from '../data/terrain-zones.js';
 import { isUnitDestroyed } from '../data/canonical-positions.js';
 import {
@@ -25,11 +25,12 @@ import {
 import { resolveCampaignPhase } from './campaign-state-machine.js';
 
 const COLLISION_RADIUS = 64;
-const NAVAL_COLLISION_RADIUS = 42;
+const NAVAL_COLLISION_RADIUS = 86;
 const MAX_ANCHOR_DRIFT = 520;
 const MAX_COLLISION_GROUPS = 220;
 const MAX_TERRAIN_ISSUES = 420;
 const MAX_HISTORICAL_ISSUES = 260;
+const MAX_CALIBRATION_RMS = 35;
 
 const SCENE_LABEL_TRANSLATIONS = {
     'naval-dardanelles-narrows': 'ÇANAKKALE BOĞAZI',
@@ -73,6 +74,7 @@ function getSeverity(type, issue = {}) {
     if (type === 'label-language') return 'P2';
     if (type === 'location-terrain') return 'P1';
     if (type === 'historical-data') return issue.diagnosticType === 'high-residual' ? 'P2' : 'P1';
+    if (type === 'calibration-gate') return 'P1';
     if (type === 'missing-source') return 'P1';
     if (type === 'route-deviation') return 'P2';
     if (type === 'historical-anchor-drift') return 'P2';
@@ -100,6 +102,7 @@ function getRenderedPhaseEntries(phase, phaseIndex) {
         if (typeDef && !typeDef.allowedPhases.includes(campaignPhase.id)) continue;
 
         const phaseData = unit.phases && unit.phases[phase.id];
+        if (unit.type === 'deniz' && isDestroyedPhaseData(phaseData)) continue;
         const point = phaseData || (!isDestroyedPhaseData(phaseData) ? getNarrativeNavalPosition(unit, phaseIndex) : null);
         if (!hasPoint(point)) continue;
 
@@ -463,8 +466,23 @@ function analyzeLabelLanguageIssues() {
         }));
 }
 
+function analyzeCalibrationGateIssues() {
+    const report = calibrationReport();
+    if (report.rms <= MAX_CALIBRATION_RMS) return [];
+    return [{
+        id: 'calibration:rms-gate',
+        type: 'calibration-gate',
+        severity: getSeverity('calibration-gate'),
+        rms: report.rms,
+        threshold: MAX_CALIBRATION_RMS,
+        message: `Harita kalibrasyon RMS ${report.rms}px; görsel birlik katmanı için hedef ${MAX_CALIBRATION_RMS}px altında.`
+    }];
+}
+
 function buildSummary(issueGroups) {
     const allIssues = Object.values(issueGroups).flat();
+    const calibration = calibrationReport();
+    const routeDeviationIssues = issueGroups.historicalPlacement.filter((issue) => issue.type === 'route-deviation');
     const bySeverity = allIssues.reduce((acc, issue) => {
         acc[issue.severity] = (acc[issue.severity] || 0) + 1;
         return acc;
@@ -477,10 +495,14 @@ function buildSummary(issueGroups) {
         collisionIssues: issueGroups.collisions.length,
         anchorDriftIssues: issueGroups.anchorDrift.length,
         locationIssues: issueGroups.locations.length,
+        calibrationIssues: issueGroups.calibration.length,
+        calibrationRms: calibration.rms,
+        calibrationGatePass: calibration.rms <= MAX_CALIBRATION_RMS,
         labelLanguageIssues: issueGroups.labels.length,
         historicalIssues: issueGroups.historicalData.length + issueGroups.historicalPlacement.length,
         missingSourceIssues: issueGroups.historicalPlacement.filter((issue) => issue.type === 'missing-source').length,
-        routeDeviationIssues: issueGroups.historicalPlacement.filter((issue) => issue.type === 'route-deviation').length,
+        routeDeviationIssues: routeDeviationIssues.length,
+        qaGatePass: (bySeverity.P0 || 0) === 0 && issueGroups.calibration.length === 0 && routeDeviationIssues.length === 0,
         phaseCount: BATTLE_DATA.phases.length,
         unitCount: BATTLE_DATA.units.length,
         generatedAt: new Date().toISOString()
@@ -497,6 +519,7 @@ export async function runMapDoctor(options = {}) {
         collisions: analyzeCollisionIssues(phases),
         anchorDrift: analyzeAnchorDriftIssues(phases),
         locations: analyzeLocationIssues(),
+        calibration: analyzeCalibrationGateIssues(),
         labels: analyzeLabelLanguageIssues(),
         historicalData: analyzeHistoricalDataIssues(),
         historicalPlacement: analyzeHistoricalPlacementIssues(phases)
@@ -511,7 +534,8 @@ export async function runMapDoctor(options = {}) {
             collisionRadius: COLLISION_RADIUS,
             navalCollisionRadius: NAVAL_COLLISION_RADIUS,
             maxHistoricalIssues: MAX_HISTORICAL_ISSUES,
-            maxAnchorDrift: MAX_ANCHOR_DRIFT
+            maxAnchorDrift: MAX_ANCHOR_DRIFT,
+            maxCalibrationRms: MAX_CALIBRATION_RMS
         }
     };
 }

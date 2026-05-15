@@ -5,6 +5,19 @@
 
 import { FRONTLINES } from '../data/frontlines.js?v=20260508-sprint-r1';
 
+function stringSeed(value) {
+    let h = 0;
+    for (let i = 0; i < String(value || '').length; i++) {
+        h = (h * 31 + String(value).charCodeAt(i)) % 1000003;
+    }
+    return h;
+}
+
+function seededRand(seed) {
+    const x = Math.sin(seed * 91.7 + 17.3) * 43758.5453;
+    return x - Math.floor(x);
+}
+
 /**
  * Aktif cephe hatlarını render et (#layer-zones veya fallback #battleEffects'e).
  * @param {object} campaignPhase - resolveCampaignPhase() çıktısı
@@ -108,8 +121,9 @@ export function renderLandCombatFX(campaignPhase, animData) {
         const dustCount = level === 'high' ? 2 : level === 'medium' ? 1 : 0;
 
         for (let d = 0; d < dustCount; d++) {
-            const offsetX = (d === 0 ? -8 : 8) + (Math.random() * 4 - 2);
-            const offsetY = (d === 0 ? -4 : 4) + (Math.random() * 4 - 2);
+            const seed = stringSeed(`${animData?.date || ''}:${fl.id}:${d}`);
+            const offsetX = (d === 0 ? -8 : 8) + (seededRand(seed) * 4 - 2);
+            const offsetY = (d === 0 ? -4 : 4) + (seededRand(seed + 13) * 4 - 2);
             fx.push(`<circle class="land-combat-fx combat-dust"
                 cx="${mid.x + offsetX}" cy="${mid.y + offsetY}" r="${4 + d * 2}"/>`);
         }

@@ -23,7 +23,8 @@ import { orchestrateAnimations } from './render/animation-orchestrator.js?v=2026
 import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260508-sprint-r1';
 import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260508-sprint-r1';
 import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js?v=20260508-sprint-r1';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay } from './ui/autoplay-controller.js?v=20260508-sprint-r1';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying } from './ui/autoplay-controller.js?v=20260508-sprint-r1';
+import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js';
 import { initOnboarding } from './ui/onboarding.js?v=20260428-deeplink-skip';
 import { toggleStatsPanel } from './ui/stats-panel.js';
 import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260501-audio-r1';
@@ -139,11 +140,16 @@ function formatPhaseIndicator(phase) {
 }
 
 // ── Başlangıç Konumları ──
+function isDestroyedNavalUnitAtPhase(unit, phaseData) {
+    return unit?.type === 'deniz' && isDestroyedPhaseData(phaseData);
+}
+
 function initPositions() {
     const firstPhase = BATTLE_DATA.phases[currentPhaseIndex]?.id;
     if (!firstPhase) return;
     BATTLE_DATA.units.forEach((u) => {
         const d = u.phases[firstPhase];
+        if (isDestroyedNavalUnitAtPhase(u, d)) return;
         if (d) currentPositions[u.id] = { x: d.x, y: d.y };
     });
 }
@@ -436,6 +442,7 @@ function setActivePhase(i) {
         updateMapDateIndicator(p.date);
         updateMapSceneState(p, animData, cameraTarget);
         applyGuidedFocus(p);
+        refreshUnitRoster(nextIndex);
         if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p, cameraTarget);
         // Her 3 fazda narration güncelle — fotoğraflar da değişebilsin
         if (nextIndex % 3 === 0) {
@@ -490,6 +497,7 @@ function setActivePhase(i) {
         if (typeDef && !typeDef.allowedPhases.includes(campaignPhase.id)) return;
 
         const phaseData = u.phases[p.id];
+        if (isDestroyedNavalUnitAtPhase(u, phaseData)) return;
         const pd = phaseData || (!isDestroyedPhaseData(phaseData) ? getNarrativeNavalPosition(u, nextIndex) : null);
         if (!pd) return;
 
@@ -548,11 +556,15 @@ function setActivePhase(i) {
     prevCampaignPhaseId = campaignPhase.id;
     for (const key in currentPositions) delete currentPositions[key];
     Object.assign(currentPositions, nextPositions);
+    refreshUnitRoster(nextIndex);
 }
 
 // ── Toggle wrapper ──
 function handleToggleAutoPlay() {
+    const wasPlaying = getIsAutoPlaying();
     toggleAutoPlay(setActivePhase, getCurrentPhaseIndex);
+    if (wasPlaying) showUnitRoster(currentPhaseIndex);
+    else hideUnitRoster();
 }
 
 // ── Keyboard Navigation ──
@@ -576,6 +588,7 @@ function initKeyboardNav() {
                 break;
             case 'Escape':
                 hideUnitPanel();
+                hideUnitRoster();
                 break;
         }
     });

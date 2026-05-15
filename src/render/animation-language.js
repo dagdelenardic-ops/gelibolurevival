@@ -20,6 +20,17 @@ function seededRand(seed) {
     return x - Math.floor(x);
 }
 
+function fmt(value) {
+    return Number(value).toFixed(1);
+}
+
+function pointAlong(from, to, ratio) {
+    return {
+        x: from.x + (to.x - from.x) * ratio,
+        y: from.y + (to.y - from.y) * ratio
+    };
+}
+
 // ═══════════════════════════════════════════════════════════
 // TEMEL PRİMİTİFLER
 // ═══════════════════════════════════════════════════════════
@@ -180,6 +191,104 @@ export function renderTrenchExchange(from, to, intensity, seed = 0) {
         </line>`;
     }
 
+    svg += `</g>`;
+    return svg;
+}
+
+/**
+ * Gercek birim noktalarindan temas koridoru.
+ * Haritada "kim kiminle savasiyor" bilgisini sabit cephe merkezinden degil
+ * o fazdaki karsi taraf tokenlerinden okutur.
+ */
+export function renderEngagementContact(ottomanPoint, alliedPoint, opts = {}) {
+    if (!ottomanPoint || !alliedPoint) return '';
+    const { nx, ny, len } = unitVec(ottomanPoint, alliedPoint);
+    if (len < 12) return '';
+
+    const intensity = Number(opts.intensity || 5);
+    const seed = Number(opts.seed || 0);
+    const ottomanColor = opts.ottomanColor || '#c0392b';
+    const alliedColor = opts.alliedColor || '#5a7a52';
+    const attacker = opts.attacker || 'both';
+    const label = opts.label || 'Aktif kara teması';
+    const mid = pointAlong(ottomanPoint, alliedPoint, 0.5);
+    const contactHalf = Math.min(44, Math.max(18, len * 0.18));
+    const contactStart = { x: mid.x - nx * contactHalf, y: mid.y - ny * contactHalf };
+    const contactEnd = { x: mid.x + nx * contactHalf, y: mid.y + ny * contactHalf };
+    const flankX = -ny;
+    const flankY = nx;
+    const bandWidth = intensity >= 8 ? 18 : intensity >= 6 ? 14 : 10;
+    const laneCount = Math.min(7, Math.max(3, Math.round(intensity)));
+    let lanes = '';
+
+    for (let i = 0; i < laneCount; i++) {
+        const r1 = seededRand(seed + i * 9.17);
+        const r2 = seededRand(seed + i * 15.41);
+        const fromOttoman = i % 2 === 0;
+        const startBase = pointAlong(fromOttoman ? ottomanPoint : alliedPoint, mid, 0.34 + r1 * 0.24);
+        const endBase = pointAlong(fromOttoman ? alliedPoint : ottomanPoint, mid, 0.38 + r2 * 0.2);
+        const lateralA = (r1 - .5) * bandWidth * 2.1;
+        const lateralB = (r2 - .5) * bandWidth * 1.6;
+        const delay = `${(r1 * 1.4).toFixed(2)}s`;
+        const dur = `${(.34 + r2 * .36).toFixed(2)}s`;
+        lanes += `<line class="anim-contact-fire ${fromOttoman ? 'is-ottoman-fire' : 'is-allied-fire'}"
+            x1="${fmt(startBase.x + flankX * lateralA)}" y1="${fmt(startBase.y + flankY * lateralA)}"
+            x2="${fmt(endBase.x + flankX * lateralB)}" y2="${fmt(endBase.y + flankY * lateralB)}"
+            style="--fire-delay:${delay};--fire-dur:${dur}"/>`;
+    }
+
+    const sparkCount = intensity >= 7 ? 4 : 2;
+    const sparks = Array.from({ length: sparkCount }, (_, index) => {
+        const r = seededRand(seed + index * 21.3);
+        const a = r * Math.PI * 2;
+        const d = 4 + seededRand(seed + index * 5.1) * bandWidth * .8;
+        return `<circle class="anim-contact-spark" cx="${fmt(mid.x + Math.cos(a) * d)}" cy="${fmt(mid.y + Math.sin(a) * d)}" r="${(1.8 + r * 1.4).toFixed(1)}" style="--spark-delay:${(index * .18).toFixed(2)}s"/>`;
+    }).join('');
+
+    const chevronSide = attacker === 'ottoman'
+        ? { color: ottomanColor, from: ottomanPoint, to: mid }
+        : attacker === 'allied'
+            ? { color: alliedColor, from: alliedPoint, to: mid }
+            : null;
+    const chevrons = chevronSide
+        ? renderContactChevrons(chevronSide.from, chevronSide.to, chevronSide.color, seed)
+        : '';
+
+    return `<g class="anim-contact-engagement" data-contact-label="${label}">
+        <title>${label}</title>
+        <line class="anim-contact-approach is-ottoman-approach"
+            x1="${fmt(ottomanPoint.x)}" y1="${fmt(ottomanPoint.y)}" x2="${fmt(contactStart.x)}" y2="${fmt(contactStart.y)}"
+            stroke="${ottomanColor}"/>
+        <line class="anim-contact-approach is-allied-approach"
+            x1="${fmt(alliedPoint.x)}" y1="${fmt(alliedPoint.y)}" x2="${fmt(contactEnd.x)}" y2="${fmt(contactEnd.y)}"
+            stroke="${alliedColor}"/>
+        <line class="anim-contact-band" x1="${fmt(contactStart.x)}" y1="${fmt(contactStart.y)}"
+            x2="${fmt(contactEnd.x)}" y2="${fmt(contactEnd.y)}" stroke-width="${bandWidth}"/>
+        <line class="anim-contact-edge" x1="${fmt(contactStart.x)}" y1="${fmt(contactStart.y)}"
+            x2="${fmt(contactEnd.x)}" y2="${fmt(contactEnd.y)}"/>
+        ${lanes}
+        ${chevrons}
+        ${sparks}
+    </g>`;
+}
+
+function renderContactChevrons(from, to, color, seed = 0) {
+    const { nx, ny, len } = unitVec(from, to);
+    if (len < 24) return '';
+    const px = -ny;
+    const py = nx;
+    const count = 3;
+    let svg = `<g class="anim-contact-chevrons" stroke="${color}">`;
+    for (let i = 0; i < count; i++) {
+        const ratio = .44 + i * .12;
+        const p = pointAlong(from, to, ratio);
+        const size = 6 + seededRand(seed + i * 3.7) * 2;
+        const back = { x: p.x - nx * size, y: p.y - ny * size };
+        svg += `<path d="M${fmt(back.x + px * size * .62)} ${fmt(back.y + py * size * .62)}
+            L${fmt(p.x)} ${fmt(p.y)}
+            L${fmt(back.x - px * size * .62)} ${fmt(back.y - py * size * .62)}"
+            style="--chevron-delay:${(i * .16).toFixed(2)}s"/>`;
+    }
     svg += `</g>`;
     return svg;
 }
