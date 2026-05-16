@@ -7,16 +7,15 @@ import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { MAP_FORTS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
 import { isNavalEraPhaseIndex, getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260508-sprint-r1';
 import { getNarrativeNavalPosition, getNavalDisplayOffset, isDestroyedPhaseData } from '../engine/position-engine.js?v=20260508-sprint-r1';
+import { snapToSeaWater } from '../data/terrain-zones.js';
 
 const BATTERY_FORT_IDS = ['fort-kilitbahir', 'fort-cimenlik', 'fort-hamidiye', 'fort-rumeli-mecidiye', 'fort-dardanos', 'fort-anadolu-hamidiye'];
 const FORT_BY_ID = MAP_FORTS.reduce((acc, f) => { acc[f.id] = f; return acc; }, {});
 
 function navalDisplayPoint(unit, point, phaseIndex) {
     const offset = getNavalDisplayOffset(unit, phaseIndex);
-    return {
-        x: Math.round(point.x + offset.x),
-        y: Math.round(point.y + offset.y)
-    };
+    // Gemi siluetiyle aynı su-kilidini uygula ki patlama/etiket gemiyle örtüşsün
+    return snapToSeaWater(point.x + offset.x, point.y + offset.y);
 }
 
 function renderSalvoPath(battery, target, index, destroyed) {

@@ -309,6 +309,32 @@ export function clampToAllowedTerrain(x, y, allowedTerrains) {
     return { x, y };
 }
 
+/**
+ * Noktayı GERÇEK deniz pikseline kilitle (raster teal-su testi güvenilir).
+ * Deniz birimleri için son güvenlik kapısı: taban koordinat + okunabilirlik
+ * ofseti karaya taşsa bile token suya çekilir. Raster hazır değilse
+ * (ilk paint) dokunmaz — terrain hazır olunca trail'ler yeniden hesaplanır.
+ * Sınırlı yarıçapta arar; bulunamazsa girişi aynen döndürür (haritada ışınlamaz).
+ * @returns {{x:number,y:number}}
+ */
+export function snapToSeaWater(x, y, maxRadius = 200) {
+    if (!rasterReady || !rasterData) return { x: Math.round(x), y: Math.round(y) };
+    if (getRasterBaseTerrain(x, y) === 'sea') return { x: Math.round(x), y: Math.round(y) };
+    for (let r = CLAMP_SEARCH_STEP; r <= maxRadius; r += CLAMP_SEARCH_STEP) {
+        const steps = Math.max(16, Math.round((Math.PI * 2 * r) / 9));
+        for (let i = 0; i < steps; i++) {
+            const angle = (i / steps) * Math.PI * 2;
+            const nx = x + Math.cos(angle) * r;
+            const ny = y + Math.sin(angle) * r;
+            if (getRasterBaseTerrain(nx, ny) === 'sea') {
+                const c = clampPointToRaster(nx, ny);
+                if (getRasterBaseTerrain(c.x, c.y) === 'sea') return c;
+            }
+        }
+    }
+    return { x: Math.round(x), y: Math.round(y) };
+}
+
 /** Noktayı denize it (kara'daysa en yakın kıyı kenarına taşı + dışarı offset) */
 function pushToSea(x, y) {
     let bestDist = Infinity;

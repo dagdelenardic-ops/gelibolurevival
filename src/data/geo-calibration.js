@@ -211,6 +211,24 @@ const RAW_FORTS = [
 export const MAP_FORTS = RAW_FORTS.map(materialize);
 
 // ══════════════════════════════════════════════════════════════
+// DENİZ SU ANKRAJLARI (MAP_NAVAL_ANCHORS)
+// ══════════════════════════════════════════════════════════════
+// 18 Mart deniz muharebesi su konumları. Değerler güncel raster
+// haritada (assets/gallipoli-map.png) DOĞRULANMIŞ teal-su pikselleri
+// — kıyı tabyaları/lokasyonlar gibi kalibre. position-engine bunlardan
+// türetir; eski elle yazılmış ham pikseller (kalibrasyon öncesi) yerine.
+// Boğaz su koridoru: x≈1060–1380, y≈2310–2560 (Erenköy körfezi).
+// ══════════════════════════════════════════════════════════════
+export const MAP_NAVAL_ANCHORS = {
+    aegeanApproach:  { x: 1066, y: 2550 }, // Ege'den Boğaz ağzına yaklaşım
+    withdrawSW:      { x: 1080, y: 2470 }, // güneybatıya çekilme
+    erenkoyBay:      { x: 1200, y: 2470 }, // Erenköy körfezi iç su
+    battleLine:      { x: 1250, y: 2410 }, // 18 Mart filo gövdesi
+    erenkoyMineLine: { x: 1300, y: 2410 }, // Nusret 7/8 Mart mayın hattı
+    narrowsBombard:  { x: 1360, y: 2320 }  // Narrows'a ateş pozisyonu (NE uç)
+};
+
+// ══════════════════════════════════════════════════════════════
 // SAHNE ETİKETLERİ — harita üstü metin yerleştirmeleri
 // Bunlar coğrafi nokta değil, tasarımsal label. El yerleşimi korundu.
 // ══════════════════════════════════════════════════════════════

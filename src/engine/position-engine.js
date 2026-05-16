@@ -7,8 +7,8 @@ import { BATTLE_DATA, BASE_PHASE_ID, PHASE_TOKEN_SPREAD, getMapLocationById } fr
 import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260407-manual-r1';
 import { ENTITY_TYPES } from '../data/entity-types.js';
 import { FRONTLINES } from '../data/frontlines.js?v=20260508-sprint-r1';
-import { MAP_FORTS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
-import { getTerrainAtPoint, clampToAllowedTerrain } from '../data/terrain-zones.js';
+import { MAP_FORTS, MAP_NAVAL_ANCHORS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
+import { getTerrainAtPoint, clampToAllowedTerrain, snapToSeaWater } from '../data/terrain-zones.js';
 import { getHistoricalPlacementForUnit } from '../data/historical-map-data.js?v=20260407-manual-r1';
 import { normalizeValue } from './date-utils.js';
 import {
@@ -234,97 +234,105 @@ function interpolateWaypoints(points, t) {
     };
 }
 
+// ── Deniz rotaları/şeritleri: kalibre su ankrajlarından türetilir ──
+// (geo-calibration.js MAP_NAVAL_ANCHORS — güncel haritada doğrulanmış
+//  Erenköy boğaz suyu). Eski elle-yazılmış kalibrasyon-öncesi pikseller
+//  kaldırıldı; tüm naval konum bu ankraj sistemine bağlı.
+const NA = MAP_NAVAL_ANCHORS;
+
 const NAVAL_APPROACH_ROUTE = [
-    { x: 760, y: 2780 },
-    { x: 920, y: 2660 },
-    { x: 1060, y: 2520 },
-    { x: 1180, y: 2440 },
-    { x: 1270, y: 2390 }
+    { x: 1010, y: 2600 },
+    { x: NA.aegeanApproach.x, y: NA.aegeanApproach.y },
+    { x: 1145, y: 2495 },
+    { x: NA.erenkoyBay.x, y: NA.erenkoyBay.y },
+    { x: NA.battleLine.x, y: NA.battleLine.y }
 ];
 
 const NAVAL_WITHDRAW_ROUTE = [
-    { x: 1314, y: 2375 },
-    { x: 1215, y: 2420 },
-    { x: 1080, y: 2520 },
-    { x: 900, y: 2700 }
+    { x: NA.battleLine.x, y: NA.battleLine.y },
+    { x: NA.erenkoyBay.x, y: NA.erenkoyBay.y },
+    { x: NA.withdrawSW.x, y: NA.withdrawSW.y },
+    { x: 1015, y: 2585 }
 ];
 
 const NUSRET_PATROL_ROUTE = [
-    { x: 1475, y: 2103 },
-    { x: 1451, y: 2091 },
-    { x: 1432, y: 2093 },
-    { x: 1475, y: 2103 }
+    { x: NA.erenkoyMineLine.x, y: NA.erenkoyMineLine.y },
+    { x: NA.erenkoyMineLine.x + 22, y: NA.erenkoyMineLine.y - 12 },
+    { x: NA.erenkoyMineLine.x + 8, y: NA.erenkoyMineLine.y + 12 },
+    { x: NA.erenkoyMineLine.x, y: NA.erenkoyMineLine.y }
 ];
 
 const NUSRET_MINE_LINE_ROUTE = [
-    { x: 1179, y: 2386 },
-    { x: 1200, y: 2405 },
-    { x: 1222, y: 2425 },
-    { x: 1244, y: 2446 }
+    { x: 1248, y: 2426 },
+    { x: 1276, y: 2416 },
+    { x: NA.erenkoyMineLine.x, y: NA.erenkoyMineLine.y },
+    { x: 1338, y: 2400 }
 ];
 
 const ALLIED_NAVAL_LANES = {
     'hms-queen-elizabeth': {
-        offset: { x: 34, y: -92 },
+        offset: { x: 14, y: -20 },
         startT: 0.52,
         attackT: 0.98,
-        hitPoint: { x: 1215, y: 2420 },
-        retreatPoint: { x: 1010, y: 2625 },
+        hitPoint: { x: 1330, y: 2360 },
+        retreatPoint: { x: NA.withdrawSW.x, y: NA.withdrawSW.y },
         role: 'birinci hat amiral gemisi'
     },
     suffren: {
-        offset: { x: 92, y: -18 },
+        offset: { x: 20, y: -10 },
         startT: 0.44,
         attackT: 0.82,
-        hitPoint: { x: 1314, y: 2375 },
-        retreatPoint: { x: 930, y: 2685 },
+        hitPoint: { x: NA.narrowsBombard.x, y: NA.narrowsBombard.y },
+        retreatPoint: { x: 1095, y: 2485 },
         role: 'Fransız ikinci hattı'
     },
     bouvet: {
-        offset: { x: -112, y: 38 },
+        offset: { x: -18, y: 10 },
         startT: 0.38,
         attackT: 0.78,
-        hitPoint: { x: 1293, y: 2356 },
-        retreatPoint: { x: 1293, y: 2356 },
+        hitPoint: { x: NA.battleLine.x, y: NA.battleLine.y },
+        retreatPoint: { x: NA.battleLine.x, y: NA.battleLine.y },
         role: 'Erenköy dönüş hattında battı'
     },
     'hms-irresistible': {
-        offset: { x: -42, y: 122 },
+        offset: { x: -10, y: 18 },
         startT: 0.31,
         attackT: 0.72,
-        hitPoint: { x: 1226, y: 2369 },
-        retreatPoint: { x: 1226, y: 2369 },
+        hitPoint: { x: 1290, y: 2402 },
+        retreatPoint: { x: 1290, y: 2402 },
         role: 'Erenköy mayın hattında battı'
     },
     'hms-ocean': {
-        offset: { x: 118, y: 88 },
+        offset: { x: 16, y: 14 },
         startT: 0.25,
         attackT: 0.68,
-        hitPoint: { x: 1273, y: 2410 },
-        retreatPoint: { x: 1273, y: 2410 },
+        hitPoint: { x: 1268, y: 2440 },
+        retreatPoint: { x: 1268, y: 2440 },
         role: 'Irresistible yardımı sırasında battı'
     },
     'allied-minesweepers': {
-        offset: { x: -150, y: 28 },
+        offset: { x: -22, y: 6 },
         startT: 0.42,
         attackT: 0.62,
-        hitPoint: { x: 1130, y: 2380 },
-        retreatPoint: { x: 930, y: 2685 },
+        hitPoint: { x: NA.erenkoyBay.x, y: NA.erenkoyBay.y },
+        retreatPoint: { x: NA.withdrawSW.x, y: NA.withdrawSW.y },
         role: 'mayın tarama trawlerları'
     }
 };
 
 const SUNK_ON_MARCH_18 = new Set(['bouvet', 'hms-irresistible', 'hms-ocean']);
 
+// Okunabilirlik vitrin ofsetleri — küçük tutuldu; final pozisyon ayrıca
+// snapToSeaWater ile suya kilitlendiği için karaya taşamaz.
 const NAVAL_DISPLAY_OFFSETS = {
-    'hms-queen-elizabeth': { x: -28, y: 78 },
-    suffren: { x: 96, y: 22 },
-    bouvet: { x: 70, y: -74 },
-    'hms-irresistible': { x: -26, y: -68 },
-    'hms-ocean': { x: 52, y: 72 },
-    'allied-minesweepers': { x: -134, y: -50 },
-    nusret: { x: -136, y: 78 },
-    'ss-river-clyde': { x: -24, y: 22 }
+    'hms-queen-elizabeth': { x: -12, y: 20 },
+    suffren: { x: 22, y: 8 },
+    bouvet: { x: 18, y: -18 },
+    'hms-irresistible': { x: -14, y: -16 },
+    'hms-ocean': { x: 14, y: 18 },
+    'allied-minesweepers': { x: -24, y: -12 },
+    nusret: { x: -22, y: 16 },
+    'ss-river-clyde': { x: -12, y: 10 }
 };
 
 /**
@@ -414,19 +422,23 @@ export function getNarrativeNavalPosition(unit, phaseIndex) {
         const historical = getHistoricalPlacementForPhase(unit, phaseIndex);
         const historicalPoint = pointFromHistoricalPlacement(historical);
         if (historicalPoint) {
-            return getTerrainSafePointForUnit(historicalPoint.x, historicalPoint.y, unit);
+            const p = getTerrainSafePointForUnit(historicalPoint.x, historicalPoint.y, unit);
+            return snapToSeaWater(p.x, p.y);
         }
     }
 
     if (!isNavalEraPhaseIndex(phaseIndex)) return null;
 
     if (unit.id === 'nusret') {
-        return getTerrainSafePointForUnit(getNusretPosition(unit, phaseIndex).x, getNusretPosition(unit, phaseIndex).y, unit);
+        const np = getNusretPosition(unit, phaseIndex);
+        const p = getTerrainSafePointForUnit(np.x, np.y, unit);
+        return snapToSeaWater(p.x, p.y);
     }
 
     if (unit.type === 'deniz' && unit.faction !== 'ottoman') {
         const point = getAlliedNavalPosition(unit, phaseIndex);
-        return getTerrainSafePointForUnit(point.x, point.y, unit);
+        const p = getTerrainSafePointForUnit(point.x, point.y, unit);
+        return snapToSeaWater(p.x, p.y);
     }
 
     // Osmanlı kara/topçu birlikleri: deniz fazında kendi başlangıç pozisyonlarında kalır.

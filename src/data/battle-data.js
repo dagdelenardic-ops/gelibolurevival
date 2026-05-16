@@ -103,14 +103,14 @@ export const BATTLE_DATA = {
             entityType: "ship", unitClass: "mine_layer", side: "ottoman", anchorRegion: "bogaz",
             commander: "Kolağası Nazmi Bey (Korvet Kaptanı Yeniköylü İbrahim oğlu Hafız Nazmi Efendi)", strength: 76,
             description: "Nusret, Kasım 1914'ten itibaren Boğaz'da birden fazla mayın döşeme seferi gerçekleştirdi. En kritik operasyonu 7/8 Mart 1915 gecesi saat 05:30'da Erenköy Koyu'na paralel 26 karbonik mayınlık gizli hattı döşemesiydi — 100-150 m aralıklarla, 4,5 m derinliğe. İtilaf keşif uçuşlarının göremediği bu hat, 18 Mart'ta Bouvet, Irresistible ve Ocean'ı batırdı. 6 Nisan 1915 itibariyle Boğaz'da toplam 422 mayın bulunuyordu (53 Alman, 362 karbonik, 7 Rus). İtilaf'ın 45 mayın tarama girişimi başarısızlıkla sonuçlandı. Komutanı Nazmi Bey, 19 Temmuz 1915'te Binbaşılığa terfi etti.",
-            phases: { "naval-assault": { x: 1179, y: 2386, status: "savunma", objective: "Erenköy Koyu'na mayın döşe — düşmanı geçirmemek", outcome: "Döşediği mayınlar 3 gemiyi batırdı, 3'ünü savaş dışı bıraktı" } }
+            phases: { "naval-assault": { x: 1300, y: 2410, status: "savunma", objective: "Erenköy Koyu'na mayın döşe — düşmanı geçirmemek", outcome: "Döşediği mayınlar 3 gemiyi batırdı, 3'ünü savaş dışı bıraktı" } }
         },
         {
             id: "allied-minesweepers", name: "İtilaf Mayın Tarama Trawlerları", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Kraliyet Donanması gözetimindeki sivil trawler ekipleri", strength: 24,
             description: "Boğaz saldırısından önce İtilaf donanmasının en zayıf halkası mayın tarama trawlerlarıydı. Çoğu sivil ekipli balıkçı/trawler gemileri, gece akıntı, projektör, topçu ateşi ve makineli tüfek baskısı altında mayın hatlarını açmaya çalıştı. 18 Mart'a kadar 45 mayın tarama girişimi başarısız oldu; Nusret'in Erenköy hattı bu nedenle taarruz günü görünmeden kaldı.",
-            phases: { "naval-assault": { x: 1130, y: 2380, status: "başarısız", objective: "Mayın hatlarını temizle", outcome: "Kıyı ateşi ve akıntı altında hat açılamadı" } }
+            phases: { "naval-assault": { x: 1200, y: 2470, status: "başarısız", objective: "Mayın hatlarını temizle", outcome: "Kıyı ateşi ve akıntı altında hat açılamadı" } }
         },
 
         // ── İTİLAF DONANMASI ──
@@ -122,21 +122,21 @@ export const BATTLE_DATA = {
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Amiral de Robeck (Donanma Komutanı)", strength: 950,
             description: "İtilaf donanmasının amiral gemisi ve dönemin en modern savaş gemisi. 15 inçlik sekiz ana tobu, 24.000 ton deplasmanı ve 24 düğüm hızıyla filodan farklı sınıftaydı. Amiral de Robeck gemi kaptanı değil, genel filo komutanıydı — geminin ayrı bir kaptanı vardı. 18 Mart 1915'te Osmanlı kıyı bataryalarını susturmaya çalıştı ancak Nusret'in döşediği mayın hattı nedeniyle hareket alanı kısıtlandı. De Robeck bu gemiden verdiği 'geri çekilin' emriyle Boğaz geçme planını fiilen sonlandırdı. 13 Mayıs 1915'te denizaltı tehdidi artınca Ege'ye geri döndü.",
-            phases: { "naval-assault": { x: 1215, y: 2420, status: "taarruz", objective: "Boğaz savunmalarını yok et", outcome: "Tabyaları bombaladı ama geçemedi" } }
+            phases: { "naval-assault": { x: 1330, y: 2360, status: "taarruz", objective: "Boğaz savunmalarını yok et", outcome: "Tabyaları bombaladı ama geçemedi" } }
         },
         {
             id: "hms-irresistible", name: "HMS Irresistible", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Albay Douglas Dent", strength: 780,
             description: "18 Mart 1915'te saat 16:14 civarında Nusret'in Erenköy mayın hattına çarparak ağır hasar alan İngiliz zırhlısı. Makineleri devre dışı kaldı; kıyı bataryalarının yoğun ateşi altında hiçbir kurtarma gemisi yaklaşamadı. Albay Douglas Dent mürettebatını terk etme emri verdi; küçük teknelerle transfer sürüyor, gemi sürtünce battı. Nazmi Bey günlüğünde şöyle yazdı: 'İngiliz zırhlısı Irresistible de limana dönemedi.' Mürettebatın büyük bölümü kurtarıldı.",
-            phases: { "naval-assault": { x: 1226, y: 2369, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Nusret'in döşediği mayına çarparak battı" } }
+            phases: { "naval-assault": { x: 1290, y: 2402, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Nusret'in döşediği mayına çarparak battı" } }
         },
         {
             id: "hms-ocean", name: "HMS Ocean", faction: "british", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Albay Hayes-Sadler", strength: 750,
             description: "18 Mart 1915'te hasarlı Irresistible'ı yedeğe almaya çalışırken kendisi de Erenköy mayın hattına çarpan İngiliz zırhlısı. Albay Hayes-Sadler'ın Ocean'ı kurtarma girişimi mahkûm bir görevdi; gemi saat 18:05'te terk edildi. Nazmi Bey günlüğüne şöyle yazdı: 'Akşam karanlığında Ocean da yan yattı.' Mürettebatın büyük çoğunluğu küçük teknelerle kurtarıldı. Her iki İngiliz zırhlısının batışı, 18 Mart'ın Osmanlı zaferini pekiştiren son sahneydi.",
-            phases: { "naval-assault": { x: 1273, y: 2410, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Mayına çarparak battı" } }
+            phases: { "naval-assault": { x: 1268, y: 2440, status: "taarruz", objective: "Boğaz'ı geç", outcome: "Mayına çarparak battı" } }
         },
 
         // ── İNGİLİZ KARA ──
@@ -184,14 +184,14 @@ export const BATTLE_DATA = {
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Kaptan Rageot de la Touche", strength: 721,
             description: "18 Mart 1915 saat 13:58'de Nusret'in Erenköy hattındaki mayına çarparak yaklaşık 2 dakikada batan Fransız zırhlısı. Bouvet kaybı kaynaklara göre değişir; Osmanlı/Nazmi Bey anlatısında 721 mürettebattan 66 kurtulan verilirken, modern özetlerde kayıp çoğunlukla yaklaşık 640 olarak aktarılır. Kesin olan: Bouvet'in batışı, o günkü İtilaf kayıplarının en ağırıdır.",
-            phases: { "naval-assault": { x: 1293, y: 2356, status: "taarruz", objective: "Osmanlı tabyalarını sustur", outcome: "Mayına çarparak battı – yaklaşık 640 kayıp" } }
+            phases: { "naval-assault": { x: 1250, y: 2410, status: "taarruz", objective: "Osmanlı tabyalarını sustur", outcome: "Mayına çarparak battı – yaklaşık 640 kayıp" } }
         },
         {
             id: "suffren", name: "Suffren", faction: "french", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Kaptan Guépratte", strength: 700,
             description: "Fransız Donanması'nın 18 Mart 1915 muharebelerindeki simge gemisi. Kaptan Guépratte komutasında Osmanlı kıyı bataryalarıyla yoğun ateş alışverişi yürüttü; ağır hasar aldı ama batmadı. Amiral de Robeck'in 'geri çekilin' emrini Guépratte bir süre geciktirerek çatışmayı sürdürdü — bu cesaret Fransız anlatısında kahraman motifi oldu. Bouvet'in batışından kısa süre sonra hâlâ sahada olan Suffren, nihayetinde ciddi yapısal hasarla geri döndü. Onarım için ayrıldıktan sonra Çanakkale harekâtına dönmedi.",
-            phases: { "naval-assault": { x: 1314, y: 2375, status: "taarruz", objective: "Kıyı bataryalarını bombalama", outcome: "Ağır hasar aldı ama sağ kaldı" } }
+            phases: { "naval-assault": { x: 1360, y: 2320, status: "taarruz", objective: "Kıyı bataryalarını bombalama", outcome: "Ağır hasar aldı ama sağ kaldı" } }
         },
         {
             id: "fr-corps", name: "Fransız Sefer Kuvveti", faction: "french", type: "kolordu",

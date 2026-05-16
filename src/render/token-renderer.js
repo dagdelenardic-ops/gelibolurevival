@@ -11,6 +11,7 @@ import {
     getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, getNavalDisplayOffset, isDestroyedPhaseData
 } from '../engine/position-engine.js?v=20260508-sprint-r1';
 import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260508-sprint-r1';
+import { snapToSeaWater } from '../data/terrain-zones.js';
 import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260508-sprint-r1';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
 import { getUnitIcon } from '../data/icon-registry.js';
@@ -643,11 +644,15 @@ function getRenderOffsetForUnit(unit, phaseIndex) {
 }
 
 function resolveRenderedPoint(base, clusterOffset, displayOffset, unit) {
-    return getTerrainSafePointForUnit(
+    const safe = getTerrainSafePointForUnit(
         base.x + clusterOffset.x + displayOffset.x,
         base.y + clusterOffset.y + displayOffset.y,
         unit
     );
+    // Deniz birimleri: okunabilirlik/cluster ofseti taban suyunu karaya
+    // taşımış olabilir — final noktayı gerçek deniz pikseline kilitle.
+    if (isNavalUnit(unit)) return snapToSeaWater(safe.x, safe.y);
+    return safe;
 }
 
 function getNavalHeading(unit, fromPoint, toPoint, phaseIndex) {
