@@ -8,7 +8,8 @@ import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.j
 import { normalizeValue } from '../engine/date-utils.js';
 import {
     unitSeed, getNarrativeNavalPosition,
-    getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, getNavalDisplayOffset, isDestroyedPhaseData
+    getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, getNavalDisplayOffset, isDestroyedPhaseData,
+    isLockedPhaseData
 } from '../engine/position-engine.js?v=20260508-sprint-r1';
 import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260508-sprint-r1';
 import { snapToSeaWater } from '../data/terrain-zones.js';
@@ -709,8 +710,15 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
 
         const prev = isEntryFrame ? getUnitEntryOrigin(u, targetBase) : (prevPositions[u.id] || targetBase);
         const visible = phaseData ? 1 : 0.55;
-        const prevOffset = getClusterOffset(spreadPrev, prev.x, prev.y, u, prevPhaseIndex);
-        const targetOffset = getClusterOffset(spreadNext, targetBase.x, targetBase.y, u, phaseIndex);
+        // Tarihsel anchor noktası varsa cluster radial dispersion uygulama
+        // (küratöryel pozisyon korunur — historical-map-data'da elle seçilmiş
+        //  ariburnu/conkbayiri/seddulbahir gibi yakın 12-20px ayrımlar artık
+        //  yapay halkaya dönüşmez).
+        const locked = isLockedPhaseData(phaseData);
+        const prevPhaseData = BATTLE_DATA.phases[prevPhaseIndex] ? u.phases[BATTLE_DATA.phases[prevPhaseIndex].id] : null;
+        const prevLocked = isLockedPhaseData(prevPhaseData);
+        const prevOffset = getClusterOffset(spreadPrev, prev.x, prev.y, u, prevPhaseIndex, prevLocked);
+        const targetOffset = getClusterOffset(spreadNext, targetBase.x, targetBase.y, u, phaseIndex, locked);
         const prevDisplayOffset = getRenderOffsetForUnit(u, prevPhaseIndex);
         const targetDisplayOffset = getRenderOffsetForUnit(u, phaseIndex);
         const sourcePoint = resolveRenderedPoint(prev, prevOffset, prevDisplayOffset, u);

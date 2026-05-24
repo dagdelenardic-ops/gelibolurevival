@@ -11,7 +11,7 @@
 // cropX/cropY değerini değiştirmek yeter.
 // ══════════════════════════════════════════════════════════════
 
-import { MAP_CROP_TOP } from './coordinate-map.js?v=20260407-manual-r1';
+import { MAP_CROP_TOP } from './coordinate-map.js?v=20260523-markers-r2';
 
 // ── 3×3 lineer sistem çözücü (Cramer's rule) ──
 function det3(m) {
@@ -82,11 +82,13 @@ function solveAffine(anchors) {
 // üretmek için `assets/reference-console.html` kullanın.
 // ══════════════════════════════════════════════════════════════
 export const GROUND_TRUTH_ANCHORS = [
-    { id: 'alcitepe',    lat: 40.09491,   lon: 26.2273,    cropX: 1117, cropY: 1471 },
-    { id: 'kilitbahir',  lat: 40.1467789, lon: 26.3779734, cropX: 1451, cropY: 1311 },
-    { id: 'x-beach',     lat: 40.06549,   lon: 26.17864,   cropX: 1017, cropY: 1556 },
-    { id: 'seddulbahir', lat: 40.0446676, lon: 26.1889171, cropX: 1033, cropY: 1619 },
-    { id: 'kumkale',     lat: 39.9815943, lon: 26.2370257, cropX: 1061, cropY: 1729 }
+    { id: 'alcitepe',    lat: 40.09491,   lon: 26.2273,    cropX: 1121, cropY: 1475 },
+    { id: 'kilitbahir',  lat: 40.1467789, lon: 26.3779734, cropX: 1447, cropY: 1307 },
+    { id: 'x-beach',     lat: 40.06549,   lon: 26.17864,   cropX: 1017, cropY: 1560 },
+    { id: 'seddulbahir', lat: 40.0446676, lon: 26.1889171, cropX: 1029, cropY: 1615 },
+    { id: 'kumkale',     lat: 39.9815943, lon: 26.2370257, cropX: 1065, cropY: 1733 },
+    { id: 'bigali',      lat: 40.2357180, lon: 26.3597320, cropX: 1473, cropY: 1108 },
+    { id: 'eceabat',     lat: 40.1852143, lon: 26.3590969, cropX: 1437, cropY: 1224 }
 ];
 
 export const AFFINE_TRANSFORM = solveAffine(GROUND_TRUTH_ANCHORS);
@@ -155,13 +157,13 @@ const RAW_LOCATIONS = [
     { id: 'anafartalar',  name: 'Anafartalar',        lat: 40.2816240, lon: 26.3292410, isAnchor: true, cropX: 1264, cropY: 842  },
 
     // ── ANZAC Bölgesi ────────────────────────────────
-    { id: 'bigali',       name: 'Bigalı',             lat: 40.2357180, lon: 26.3597320, isAnchor: true, cropX: 1314, cropY: 982  },
+    { id: 'bigali',       name: 'Bigalı',             lat: 40.2357180, lon: 26.3597320, isAnchor: true, cropX: 1473, cropY: 1108 },
     { id: 'conkbayiri',   name: 'Conkbayırı',         lat: 40.2525008, lon: 26.3081938, isAnchor: true, cropX: 1236, cropY: 964  },
     { id: 'ariburnu',     name: 'Arıburnu (ANZAC Koyu)', lat: 40.2349804, lon: 26.2773514, isAnchor: true, cropX: 1246, cropY: 1008 },
     { id: 'kabatepe',     name: 'Kabatepe',           lat: 40.2128557, lon: 26.2779571, isAnchor: true, cropX: 1199, cropY: 1139 },
 
     // ── Boğaz / Narrows ──────────────────────────────
-    { id: 'eceabat',      name: 'Eceabat (Maidos)',   lat: 40.1852143, lon: 26.3590969, isAnchor: true, cropX: 1404, cropY: 1178 },
+    { id: 'eceabat',      name: 'Eceabat (Maidos)',   lat: 40.1852143, lon: 26.3590969, isAnchor: true, cropX: 1437, cropY: 1224 },
     { id: 'kilitbahir',   name: 'Kilitbahir',         lat: 40.1467789, lon: 26.3779734, isAnchor: true, cropX: 1451, cropY: 1311 },
     { id: 'bogaz',        name: 'Boğaz (Narrows)',    lat: 40.1465,    lon: 26.3904,    isAnchor: true, cropX: 1475, cropY: 1323 },
     { id: 'canakkale',    name: 'Çanakkale',          lat: 40.1462710, lon: 26.4028892, isAnchor: true, cropX: 1508, cropY: 1322 },
@@ -333,8 +335,8 @@ function fromCropPoint({ cropX, cropY, ...rest }) {
 export const MAP_FRONTLINES = [
     {
         id: 'ariburnu-front',
-        phase: ['inland_combat', 'stalemate'],
-        dateRange: { start: '1915-04-27', end: '1915-12-19' },
+        phase: ['landing', 'inland_combat', 'stalemate'],
+        dateRange: { start: '1915-04-25', end: '1915-12-19' },
         side1: 'allied',
         side2: 'ottoman',
         points: [
@@ -350,8 +352,8 @@ export const MAP_FRONTLINES = [
     },
     {
         id: 'seddulbahir-front',
-        phase: ['inland_combat', 'stalemate'],
-        dateRange: { start: '1915-04-28', end: '1916-01-08' },
+        phase: ['landing', 'inland_combat', 'stalemate'],
+        dateRange: { start: '1915-04-25', end: '1916-01-08' },
         side1: 'allied',
         side2: 'ottoman',
         points: [

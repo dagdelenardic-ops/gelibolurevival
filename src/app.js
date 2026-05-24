@@ -147,7 +147,8 @@ function initPositions() {
     BATTLE_DATA.units.forEach((u) => {
         if (isUnitOffMap(u.id, iso)) return;
         const d = u.phases[startPhase.id];
-        if (d) currentPositions[u.id] = { x: d.x, y: d.y };
+        // off-map (reserve/karargah) birimleri ilk render'da da gösterme
+        if (d && !d.offMap) currentPositions[u.id] = { x: d.x, y: d.y };
     });
 }
 
@@ -498,6 +499,11 @@ function setActivePhase(i) {
         const phaseData = u.phases[p.id];
         const pd = phaseData || getNarrativeNavalPosition(u, nextIndex);
         if (!pd) return;
+
+        // ── RESERVE GATE: ihtiyat/karargah birimleri haritada gösterme.
+        // (expandUnitTrails offMap=true flag'i yerleştirdi; roster panel
+        //  bunları "İhtiyatta / Karargâhta" rozetiyle gösterecek.)
+        if (pd.offMap) return;
 
         // Terrain clamping zaten expandUnitTrails()'de uygulanıyor — burada tekrar yapma
 

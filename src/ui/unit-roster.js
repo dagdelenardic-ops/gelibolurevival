@@ -5,6 +5,7 @@
 
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
 import { showUnitPanel } from './unit-panel.js?v=20260508-sprint-r1';
+import { listReserveUnitsForIso } from '../data/unit-sectors.js';
 
 let rosterRoot = null;
 let rosterBound = false;
@@ -46,6 +47,13 @@ function ensureRosterRoot() {
         </div>
         <div id="unitRosterMeta" class="unit-roster-meta"></div>
         <div id="unitRosterList" class="unit-roster-list"></div>
+        <div id="unitRosterReserveSection" class="unit-roster-reserve" hidden>
+            <div class="unit-roster-reserve-header">
+                <span class="unit-roster-kicker">İhtiyatta / Karargâhta</span>
+                <small id="unitRosterReserveMeta"></small>
+            </div>
+            <div id="unitRosterReserveList" class="unit-roster-reserve-list"></div>
+        </div>
     `;
     document.body.appendChild(rosterRoot);
     bindRosterEvents();
@@ -86,6 +94,53 @@ function getRenderedUnitEntries() {
         });
 }
 
+function renderReserveSection(phase) {
+    const root = ensureRosterRoot();
+    const section = root.querySelector('#unitRosterReserveSection');
+    const list = root.querySelector('#unitRosterReserveList');
+    const meta = root.querySelector('#unitRosterReserveMeta');
+    if (!section || !list) return;
+
+    const iso = String(phase?.isoStart || phase?.date || '');
+    const reserves = iso ? listReserveUnitsForIso(BATTLE_DATA.units, iso) : [];
+
+    if (!reserves.length) {
+        section.hidden = true;
+        list.innerHTML = '';
+        if (meta) meta.textContent = '';
+        return;
+    }
+
+    section.hidden = false;
+    if (meta) meta.textContent = `${reserves.length} birim cephe dışında`;
+
+    // Faction sırasıyla grupla
+    const factionOrder = ['ottoman', 'british', 'anzac', 'french'];
+    reserves.sort((a, b) => {
+        const fa = factionOrder.indexOf(a.faction);
+        const fb = factionOrder.indexOf(b.faction);
+        if (fa !== fb) return fa - fb;
+        return a.unitName.localeCompare(b.unitName, 'tr');
+    });
+
+    list.innerHTML = reserves.map((entry) => {
+        const f = BATTLE_DATA.factions[entry.faction] || BATTLE_DATA.factions.ottoman;
+        const classBadge = entry.unitClass === 'army_hq' ? 'KARARGÂH'
+            : entry.unitClass === 'corps' ? 'KOLORDU'
+            : entry.unitClass === 'division' ? 'TÜMEN'
+            : entry.unitClass === 'regiment' ? 'ALAY'
+            : '';
+        return `<button type="button" class="unit-roster-reserve-item" data-unit-id="${escapeHtml(entry.unitId)}">
+            <span class="unit-roster-dot" style="--unit-color:${escapeHtml(f.colorLight)}"></span>
+            <span class="unit-roster-main">
+                <strong>${escapeHtml(entry.unitName)}</strong>
+                <small>${escapeHtml(entry.locationLabel)}${classBadge ? ` · <em>${escapeHtml(classBadge)}</em>` : ''}</small>
+                ${entry.note ? `<small class="unit-roster-reserve-note">${escapeHtml(entry.note)}</small>` : ''}
+            </span>
+        </button>`;
+    }).join('');
+}
+
 function renderRosterList(phaseIndex) {
     const phase = BATTLE_DATA.phases[phaseIndex];
     const root = ensureRosterRoot();
@@ -96,26 +151,28 @@ function renderRosterList(phaseIndex) {
 
     if (title) title.textContent = 'Aktif Birlikler';
     if (meta) meta.textContent = `${phase?.date || ''} · ${entries.length} görünür birim`;
-    if (!list) return;
 
-    if (!entries.length) {
-        list.innerHTML = '<div class="unit-roster-empty">Bu fazda görünür birlik yok.</div>';
-        return;
+    if (list) {
+        if (!entries.length) {
+            list.innerHTML = '<div class="unit-roster-empty">Bu fazda görünür birlik yok.</div>';
+        } else {
+            list.innerHTML = entries.map((entry) => {
+                const f = BATTLE_DATA.factions[entry.unit.faction] || BATTLE_DATA.factions.ottoman;
+                const stress = entry.stamina <= .35 || entry.lossRatio >= .35 ? 'is-stressed' : '';
+                const target = entry.target && entry.target !== entry.location ? ` → ${entry.target}` : '';
+                return `<button type="button" class="unit-roster-item ${stress}" data-unit-id="${escapeHtml(entry.unit.id)}">
+                    <span class="unit-roster-dot" style="--unit-color:${escapeHtml(f.colorLight)}"></span>
+                    <span class="unit-roster-main">
+                        <strong>${escapeHtml(entry.unit.name)}</strong>
+                        <small>${escapeHtml(entry.action)} · ${escapeHtml(entry.location)}${escapeHtml(target)}</small>
+                    </span>
+                    <span class="unit-roster-confidence">${confidenceLabel(entry.confidence)}</span>
+                </button>`;
+            }).join('');
+        }
     }
 
-    list.innerHTML = entries.map((entry) => {
-        const f = BATTLE_DATA.factions[entry.unit.faction] || BATTLE_DATA.factions.ottoman;
-        const stress = entry.stamina <= .35 || entry.lossRatio >= .35 ? 'is-stressed' : '';
-        const target = entry.target && entry.target !== entry.location ? ` → ${entry.target}` : '';
-        return `<button type="button" class="unit-roster-item ${stress}" data-unit-id="${escapeHtml(entry.unit.id)}">
-            <span class="unit-roster-dot" style="--unit-color:${escapeHtml(f.colorLight)}"></span>
-            <span class="unit-roster-main">
-                <strong>${escapeHtml(entry.unit.name)}</strong>
-                <small>${escapeHtml(entry.action)} · ${escapeHtml(entry.location)}${escapeHtml(target)}</small>
-            </span>
-            <span class="unit-roster-confidence">${confidenceLabel(entry.confidence)}</span>
-        </button>`;
-    }).join('');
+    renderReserveSection(phase);
 }
 
 function openUnitFromRoster(unitId) {
@@ -136,7 +193,7 @@ function bindRosterEvents() {
             hideUnitRoster();
             return;
         }
-        const item = event.target.closest('.unit-roster-item');
+        const item = event.target.closest('.unit-roster-item, .unit-roster-reserve-item');
         if (item) openUnitFromRoster(item.dataset.unitId);
     });
     rosterRoot.addEventListener('keydown', (event) => {
