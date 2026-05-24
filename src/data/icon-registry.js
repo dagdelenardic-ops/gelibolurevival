@@ -6,12 +6,12 @@ const UNIT_ICONS = {
   // Osmanlı birimleri
   '5-ordu':          { icon: 'army-star',           size: 12 },
   '3-kolordu':       { icon: 'army-star',           size: 10 },
-  '19-tumen':        { icon: 'soldier-man',         size: 9  },
-  '57-alay':         { icon: 'soldier-man',         size: 7  },
-  '27-alay':         { icon: 'soldier-man',         size: 7  },
-  '7-tumen':         { icon: 'soldier-man',         size: 9  },
-  '9-tumen':         { icon: 'soldier-man',         size: 9  },
-  '5-tumen':         { icon: 'soldier-man',         size: 9  },
+  '19-tumen':        { icon: '',                    size: 0  },
+  '57-alay':         { icon: '',                    size: 0  },
+  '27-alay':         { icon: '',                    size: 0  },
+  '7-tumen':         { icon: '',                    size: 0  },
+  '9-tumen':         { icon: '',                    size: 0  },
+  '5-tumen':         { icon: '',                    size: 0  },
   'mustahkem-mevki': { icon: 'cannon',              size: 9  },
   'nusret':          { icon: 'naval-mine',          size: 10 },
   // İngiliz birimleri
@@ -22,8 +22,8 @@ const UNIT_ICONS = {
   'allied-minesweepers': { icon: 'anchor',          size: 8  },
   'ss-river-clyde':  { icon: 'anchor',              size: 8  },
   // ANZAC birimleri
-  'anzac-1div':      { icon: 'soldier-man',         size: 9  },
-  'nz-inf':          { icon: 'soldier-man',         size: 7  },
+  'anzac-1div':      { icon: '',                    size: 0  },
+  'nz-inf':          { icon: '',                    size: 0  },
   // Fransız birimleri
   'bouvet':          { icon: 'battleship',          size: 10 },
   'suffren':         { icon: 'battleship',          size: 10 },
@@ -41,7 +41,7 @@ const NARRATION_ICONS = {
 };
 
 export function getUnitIcon(unitId) {
-  return UNIT_ICONS[unitId] || { icon: 'soldier-man', size: 8 };
+  return UNIT_ICONS[unitId] || { icon: '', size: 0 };
 }
 
 export function getNarrationIcon(title) {

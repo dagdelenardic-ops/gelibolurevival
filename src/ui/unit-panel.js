@@ -3,13 +3,13 @@
 // Birim tıklayınca açılan sağ panel — komutan portresi dahil
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { getUnitIcon } from '../data/icon-registry.js';
-import { getCommanderPortrait } from '../data/commander-portraits.js';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260508-sprint-r1';
-import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
-import { getUnitDossier } from '../data/unit-dossiers.js';
-import { getHistoricalSourcesForIds } from '../data/historical-map-data.js?v=20260407-manual-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { getUnitIcon } from '../data/icon-registry.js?v=20260523-markers-r2';
+import { getCommanderPortrait } from '../data/commander-portraits.js?v=20260523-markers-r2';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260523-markers-r2';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260523-markers-r2';
+import { getUnitDossier } from '../data/unit-dossiers.js?v=20260523-markers-r2';
+import { getHistoricalSourcesForIds, HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260523-markers-r2';
 
 /** Faksiyon banner rengi — desatüre askeri tonlar */
 function getFactionBanner(faction) {
@@ -88,6 +88,12 @@ function getAnimatedUnitState(unit, animData) {
     return { unitState, intensity };
 }
 
+function getStrengthNoun(unit) {
+    return unit?.type === 'deniz' || unit?.entityType === 'ship' || unit?.entityType === 'landing_boat'
+        ? 'personel'
+        : 'asker';
+}
+
 function renderVitals(unit, phase, animData) {
     if (!unit.strength) return '-';
     const isoDate = String(phase?.isoStart || '');
@@ -98,11 +104,12 @@ function renderVitals(unit, phase, animData) {
     const loss = vitals.loss.toLocaleString('tr-TR');
     const lossPct = Math.round(vitals.lossRatio * 100);
     const strengthPct = Math.round(vitals.ratio * 100);
+    const noun = getStrengthNoun(unit);
 
     return `
         <div class="panel-vitals">
-            <div><strong>${current}</strong> / ${base} asker</div>
-            <div class="panel-vitals-sub">Kayıp: ${loss} (${lossPct}%) · Stamina: ${vitals.staminaPercent}% ${vitals.staminaLabel}</div>
+            <div><strong>${current}</strong> / ${base} ${noun}</div>
+            <div class="panel-vitals-sub">Kayıp: ${loss} (${lossPct}%) · Direnç: ${vitals.staminaPercent}% ${vitals.staminaLabel}</div>
             <div class="panel-vitals-bars" aria-hidden="true">
                 <span style="--vital-width:${strengthPct}%;--vital-color:${vitals.ratio > .62 ? '#72ad67' : vitals.ratio > .38 ? '#d9a94f' : '#c95b4d'}"></span>
                 <span style="--vital-width:${vitals.staminaPercent}%;--vital-color:${vitals.stamina > .62 ? '#7eaec8' : vitals.stamina > .38 ? '#d9a94f' : '#c95b4d'}"></span>
@@ -157,10 +164,11 @@ function renderEvidence(d) {
     `;
 }
 
-function renderDossier(dossier) {
+function renderDossier(dossier, unitDescription) {
     const notes = Array.isArray(dossier.timelineNotes) ? dossier.timelineNotes : [];
     return `
-        <div class="panel-section-title">Birim Dosyası</div>
+        <div class="panel-section-title">Birim Dosyası & Tarihsel Bağlam</div>
+        ${unitDescription ? `<p class="unit-historical-desc" style="font-style: italic; color: #f2dfab; margin-bottom: 12px; line-height: 1.5; font-size: 0.84rem;">${escapeHtml(unitDescription)}</p>` : ''}
         <p>${escapeHtml(dossier.summary)}</p>
         ${notes.length ? `<ul>${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}</ul>` : ''}
     `;
@@ -218,7 +226,7 @@ export function showUnitPanel(u, d, phase, animData) {
     const evidenceEl = document.getElementById('panelEvidence');
     const mediaEl = document.getElementById('panelDossierMedia');
 
-    if (dossierEl) dossierEl.innerHTML = renderDossier(dossier);
+    if (dossierEl) dossierEl.innerHTML = renderDossier(dossier, u.description);
     if (evidenceEl) evidenceEl.innerHTML = renderEvidence(d || {});
     if (mediaEl) mediaEl.innerHTML = renderDossierMedia(dossier);
 
@@ -312,25 +320,48 @@ if (typeof document !== 'undefined') {
 /** Birim token tıklama olaylarını bağla */
 export function attachUnitClicks(getCurrentPhaseIndex) {
     const tg = document.getElementById('unitTokens');
-    if (!tg || tg.dataset.clickBound === '1') return;
-    tg.dataset.clickBound = '1';
-    tg.addEventListener('click', (ev) => {
-        const el = ev.target.closest('.unit-token');
-        if (!el) return;
-        const unitId = el.dataset.unitId;
-        const unit = BATTLE_DATA.units.find((u) => u.id === unitId);
-        if (!unit) return;
-        const phase = BATTLE_DATA.phases[getCurrentPhaseIndex()];
-        const phaseData = unit.phases[phase.id] || { status: 'Bilinmiyor', objective: 'Bilinmiyor', outcome: 'Bilinmiyor' };
-        const currentIso = String(phase.isoStart || phase.date);
-        const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso] || null;
-        showUnitPanel(unit, phaseData, phase, animData);
-    });
-    tg.addEventListener('keydown', (ev) => {
-        if (ev.key !== 'Enter' && ev.key !== ' ') return;
-        const el = ev.target.closest('.unit-token');
-        if (!el) return;
-        ev.preventDefault();
-        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    });
+    if (tg && tg.dataset.clickBound !== '1') {
+        tg.dataset.clickBound = '1';
+        tg.addEventListener('click', (ev) => {
+            const el = ev.target.closest('.unit-token');
+            if (!el) return;
+            const unitId = el.dataset.unitId;
+            const unit = BATTLE_DATA.units.find((u) => u.id === unitId);
+            if (!unit) return;
+            const phase = BATTLE_DATA.phases[getCurrentPhaseIndex()];
+            const phaseData = unit.phases[phase.id] || { status: 'Bilinmiyor', objective: 'Bilinmiyor', outcome: 'Bilinmiyor' };
+            const currentIso = String(phase.isoStart || phase.date);
+            const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso] || null;
+            showUnitPanel(unit, phaseData, phase, animData);
+        });
+        tg.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Enter' && ev.key !== ' ') return;
+            const el = ev.target.closest('.unit-token');
+            if (!el) return;
+            ev.preventDefault();
+            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        });
+    }
+
+    // Also bind clicks on tactical route groups (arrows) to open unit details!
+    const routesLayer = document.getElementById('layer-routes');
+    if (routesLayer && routesLayer.dataset.clickBound !== '1') {
+        routesLayer.dataset.clickBound = '1';
+        routesLayer.addEventListener('click', (ev) => {
+            const el = ev.target.closest('.tactical-route-group');
+            if (!el) return;
+            const routeId = el.dataset.routeId;
+            const route = HISTORICAL_ROUTES.find((r) => r.id === routeId);
+            if (!route || !route.unitIds.length) return;
+            // Open the panel for the first unit associated with this route
+            const unitId = route.unitIds[0];
+            const unit = BATTLE_DATA.units.find((u) => u.id === unitId);
+            if (!unit) return;
+            const phase = BATTLE_DATA.phases[getCurrentPhaseIndex()];
+            const phaseData = unit.phases[phase.id] || { status: 'Bilinmiyor', objective: 'Bilinmiyor', outcome: 'Bilinmiyor' };
+            const currentIso = String(phase.isoStart || phase.date);
+            const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso] || null;
+            showUnitPanel(unit, phaseData, phase, animData);
+        });
+    }
 }

@@ -3,12 +3,13 @@
 // Historically grounded military cartography with modern UI clarity
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
-import { renderTokens } from './token-renderer.js?v=20260508-sprint-r1';
-import { renderBattleEffects } from './effects-renderer.js?v=20260508-sprint-r1';
-import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260508-sprint-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260523-markers-r2';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260523-markers-r2';
+import { HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260523-markers-r2';
+import { renderTokens } from './token-renderer.js?v=20260523-markers-r2';
+import { renderBattleEffects } from './effects-renderer.js?v=20260523-markers-r2';
+import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260523-markers-r2';
 
 function getActiveSceneGroups(phase, animData) {
     const iso = String(phase && phase.isoStart || '');
@@ -282,66 +283,45 @@ function renderFooterOrnaments() {
         x="${credit.x}" y="${credit.y}" text-anchor="end" fill="#d8c49a" font-family="var(--mono)" font-size="12" opacity=".45">Icons by Icons8</text>`;
 }
 
-// ── Yarımada kıyı hattı path'leri (daha gerçekçi, daha fazla kontrol noktası) ──
-const PENINSULA_PATH = `
-    M 525 18
-    C 515 24, 505 28, 495 34
-    C 482 40, 472 44, 462 52
-    C 452 60, 446 68, 442 78
-    C 438 88, 436 98, 434 108
-    C 432 118, 431 128, 430 138
-    C 428 152, 426 166, 424 178
-    C 422 190, 420 202, 418 212
-    C 416 224, 416 236, 418 248
-    C 420 260, 422 272, 422 284
-    C 422 296, 420 308, 416 320
-    C 412 332, 406 344, 400 356
-    C 394 368, 388 380, 382 392
-    C 376 404, 370 416, 364 428
-    C 356 442, 348 455, 340 466
-    C 334 476, 328 484, 322 492
-    C 316 500, 310 506, 304 508
-    C 296 510, 288 506, 282 498
-    C 276 488, 270 474, 264 458
-    C 258 442, 252 426, 248 410
-    C 244 394, 240 378, 236 362
-    C 232 346, 228 330, 226 314
-    C 224 298, 222 282, 220 266
-    C 218 252, 218 240, 220 228
-    C 222 218, 224 210, 224 200
-    C 224 190, 222 180, 224 170
-    C 226 160, 230 150, 234 140
-    C 238 130, 242 120, 246 110
-    C 248 100, 252 90, 258 82
-    C 266 72, 278 62, 295 50
-    C 315 38, 340 30, 370 24
-    C 400 18, 440 16, 480 14
-    L 525 18 Z
-`;
+export function renderTacticalRoutes(isoDate) {
+    if (!isoDate) return '';
+    const activeRoutes = HISTORICAL_ROUTES.filter((route) => {
+        return isoDate >= route.start && isoDate <= route.end;
+    });
 
-const ASIA_PATH = `
-    M 530 190
-    C 534 208, 530 228, 524 250
-    L 518 275
-    C 512 295, 506 315, 500 335
-    L 496 360
-    C 492 380, 490 396, 488 414
-    L 486 436
-    C 482 456, 474 474, 464 488
-    C 454 500, 448 512, 450 524
-    C 456 534, 476 540, 512 542
-    L 720 540
-    L 720 560 L 440 560
-    C 432 548, 428 536, 432 522
-    C 436 508, 444 494, 452 480
-    C 460 464, 464 446, 466 428
-    L 470 402
-    C 474 382, 478 362, 480 342
-    L 484 312
-    C 486 292, 492 272, 500 254
-    L 512 228
-    C 518 214, 524 200, 530 190 Z
-`;
+    return activeRoutes.map((route) => {
+        const pathD = route.points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+        // Determine color based on faction of unit
+        const isOttoman = route.unitIds.some((id) => {
+            const unit = BATTLE_DATA.units.find((u) => u.id === id);
+            return unit && (unit.side === 'ottoman' || unit.faction === 'ottoman');
+        });
+        const color = isOttoman ? '#c4645a' : '#7a9ab0';
+        const marker = isOttoman ? 'url(#arrow-ottoman)' : 'url(#arrow-allied)';
+
+        // Find unit names for labeling the route
+        const names = route.unitIds.map((id) => {
+            const u = BATTLE_DATA.units.find((unit) => unit.id === id);
+            return u ? u.name : id;
+        }).join(' & ');
+
+        // Midpoint of the route to place the label
+        const midIdx = Math.floor(route.points.length / 2);
+        const midPoint = route.points[midIdx] || { x: 0, y: 0 };
+
+        return `<g class="tactical-route-group" data-route-id="${escapeSvgText(route.id)}">
+            <!-- Glow background line -->
+            <path d="${pathD}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" opacity="0.12" />
+            <!-- Main thick animated tactical arrow -->
+            <path class="tactical-arrow" d="${pathD}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" marker-end="${marker}" />
+            <!-- Text label placed at midpoint -->
+            <text x="${midPoint.x}" y="${midPoint.y - 12}" class="tactical-route-label" fill="${color}" font-size="15" font-weight="700" font-family="var(--mono)" text-anchor="middle"
+              paint-order="stroke" stroke="rgba(18,15,12,.88)" stroke-width="3.5" opacity="0.82">
+                ${escapeSvgText(names)}
+            </text>
+        </g>`;
+    }).join('');
+}
 
 const isMobileMap = typeof window !== 'undefined' && window.innerWidth <= 768;
 
@@ -375,6 +355,12 @@ export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers
       <stop offset="0%" stop-color="transparent"/>
       <stop offset="100%" stop-color="#000" stop-opacity=".18"/>
     </radialGradient>
+    <marker id="arrow-allied" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#7a9ab0"/>
+    </marker>
+    <marker id="arrow-ottoman" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#c4645a"/>
+    </marker>
   </defs>
 
   <g id="layer-terrain" clip-path="url(#mapClip)">
@@ -393,7 +379,7 @@ export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers
   </g>
 
   <g id="layer-zones"></g>
-  <g id="layer-routes"></g>
+  <g id="layer-routes">${renderTacticalRoutes(phase.isoStart || '')}</g>
 
   <g id="layer-labels">
     <g id="locations">

@@ -13,8 +13,8 @@
 // getNarrativeNavalPosition + ALLIED_NAVAL_LANES sistemiyle yönetilir.
 // ══════════════════════════════════════════════════════════════
 
-import { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } from './historical-map-data.js?v=20260407-manual-r1';
-import { getCanonicalPosition } from './canonical-positions.js';
+import { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } from './historical-map-data.js?v=20260523-markers-r2';
+import { getCanonicalPosition } from './canonical-positions.js?v=20260523-markers-r2';
 
 /**
  * Reserve/karargâh sayılan arka alan noktaları.
@@ -22,7 +22,7 @@ import { getCanonicalPosition } from './canonical-positions.js';
  * Yeni arka alan eklemek için listeye nokta ekleyin.
  */
 const RESERVE_LOCATION_POINTS = [
-    { x: 1314, y: 1762, radius: 80, label: 'Bigalı / Gelibolu arka alan' }
+    { x: 1473, y: 1888, radius: 80, label: 'Bigalı / Gelibolu arka alan' }
     // Eceabat (1404, 1958) BURADA DEĞİL — Eceabat'ta savunma rezervinde olan
     // birimler (5. Tümen, 27. Alay erken dönem) cephe gerisi olsa da
     // coğrafi olarak haritada görünür — yarımada ortasında savunma noktası.
@@ -100,7 +100,7 @@ function classifyByCanonicalFallback(unitId, isoDate) {
         anchorId: `canonical:${unitId}:${canon.location}`,
         sourceIds: [],
         note: canon.note || '',
-        point: { x: 1314, y: 1762 }, // bigali proxy (gelibolu harita dışı)
+        point: { x: 1473, y: 1888 }, // bigali proxy (gelibolu harita dışı)
         locationLabel: canon.location === 'gelibolu' ? '5. Ordu karargâhı (Gelibolu)' : 'Harita dışı'
     };
 }

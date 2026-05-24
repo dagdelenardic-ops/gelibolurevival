@@ -15,11 +15,11 @@ export const ENTITY_TYPES = {
     },
     artillery_battery: {
         allowedTerrain: ['land', 'coast'],
-        allowedPhases: ['naval', 'landing', 'inland_combat', 'stalemate'],
+        allowedPhases: ['naval', 'landing', 'inland_combat', 'stalemate', 'evacuation'],
     },
     infantry_unit: {
         allowedTerrain: ['land', 'coast'],
-        allowedPhases: ['landing', 'inland_combat', 'stalemate', 'evacuation'],
+        allowedPhases: ['naval', 'landing', 'inland_combat', 'stalemate', 'evacuation'],
     },
     landing_boat: {
         allowedTerrain: ['coast', 'sea'],
