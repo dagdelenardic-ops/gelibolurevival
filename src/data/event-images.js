@@ -134,7 +134,7 @@ export const EVENT_IMAGES = [
     },
     // ── 7. 5. Ordu Kuruluşu — Savunma Hazırlığı ──
     {
-        startIso: '1915-03-23',
+        startIso: '1915-03-24',
         endIso:   '1915-04-24',
         url:      `${P}/ottoman-battery.jpg`,
         caption:  'Osmanlı topçu bataryası, Gelibolu savunma hazırlığı',
@@ -154,7 +154,7 @@ export const EVENT_IMAGES = [
     },
     // ── 9. ANZAC Çıkarması Sonrası ──
     {
-        startIso: '1915-04-26',
+        startIso: '1915-04-27',
         endIso:   '1915-04-27',
         url:      `${P}/anzac-landing.jpg`,
         caption:  'ANZAC çıkarması — 25 Nisan 1915, Arıburnu',
@@ -164,12 +164,13 @@ export const EVENT_IMAGES = [
     },
     // ── 10. V Beach / Seddülbahir ──
     {
-        startIso: '1915-04-28',
+        startIso: '1915-04-26',
         endIso:   '1915-05-05',
         url:      `${P}/v-beach-river-clyde.jpg`,
         caption:  'V Beach ve Seddülbahir kalesi — SS River Clyde\'dan görünüm',
         source:   'Royal Museums Greenwich, Public Domain',
         cropFocus: 'center 30%',
+        preferStill: true,
         context:  'V Beach çıkarması savaşın en kanlı sahnelerinden biriydi. SS River Clyde\'dan çıkan İngiliz askerleri Osmanlı makineli tüfek ateşiyle karşılaştı — ilk dalganın %70\'i kıyıya bile ulaşamadan düştü. Seddülbahir kalesi ancak ikinci gün alınabildi.',
     },
     // ── 11. W Beach / Helles ──
@@ -245,12 +246,24 @@ export const EVENT_IMAGES = [
     // ── 18. Tahliye Dönemi ──
     {
         startIso: '1915-12-07',
-        endIso:   '1916-01-09',
+        endIso:   '1915-12-20',
         url:      `${P}/periscope-rifle.jpg`,
         caption:  'Periskoplu tüfek — Tahliye öncesi ANZAC buluşu',
         source:   'Australian War Memorial, Public Domain',
         cropFocus: 'center 30%',
-        context:  'Tahliye harekâtı savaşın en başarılı operasyonu oldu. ANZAC\'lar periskoplu tüfekler ve zamanlı ateş düzenekleriyle siperlerin dolu olduğu izlenimini yarattı. 83.000 asker, 186 top ve 1.700 at tek kayıp vermeden tahliye edildi. 9 Ocak 1916\'da son asker yarımadayı terk etti.',
+        preferStill: true,
+        context:  'Arıburnu ve Anafartalar tahliyesi kampanyanın en başarılı operasyonu oldu. ANZAC\'lar periskoplu tüfekler ve zamanlı ateş düzenekleriyle siperlerin dolu olduğu izlenimini yarattı. 83.000 asker, 186 top ve 1.700 at tek kayıp vermeden tahliye edildi.',
+    },
+    // ── 19. Seddülbahir Son Tahliye ve Kampanya Sonu ──
+    {
+        startIso: '1915-12-21',
+        endIso:   '1916-01-09',
+        url:      `${P}/dardanelles-map-1915.jpg`,
+        caption:  'Gelibolu harekât sahası — son tahliye ve kampanya sonu',
+        source:   'Wikimedia Commons, Public Domain',
+        cropFocus: 'center',
+        preferStill: true,
+        context:  'Arıburnu ve Anafartalar boşaltıldıktan sonra son perde Seddülbahir\'de yaşandı. 9 Ocak 1916\'da Helles tahliyesi tamamlandı ve Gelibolu kampanyası sona erdi. Genel bilanço iki taraf için de yaklaşık 250.000 kayıptı.',
     },
 ];
 
@@ -272,5 +285,11 @@ export function getEventImage(isoDate) {
             }
         }
     }
-    return best;
+    if (!best) return null;
+    const spanDays = bestSpan / 86400000;
+    return {
+        ...best,
+        spanDays,
+        preferStill: best.preferStill === true || spanDays <= 4,
+    };
 }

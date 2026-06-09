@@ -1,0 +1,29 @@
+.DS_Store
+*.bak*
+.git/
+.claude/
+.playwright-mcp/
+.vercel/
+node_modules/
+tmp/
+andre/
+
+# Local verification artifacts
+gelibolu-*.png
+local-run*.png
+map-check-*.png
+verification-overlay*.png
+suvla-fix-check*.png
+aug-1915-*.png
+weird-sea-anim-*.png
+test-results/
+playwright-report/
+
+# Development-only material
+archive/
+docs/
+scripts/
+CLAUDE.md
+AGENTS.md
+assets/reference-console.html
+book/*.epub

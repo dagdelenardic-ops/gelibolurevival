@@ -3,15 +3,15 @@
 // Günlük faz üretimi, faz yönetimi, timeline veri hazırlığı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { HISTORICAL_ANCHORS } from '../data/historical-anchors.js';
-import { GUIDED_CAMPAIGN_CHAPTERS, getGuidedCampaignChapter } from '../data/guided-campaign.js';
+import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260523-markers-r2';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260523-markers-r2';
+import { HISTORICAL_ANCHORS } from '../data/historical-anchors.js?v=20260523-markers-r2';
+import { GUIDED_CAMPAIGN_CHAPTERS, getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260523-markers-r2';
 import {
     isoToUTCDate, utcDateToISO, addUTCDateDays,
     formatISOToTR, dayDiffISO, normalizeValue, normalizeDateText
-} from './date-utils.js';
-import { unitSeed } from './position-engine.js?v=20260508-sprint-r1';
+} from './date-utils.js?v=20260523-markers-r2';
+import { unitSeed } from './position-engine.js?v=20260523-markers-r2';
 // Dynamic import — 1.1MB dosyayı ana modül parse'ını bloklamadan yükle
 let BOOK_PHASE_EVENTS = [];
 let BOOK_WEEKLY_GUIDE = [];
@@ -20,7 +20,7 @@ let _bookDataLoaded = false;
 export async function loadBookData() {
     if (_bookDataLoaded) return;
     try {
-        const mod = await import('../../book/gallipoli-events.js');
+        const mod = await import('../../book/gallipoli-events.js?v=20260523-markers-r2');
         BOOK_PHASE_EVENTS = mod.BOOK_PHASE_EVENTS || [];
         BOOK_WEEKLY_GUIDE = mod.BOOK_WEEKLY_GUIDE || [];
         _bookDataLoaded = true;
@@ -28,7 +28,7 @@ export async function loadBookData() {
         console.warn('Kitap verisi yüklenemedi:', err);
     }
 }
-import { CANONICAL_POSITIONS, getCanonicalPosition, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js';
+import { CANONICAL_POSITIONS, getCanonicalPosition, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js?v=20260523-markers-r2';
 
 const BASE_PHASE_TEMPLATES = JSON.parse(JSON.stringify(BATTLE_DATA.phases));
 
@@ -52,6 +52,7 @@ const UNIT_CLASS_PRIORITY = {
 };
 
 const UNIT_AVAILABILITY_WINDOWS = {
+    '5-ordu': { startIso: '1915-03-24', endIso: '1916-01-09' },
     'allied-minesweepers': { startIso: '1915-02-19', endIso: '1915-03-18' },
     'hms-queen-elizabeth': { startIso: '1915-02-19', endIso: '1915-03-22' },
     'hms-irresistible': { startIso: '1915-02-19', endIso: '1915-03-18' },
@@ -118,9 +119,27 @@ function flattenLocationValue(value) {
     return [];
 }
 
+function removeRepeatedNarrationSentences(text) {
+    const sentences = String(text || '')
+        .split(/(?<=[.!?])\s+/)
+        .map((sentence) => sentence.trim())
+        .filter(Boolean);
+    if (sentences.length < 2) return String(text || '').trim();
+
+    const seen = new Set();
+    const unique = [];
+    for (const sentence of sentences) {
+        const key = sentence.toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push(sentence);
+    }
+    return unique.join(' ');
+}
+
 function cleanNarrationText(rawNarration) {
     if (!rawNarration) return '';
-    return String(rawNarration)
+    const cleaned = String(rawNarration)
         .split(/\s*\|\s*/)
         .map((part) => part
             .replace(/^Açık Olay:\s*/i, '')
@@ -137,6 +156,7 @@ function cleanNarrationText(rawNarration) {
         .replace(/\s+([,.;:!?])/g, '$1')
         .replace(/\s+/g, ' ')
         .trim();
+    return removeRepeatedNarrationSentences(cleaned);
 }
 
 function cleanPhaseTitle(rawTitle) {
@@ -148,6 +168,59 @@ function cleanPhaseTitle(rawTitle) {
         .replace(/^[\s·–-]+|[\s·–-]+$/g, '')
         .replace(/\s{2,}/g, ' ')
         .trim() || 'Cephe Günü';
+}
+
+function normalizeFifthArmyText(value) {
+    return String(value || '')
+        .replace(/23 Mart'ta 5\. Ordu kuruldu; Liman von Sanders komutayı devraldı\.?/g, "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı.")
+        .replace(/23 Mart'ta 5\. Ordu kuruldu/g, "24 Mart'ta 5. Ordu kuruldu")
+        .replace(/5\. Ordu kuruldu; Alman Mareşal Liman von Sanders komutayı devraldı\.?/g, '5. Ordu kuruluş hazırlıkları ve yarımada savunma düzeni öne çıkıyor.');
+}
+
+function normalizeBookPhaseConsistency(phase) {
+    const normalized = {
+        ...phase,
+        narration: normalizeFifthArmyText(phase.narration)
+    };
+
+    if (normalized.isoStart === '1915-03-23' && /^5\. Ordu'nun Kuruluşu\b/.test(normalized.title)) {
+        return {
+            ...normalized,
+            title: '5. Ordu Hazırlığı',
+            narration: 'Kara harekâtı için 5. Ordu hazırlıkları sürüyor; komuta düzeni 24 Mart günü netleşecek.'
+        };
+    }
+
+    if (
+        normalized.isoStart > '1915-03-24' &&
+        normalized.isoStart <= '1915-03-29' &&
+        /^5\. Ordu'nun Kuruluşu\b/.test(normalized.title)
+    ) {
+        return {
+            ...normalized,
+            title: 'Kara Harekâtı Hazırlığı'
+        };
+    }
+
+    return normalized;
+}
+
+function normalizeWeeklyGuideConsistency(guide) {
+    const normalized = {
+        ...guide,
+        title: cleanPhaseTitle(guide?.title || ''),
+        narration: normalizeFifthArmyText(cleanNarrationText(guide?.narration || ''))
+    };
+
+    if (normalized.startIso === '1915-03-23' && normalized.endIso === '1915-03-29') {
+        return {
+            ...normalized,
+            title: '5. Ordu ve Çıkarma Hazırlıkları',
+            narration: "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı. Deniz harekâtının ardından kara çıkarması hazırlıkları hızlandı."
+        };
+    }
+
+    return normalized;
 }
 
 function buildMobileSummary(text) {
@@ -319,10 +392,26 @@ function getAutoplayHoldMs(phase, chapter) {
 }
 
 function decoratePhasesForMobile() {
+    // Belgesel kamerası: kamera "sahne"yi (en son major anchor'ın mapFocusOverride'ı)
+    // izler ve aradaki anchor'sız günlerde bu çerçeveyi KORUR — her gün yeniden
+    // hesaplayıp zıplamaz. Yeni anchor gelince yumuşakça yeni sahneye kayar.
+    let sceneFocus = null;
     BATTLE_DATA.phases = BATTLE_DATA.phases.map((phase) => {
         const chapter = getMobileStoryChapter(phase.isoStart);
         const locationIds = collectPhaseLocationIds(phase, chapter);
-        const mapFocus = phase.mapFocusOverride ? { ...phase.mapFocusOverride } : buildMapFocus(locationIds);
+        let mapFocus;
+        // Sahne-belirleyici = küratörlü override VEYA major beat (anchor/şablon).
+        // Major günler kendi sektörüne çerçeveler ve "sahne"yi günceller; aradaki
+        // minor günler bu çerçeveyi KORUR (kamera her gün zıplamaz, sahne tutulur).
+        const isSceneSetter = !!phase.mapFocusOverride || phase.importance === 'major';
+        if (isSceneSetter) {
+            mapFocus = phase.mapFocusOverride ? { ...phase.mapFocusOverride } : buildMapFocus(locationIds);
+            sceneFocus = mapFocus;
+        } else if (sceneFocus) {
+            mapFocus = { ...sceneFocus };
+        } else {
+            mapFocus = buildMapFocus(locationIds); // henüz sahne kurulmadan (erken günler)
+        }
         return {
             ...phase,
             mobilePriority: phase.importance === 'major' ? 'feature' : 'supporting',
@@ -423,6 +512,7 @@ function getParsedPhasesFromBook() {
             objectiveByFaction: p.objectiveByFaction && typeof p.objectiveByFaction === 'object' ? p.objectiveByFaction : null,
             outcomeByFaction: p.outcomeByFaction && typeof p.outcomeByFaction === 'object' ? p.outcomeByFaction : null
         }))
+        .map(normalizeBookPhaseConsistency)
         .filter(Boolean);
 }
 
@@ -486,7 +576,9 @@ function ensureExpandedPhases(options = {}) {
     BATTLE_DATA.phases = cloneBasePhases();
 
     const parsedPhases = getParsedPhasesFromBook();
-    WEEKLY_GUIDE = Array.isArray(BOOK_WEEKLY_GUIDE) ? BOOK_WEEKLY_GUIDE : [];
+    WEEKLY_GUIDE = Array.isArray(BOOK_WEEKLY_GUIDE)
+        ? BOOK_WEEKLY_GUIDE.map(normalizeWeeklyGuideConsistency)
+        : [];
     if (parsedPhases && parsedPhases.length > 0) {
         BATTLE_DATA.phases = parsedPhases
             .map((p, idx) => ({ ...p, isoStart: p.isoStart || normalizeDateText(p.date, idx) }))
@@ -574,8 +666,13 @@ export function getMinimumStartIsoForUnit(unit) {
 /** ISO tarihine karşılık gelen phase indeksi */
 export function getPhaseIndexByIso(iso) {
     if (!iso) return 0;
-    const idx = BATTLE_DATA.phases.findIndex((p) => String(p.isoStart || '') >= iso);
-    return idx === -1 ? Math.max(0, BATTLE_DATA.phases.length - 1) : idx;
+    let idx = -1;
+    for (let i = 0; i < BATTLE_DATA.phases.length; i++) {
+        const phaseIso = String(BATTLE_DATA.phases[i].isoStart || '');
+        if (phaseIso && phaseIso <= iso) idx = i;
+        if (phaseIso && phaseIso > iso) break;
+    }
+    return idx === -1 ? 0 : idx;
 }
 
 /** Aktif hafta indeksini bul */

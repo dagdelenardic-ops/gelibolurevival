@@ -259,6 +259,7 @@ body{
 .stats-side-name{font-family:var(--mono);font-size:.9rem;font-weight:700;margin-bottom:4px}
 .stats-row{display:flex;justify-content:space-between;font-size:.82rem;color:var(--text-muted)}
 .stats-row span:last-child{color:var(--text);font-family:var(--mono)}
+.stats-note{font-size:.68rem;line-height:1.35;color:var(--text-dim);background:rgba(255,255,255,.035);border-left:2px solid rgba(230,207,143,.32);padding:5px 7px;margin:0 0 2px}
 .stats-row-total{border-top:1px solid var(--border-light);padding-top:6px;margin-top:4px;font-weight:700}
 .stats-row-total span{color:#fff!important}
 .stats-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-top:4px}

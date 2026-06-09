@@ -3,31 +3,32 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260508-sprint-r1';
-import { ENTITY_TYPES } from './data/entity-types.js';
-import { waitForTerrainSampler } from './data/terrain-zones.js';
-import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js';
-import { isUnitOffMap } from './data/canonical-positions.js';
-import { normalizeDateText } from './engine/date-utils.js';
-import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260508-sprint-r1';
-import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js';
-import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation } from './engine/position-engine.js?v=20260508-sprint-r1';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260508-sprint-r2';
-import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260508-sprint-r1';
-import { renderBattleEffects } from './render/effects-renderer.js?v=20260508-sprint-r1';
-import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260508-sprint-r1';
-import { animateCamera } from './render/camera.js?v=20260428-camera-safe';
-import { initTouchZoom } from "./engine/touch-zoom.js?v=20260407-manual-r1";
+import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260523-markers-r2';
+import { ENTITY_TYPES } from './data/entity-types.js?v=20260523-markers-r2';
+import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260523-markers-r2';
+import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260523-markers-r2';
+import { isUnitOffMap } from './data/canonical-positions.js?v=20260523-markers-r2';
+import { normalizeDateText } from './engine/date-utils.js?v=20260523-markers-r2';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260523-markers-r2';
+import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260523-markers-r2';
+import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation } from './engine/position-engine.js?v=20260523-markers-r2';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260523-markers-r2';
+import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260523-markers-r2';
+import { renderBattleEffects } from './render/effects-renderer.js?v=20260523-markers-r2';
+import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260523-markers-r2';
+import { animateCamera } from './render/camera.js?v=20260523-markers-r2';
+import { initTouchZoom } from "./engine/touch-zoom.js?v=20260523-markers-r2";
 
-import { orchestrateAnimations } from './render/animation-orchestrator.js?v=20260508-sprint-r1';
-import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260508-sprint-r1';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260508-sprint-r1';
-import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js?v=20260508-sprint-r1';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying } from './ui/autoplay-controller.js?v=20260508-sprint-r1';
-import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js';
-import { initOnboarding } from './ui/onboarding.js?v=20260428-deeplink-skip';
-import { toggleStatsPanel } from './ui/stats-panel.js';
-import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260501-audio-r1';
+import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260523-markers-r2';
+import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260523-markers-r2';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260523-markers-r2';
+import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js?v=20260523-markers-r2';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying } from './ui/autoplay-controller.js?v=20260523-markers-r2';
+import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260523-markers-r2';
+import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260523-markers-r2';
+import { initOnboarding } from './ui/onboarding.js?v=20260523-markers-r2';
+import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260523-markers-r2';
+import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260523-markers-r2';
 
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
@@ -35,6 +36,8 @@ const currentPositions = {};
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 let richTimelineHydrationStarted = false;
 let terrainRefreshVersion = 0;
+let keyboardNavBound = false;
+const CAMPAIGN_START_ISO = '1914-11-03';
 
 function getCurrentPhaseIndex() { return currentPhaseIndex; }
 
@@ -77,7 +80,14 @@ async function hydrateRichTimelineInBackground() {
     richTimelineHydrationStarted = true;
 
     const activePhase = BATTLE_DATA.phases[currentPhaseIndex];
-    const activeIso = getRequestedStartIso() || activePhase?.isoStart || normalizeDateText(activePhase?.date, currentPhaseIndex);
+    const requestedIso = getRequestedStartIso();
+    const isBootstrapDefault = !requestedIso
+        && currentPhaseIndex === 0
+        && BATTLE_DATA.phases.length <= 6
+        && activePhase?.isoStart === '1915-03-18';
+    const activeIso = requestedIso
+        || (isBootstrapDefault ? CAMPAIGN_START_ISO : activePhase?.isoStart)
+        || normalizeDateText(activePhase?.date, currentPhaseIndex);
     const previousMobileMode = getMobileViewMode();
 
     try {
@@ -178,6 +188,23 @@ function isQuietPeriod(iso) {
 }
 let narrationTimer = null;
 let lastCameraKey = '';
+let lastCameraTarget = null;
+
+// Kamera "ölü bant" (deadband): belgesel kararlılığı için kamera ancak hedef
+// ANLAMLI ölçüde değişince yeniden çerçeveler. Gün-gün küçük sürüklenmeler
+// (birim hareketi, locationIds blend'i) kamerayı zıplatmaz.
+function shouldMoveCamera(prev, next) {
+    if (!prev || !next) return true;
+    const prevCx = prev.x + prev.w / 2;
+    const prevCy = prev.y + prev.h / 2;
+    const nextCx = next.x + next.w / 2;
+    const nextCy = next.y + next.h / 2;
+    const centerShift = Math.hypot(nextCx - prevCx, nextCy - prevCy);
+    const zoomRatio = next.w > 0 && prev.w > 0 ? next.w / prev.w : 1;
+    // Merkez 180 harita-biriminden fazla kaydıysa VEYA zoom %20'den fazla
+    // değiştiyse yeni sahneye geç; aksi halde mevcut çerçeveyi koru.
+    return centerShift > 180 || zoomRatio > 1.2 || zoomRatio < 0.83;
+}
 
 const FRONT_CAMERA_TARGETS = {
     Deniz: { x: 1120, y: 1650, w: 980, h: 820, locationIds: ['bogaz', 'canakkale', 'kilitbahir', 'erenkoyu'] },
@@ -261,6 +288,19 @@ function buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData) {
         return { ...EVACUATION_CAMERA_TARGETS.south, reason: 'evacuation-south' };
     }
 
+    // Deniz dönemi (18 Mart vb.): Boğaz cephesi kararlı, küratörlü bir çerçeveye
+    // sahiptir; naval fazların buildMapFocus'u tüm haritaya açıldığından bu
+    // çerçeve mapFocus'tan ÖNCE gelir — yoksa deniz muharebesi tüm-harita zoom'da
+    // minik kalır. (Kara sahneleri aşağıdaki kararlı mapFocus carry-forward'ı kullanır.)
+    if (fronts.length === 1 && fronts[0] === 'Deniz' && FRONT_CAMERA_TARGETS.Deniz) {
+        return { ...FRONT_CAMERA_TARGETS.Deniz, reason: 'front:Deniz' };
+    }
+
+    // Belgesel kararlılığı: küratörlü sahne odağı (mapFocus / anchor mapFocusOverride)
+    // gün-gün hareket eden birim kutusundan ÖNCE gelir. Böylece kamera her gün
+    // yeniden çerçevelemez; yalnızca sahne (anchor) değişince yumuşakça kayar.
+    if (phase?.mapFocus) return { ...phase.mapFocus, reason: 'guided-campaign' };
+
     if (fronts.length === 1 && FRONT_CAMERA_TARGETS[fronts[0]]) {
         return { ...FRONT_CAMERA_TARGETS[fronts[0]], reason: `front:${fronts[0]}` };
     }
@@ -275,8 +315,6 @@ function buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData) {
         });
         if (target) return { ...target, reason: 'active-units' };
     }
-
-    if (phase?.mapFocus) return { ...phase.mapFocus, reason: 'guided-campaign' };
 
     if (Array.isArray(phase?.locationIds) && phase.locationIds.length) {
         const locationPoints = phase.locationIds
@@ -300,10 +338,17 @@ function applyPhaseCamera(phase, campaignPhase, nextPositions, animData) {
     const svg = document.getElementById('battleMap');
     if (!svg) return null;
     const target = clampCameraTarget(buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData));
-    const key = `${target.x}:${target.y}:${target.w}:${target.h}`;
-    if (key !== lastCameraKey) {
+    // Karşılaştırma GERÇEK viewBox'a karşı yapılır (cache'lenmiş anahtara değil):
+    // hem gün-gün küçük sürüklenmeyi deadband ile yutar hem de renderMap SVG'yi
+    // varsayılana sıfırladığında doğru çerçeveyi yeniden uygular (desync düzeltmesi).
+    const vb = svg.viewBox.baseVal;
+    const current = (Number.isFinite(vb.width) && vb.width > 0)
+        ? { x: vb.x, y: vb.y, w: vb.width, h: vb.height }
+        : null;
+    if (shouldMoveCamera(current, target)) {
         animateCamera(svg, target, 720);
-        lastCameraKey = key;
+        lastCameraKey = `${target.x}:${target.y}:${target.w}:${target.h}`;
+        lastCameraTarget = target;
     }
     return target;
 }
@@ -341,6 +386,14 @@ function applyGuidedFocus(phase) {
         const active = guidedUnitIds.has(el.dataset.unitId);
         el.classList.toggle('is-referenced', active);
         el.classList.toggle('is-story-passive', hasGuidedUnits && !active);
+        if (hasGuidedUnits) {
+            if (active) {
+                el.classList.add('is-active');
+                el.classList.remove('is-muted');
+            } else {
+                el.classList.remove('is-active', 'is-muted');
+            }
+        }
         if (isMobile && hasGuidedUnits && !active) {
             el.setAttribute('aria-hidden', 'true');
             el.setAttribute('tabindex', '-1');
@@ -393,14 +446,14 @@ async function initMapEditorIfRequested() {
         return;
     }
 
-    const { initMapEditor } = await import('./ui/map-editor.js?v=20260508-sprint-r1');
+    const { initMapEditor } = await import('./ui/map-editor.js?v=20260523-markers-r2');
     initMapEditor();
 }
 
 async function initMapDoctorIfRequested() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('doctor') !== '1') return;
-    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260430-doctor-r2');
+    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260523-markers-r2');
     initMapDoctorPanel();
 }
 
@@ -440,6 +493,7 @@ function setActivePhase(i) {
         updateMapDateIndicator(p.date);
         updateMapSceneState(p, animData, cameraTarget);
         applyGuidedFocus(p);
+        updateMovementLedger(p, currentPositions, animData);
         refreshUnitRoster(nextIndex);
         if (getMobileViewMode() !== 'story') focusStoryMapForPhase(p, cameraTarget);
         // Her 3 fazda narration güncelle — fotoğraflar da değişebilsin
@@ -515,6 +569,9 @@ function setActivePhase(i) {
     const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
     const cameraTarget = applyPhaseCamera(p, campaignPhase, nextPositions, animData);
 
+    // Günlük hareket defteri: o gün hangi deniz/kara birliği nereden→nereye.
+    updateMovementLedger(p, nextPositions, animData);
+
     const tg = document.getElementById('unitTokens');
     if (tg) {
         const nextMarkup = renderTokens(p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
@@ -533,8 +590,11 @@ function setActivePhase(i) {
         renderLandCombatFX(campaignPhase, animData);
 
         const { routes: animRoutes, fx: animFx } = orchestrateAnimations(animData, nextPositions);
+        // Birim hareket izleri: o gün gerçekten yürüyen birimlerin yön okları
+        // (campaign-movement.js march legleri görünür olur).
+        const moveTrails = renderUnitMovementTrails(prevPositions, nextPositions, BATTLE_DATA.units, currentIso);
         const routesLayer = document.getElementById('layer-routes');
-        if (routesLayer) routesLayer.innerHTML = animRoutes;
+        if (routesLayer) routesLayer.innerHTML = animRoutes + moveTrails;
         const combatLayer = document.getElementById('layer-combat-fx');
         if (combatLayer) combatLayer.innerHTML += animFx;
 
@@ -573,6 +633,8 @@ function handleToggleAutoPlay() {
 
 // ── Keyboard Navigation ──
 function initKeyboardNav() {
+    if (keyboardNavBound) return;
+    keyboardNavBound = true;
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         switch (e.key) {
@@ -593,6 +655,7 @@ function initKeyboardNav() {
             case 'Escape':
                 hideUnitPanel();
                 hideUnitRoster();
+                hideStatsPanel();
                 break;
         }
     });
@@ -619,6 +682,7 @@ async function init() {
     if (statsBtn) statsBtn.addEventListener('click', toggleStatsPanel);
     initKeyboardNav();
     initPinchZoom();
+    initMovementLedger();
     initMapEditorIfRequested();
     initMapDoctorIfRequested();
     // ?date=… deep-link'i koru — sıfıra fl yapma (applyRequestedStartPhase

@@ -1,10 +1,10 @@
 // ══════════════════════════════════════════════════════════════
 // Gelibolu Revival — Kayıp Modeli
 // Tarihsel verilere dayalı birim kuvvet azalma sistemi
-// Toplam kayıp: Osmanlı ~250.000, İtilaf ~265.000 (Peter Hart, 2011)
+// Toplam kayıp: Osmanlı ~250.000, İtilaf ~250.000 (Peter Hart, 2011)
 // ══════════════════════════════════════════════════════════════
 
-import { CANONICAL_POSITIONS } from './canonical-positions.js';
+import { CANONICAL_POSITIONS, OFF_MAP_LOCATIONS } from './canonical-positions.js?v=20260523-markers-r2';
 
 /**
  * Tarihsel kayıp profilleri — birim başına kampanya boyunca kümülatif kayıp oranı.
@@ -65,9 +65,9 @@ const CASUALTY_PROFILES = {
 
     // ── İTİLAF DENİZ ──
     'hms-queen-elizabeth': { totalLossRatio: 0.02, baseDailyRate: 0 },
-    'hms-irresistible': { totalLossRatio: 1.0, baseDailyRate: 0 }, // battı
-    'hms-ocean': { totalLossRatio: 1.0, baseDailyRate: 0 },
-    'bouvet': { totalLossRatio: 1.0, baseDailyRate: 0 },
+    'hms-irresistible': { totalLossRatio: 0.20, baseDailyRate: 0 },
+    'hms-ocean': { totalLossRatio: 0.05, baseDailyRate: 0 },
+    'bouvet': { totalLossRatio: 640 / 721, baseDailyRate: 0 },
     'suffren': { totalLossRatio: 0.10, baseDailyRate: 0.0001 },
 
     // ── İTİLAF KARA ──
@@ -104,6 +104,14 @@ const CASUALTY_PROFILES = {
 // ── Kampanya tarih aralığı ──
 const CAMPAIGN_START = '1914-11-03';
 
+// Gemi batışı ile mürettebat kaybı aynı şey değildir. İngiliz zırhlılarında
+// personelin büyük bölümü kurtarıldığı için kayıp oranı gemi kaderinden ayrı tutulur.
+const NAVAL_LOSS_EVENTS = {
+    'bouvet': { iso: '1915-03-18', lossRatio: 640 / 721 },
+    'hms-irresistible': { iso: '1915-03-18', lossRatio: 0.20 },
+    'hms-ocean': { iso: '1915-03-18', lossRatio: 0.05 },
+};
+
 /** ISO tarihler arası gün farkı */
 function daysBetween(isoA, isoB) {
     const a = new Date(isoA + 'T00:00:00Z');
@@ -119,7 +127,10 @@ function daysBetween(isoA, isoB) {
  */
 function getDeploymentIso(unitId) {
     const segments = CANONICAL_POSITIONS[unitId];
-    const firstStart = Array.isArray(segments) && segments[0] && segments[0].start;
+    const firstActive = Array.isArray(segments)
+        ? segments.find((seg) => seg && !OFF_MAP_LOCATIONS.has(seg.location))
+        : null;
+    const firstStart = firstActive && firstActive.start;
     return firstStart && firstStart > CAMPAIGN_START ? firstStart : CAMPAIGN_START;
 }
 
@@ -183,16 +194,17 @@ export function getUnitStrength(unitId, isoDate, intensity, unitState, baseStren
         return { current: baseStrength || 0, loss: 0, ratio: 1 };
     }
 
-    // Batmış gemi — anlık tam kayıp
-    if (profile.totalLossRatio >= 1.0) {
-        const sinkDates = {
-            'hms-irresistible': '1915-03-18',
-            'hms-ocean': '1915-03-18',
-            'bouvet': '1915-03-18',
+    // Deniz kaybı — gemi batabilir, ama panelde gösterilen kuvvet personeldir.
+    const navalLoss = NAVAL_LOSS_EVENTS[unitId];
+    if (navalLoss && isoDate >= navalLoss.iso) {
+        const loss = Math.min(baseStrength, Math.round(baseStrength * navalLoss.lossRatio));
+        const current = Math.max(0, baseStrength - loss);
+        return {
+            current,
+            loss,
+            ratio: current / baseStrength,
+            todayLoss: isoDate === navalLoss.iso ? loss : 0,
         };
-        if (sinkDates[unitId] && isoDate >= sinkDates[unitId]) {
-            return { current: 0, loss: baseStrength, ratio: 0 };
-        }
     }
 
     // Cache kontrolü — intensity/unitState/baseStrength anahtara dahil;

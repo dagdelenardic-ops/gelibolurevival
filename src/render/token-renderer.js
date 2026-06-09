@@ -3,20 +3,20 @@
 // Birlik token SVG oluşturma, animasyon, highlight
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { normalizeValue } from '../engine/date-utils.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260523-markers-r2';
+import { normalizeValue } from '../engine/date-utils.js?v=20260523-markers-r2';
 import {
-    unitSeed, getNarrativeNavalPosition,
+    unitSeed,
     getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, getNavalDisplayOffset, isDestroyedPhaseData,
     isLockedPhaseData
-} from '../engine/position-engine.js?v=20260508-sprint-r1';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260508-sprint-r1';
-import { snapToSeaWater } from '../data/terrain-zones.js';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260508-sprint-r1';
-import { getUnitVitals, formatStrength } from '../data/casualty-model.js';
-import { getUnitIcon } from '../data/icon-registry.js';
-import { getUnitVisualProfile, getSpriteSetId, hasRuntimeSpriteAtlas } from '../data/unit-visual-profiles.js';
+} from '../engine/position-engine.js?v=20260523-markers-r2';
+import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260523-markers-r2';
+import { snapToSeaWater } from '../data/terrain-zones.js?v=20260523-markers-r2';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260523-markers-r2';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260523-markers-r2';
+import { getUnitIcon } from '../data/icon-registry.js?v=20260523-markers-r2';
+import { getUnitVisualProfile, getSpriteSetId, hasRuntimeSpriteAtlas } from '../data/unit-visual-profiles.js?v=20260523-markers-r2';
 
 let tokenTrailTimer = null;
 const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -37,6 +37,7 @@ const NAVAL_VISUAL_PROFILES = {
         role: 'battleship',
         length: 92,
         beam: 22,
+        scale: .84,
         deckInset: 10,
         bridge: { x: 2, y: -8, w: 22, h: 13 },
         funnels: [{ x: -11, y: 0 }, { x: -22, y: 0 }],
@@ -48,6 +49,7 @@ const NAVAL_VISUAL_PROFILES = {
         role: 'flagship',
         length: 108,
         beam: 25,
+        scale: .78,
         deckInset: 12,
         bridge: { x: 5, y: -9, w: 26, h: 15 },
         funnels: [{ x: -12, y: 0 }, { x: -25, y: 0 }],
@@ -59,6 +61,7 @@ const NAVAL_VISUAL_PROFILES = {
         role: 'battleship',
         length: 88,
         beam: 21,
+        scale: .84,
         deckInset: 10,
         bridge: { x: 0, y: -8, w: 21, h: 12 },
         funnels: [{ x: -10, y: 0 }, { x: -21, y: 0 }, { x: -30, y: 0 }],
@@ -70,6 +73,7 @@ const NAVAL_VISUAL_PROFILES = {
         role: 'minelayer',
         length: 66,
         beam: 17,
+        scale: .74,
         deckInset: 8,
         bridge: { x: 7, y: -6, w: 16, h: 10 },
         funnels: [{ x: -12, y: 0 }],
@@ -81,6 +85,7 @@ const NAVAL_VISUAL_PROFILES = {
         role: 'minesweeper',
         length: 48,
         beam: 13,
+        scale: .8,
         deckInset: 6,
         bridge: { x: 2, y: -5, w: 13, h: 8 },
         funnels: [{ x: -10, y: 0 }],
@@ -92,6 +97,7 @@ const NAVAL_VISUAL_PROFILES = {
         role: 'landing-ship',
         length: 82,
         beam: 24,
+        scale: .86,
         deckInset: 7,
         bridge: { x: -8, y: -8, w: 24, h: 13 },
         funnels: [{ x: -25, y: 0 }],
@@ -114,6 +120,18 @@ const NAVAL_DEFAULT_HEADINGS = {
 
 function isNavalUnit(unit) {
     return unit.type === 'deniz' || unit.entityType === 'landing_boat';
+}
+
+function renderTokenHitTarget(unit) {
+    if (isNavalUnit(unit)) {
+        const profile = getNavalVisualProfile(unit);
+        const width = Math.max(58, Math.round(profile.length + 24));
+        const height = Math.max(42, Math.round(profile.beam + 30));
+        return `<rect class="unit-hit-target" x="${-width / 2}" y="${-height / 2}" width="${width}" height="${height}" rx="14" aria-hidden="true"/>`;
+    }
+
+    const radius = Math.max(28, getTokenRadius(unit.unitClass) + 10);
+    return `<circle class="unit-hit-target" cx="0" cy="0" r="${radius}" aria-hidden="true"/>`;
 }
 
 function getNavalVisualProfile(unit) {
@@ -149,12 +167,24 @@ function renderWake(profile, isSunk) {
     </g>`;
 }
 
-function renderGunTurret(x, y, color, light, index) {
+function renderGunTurret(x, y, color, light, index, activeGuns = false) {
     const delay = `${(index * .16).toFixed(2)}s`;
+    let rotationAnimation = '';
+    if (activeGuns) {
+        const dur = `${2.2 + index * 0.4}s`;
+        const fromAngle = -15 - (index % 3) * 10;
+        const toAngle = 15 + (index % 2) * 12;
+        rotationAnimation = `<animateTransform attributeName="transform" type="rotate"
+            values="0; ${fromAngle}; ${toAngle}; 0"
+            dur="${dur}" repeatCount="indefinite"/>`;
+    }
     return `<g class="naval-turret" transform="translate(${x} ${y})" style="--gun-delay:${delay}">
-        <rect x="-5.2" y="-3.2" width="10.4" height="6.4" rx="2.2" fill="${light}" opacity=".88" stroke="rgba(20,16,12,.62)" stroke-width=".8"/>
-        <line x1="2" y1="0" x2="18" y2="0" stroke="#1e2429" stroke-width="2.2" stroke-linecap="round"/>
-        <circle class="naval-gun-flash" cx="20" cy="0" r="4.2" fill="rgba(242,196,92,.72)"/>
+        <g>
+            ${rotationAnimation}
+            <rect x="-5.2" y="-3.2" width="10.4" height="6.4" rx="2.2" fill="${light}" opacity=".88" stroke="rgba(20,16,12,.62)" stroke-width=".8"/>
+            <line x1="2" y1="0" x2="18" y2="0" stroke="#1e2429" stroke-width="2.2" stroke-linecap="round"/>
+            <circle class="naval-gun-flash" cx="20" cy="0" r="4.2" fill="rgba(242,196,92,.72)"/>
+        </g>
     </g>`;
 }
 
@@ -188,6 +218,7 @@ function renderBattleshipSilhouette(unit, f, profile, phaseData, intent) {
         C${(l * .18).toFixed(1)} ${(b * .45).toFixed(1)} ${(-l * .2).toFixed(1)} ${(b * .55).toFixed(1)} ${(-l / 2 + deckInset).toFixed(1)} ${(b * .34).toFixed(1)} Z`;
     const bridge = profile.bridge;
     const activeGuns = ['bombarding', 'engaged'].includes(intent?.actionKey);
+    const activeMinelaying = intent?.actionKey === 'minelaying';
 
     return `<g class="naval-ship-core${isSunk ? ' is-sunk-core' : ''}${isDamaged ? ' is-damaged-core' : ''}${activeGuns ? ' is-firing-core' : ''}">
         ${renderWake(profile, isSunk)}
@@ -197,23 +228,31 @@ function renderBattleshipSilhouette(unit, f, profile, phaseData, intent) {
         <path class="naval-deck" d="${deckD}" fill="${cl}" opacity="${isSunk ? '.32' : '.82'}"/>
         <rect class="naval-bridge" x="${bridge.x - bridge.w / 2}" y="${bridge.y}" width="${bridge.w}" height="${bridge.h}" rx="3.2" fill="#ded0a4" stroke="rgba(24,20,16,.68)" stroke-width="1" opacity="${isSunk ? '.42' : '.88'}"/>
         <path class="naval-bow-cut" d="M${(l / 2 - 17).toFixed(1)} 0 L${(l / 2 - 4).toFixed(1)} 0" stroke="#f0dfb2" stroke-width="1.6" opacity=".66"/>
-        ${profile.turrets.map((turret, index) => renderGunTurret(turret.x, turret.y, c, cl, index)).join('')}
+        ${profile.turrets.map((turret, index) => renderGunTurret(turret.x, turret.y, c, cl, index, activeGuns)).join('')}
         ${renderSmoke(profile, cl, isSunk, isDamaged)}
         ${profile.mast ? `<g class="naval-mast">
             <line x1="${bridge.x}" y1="${bridge.y - 4}" x2="${bridge.x}" y2="${bridge.y - 28}" stroke="${cl}" stroke-width="1.25" opacity=".82"/>
             <line x1="${bridge.x}" y1="${bridge.y - 24}" x2="${bridge.x + 17}" y2="${bridge.y - 18}" stroke="${cl}" stroke-width=".9" opacity=".64"/>
             ${isFlagship ? `<polygon points="${bridge.x + 1},${bridge.y - 28} ${bridge.x + 17},${bridge.y - 24} ${bridge.x + 1},${bridge.y - 19}" fill="#f6e5a7" opacity=".9"/>` : ''}
         </g>` : ''}
-        ${unit.id === 'nusret' ? renderMinelayerRails(profile, cl, isSunk) : ''}
+        ${unit.id === 'nusret' ? renderMinelayerRails(profile, cl, isSunk, activeMinelaying) : ''}
         ${isDamaged || isSunk ? renderNavalDamage(profile, isSunk) : ''}
     </g>`;
 }
 
-function renderMinelayerRails(profile, light, isSunk) {
+function renderMinelayerRails(profile, light, isSunk, activeMinelaying = false) {
     const stern = -profile.length / 2 + 9;
     const mines = Array.from({ length: 4 }, (_, index) => {
         const x = stern + index * 7;
-        return `<circle class="naval-deck-mine" cx="${x}" cy="${profile.beam * .4}" r="2.8" fill="#1c1b18" stroke="${light}" stroke-width=".8" opacity="${isSunk ? '.3' : '.84'}"/>`;
+        let anim = '';
+        if (activeMinelaying) {
+            const delay = `${index * 0.6}s`;
+            anim = `<animate attributeName="cx" values="${x};${stern - 15}" dur="2.4s" repeatCount="indefinite" begin="${delay}"/>
+                    <animate attributeName="opacity" values="1;1;0" dur="2.4s" repeatCount="indefinite" begin="${delay}"/>`;
+        }
+        return `<circle class="naval-deck-mine" cx="${x}" cy="${profile.beam * .4}" r="2.8" fill="#1c1b18" stroke="${light}" stroke-width=".8" opacity="${isSunk ? '.3' : '.84'}">
+            ${anim}
+        </circle>`;
     }).join('');
     return `<g class="naval-minelayer-gear">
         <line x1="${stern - 4}" y1="${profile.beam * .48}" x2="${stern + 28}" y2="${profile.beam * .48}" stroke="${light}" stroke-width="1.4" opacity=".62"/>
@@ -237,29 +276,31 @@ function renderNavalDamage(profile, isSunk) {
     </g>`;
 }
 
-function renderMiniTrawler(x, y, f, index) {
+function renderMiniTrawler(x, y, f, index, isSunk = false, isDamaged = false) {
     const c = f.color;
     const cl = f.colorLight;
+    const op = isSunk ? '.4' : isDamaged ? '.75' : '.94';
     return `<g class="naval-trawler-boat" transform="translate(${x} ${y})" style="--boat-delay:${(index * .18).toFixed(2)}s">
-        <path d="M-18 -5 C-10 -9 8 -8 20 0 C9 8 -10 8 -18 5 Z" fill="${c}" stroke="${cl}" stroke-width="1.7" opacity=".94"/>
-        <rect x="-4" y="-8" width="12" height="8" rx="2.2" fill="${cl}" opacity=".78"/>
-        <line x1="-13" y1="0" x2="-24" y2="0" stroke="${cl}" stroke-width="1" opacity=".6"/>
-        <path class="naval-wake naval-wake-soft" d="M-18 -4 C-32 -12 -42 -8 -52 -2 M-18 4 C-32 12 -42 8 -52 2"/>
+        <path d="M-18 -5 C-10 -9 8 -8 20 0 C9 8 -10 8 -18 5 Z" fill="${c}" stroke="${cl}" stroke-width="1.7" opacity="${op}"/>
+        <rect x="-4" y="-8" width="12" height="8" rx="2.2" fill="${cl}" opacity="${isSunk ? '.3' : '.78'}"/>
+        <line x1="-13" y1="0" x2="-24" y2="0" stroke="${cl}" stroke-width="1" opacity="${isSunk ? '.2' : '.6'}"/>
+        ${!isSunk ? `<path class="naval-wake naval-wake-soft" d="M-18 -4 C-32 -12 -42 -8 -52 -2 M-18 4 C-32 12 -42 8 -52 2"/>` : ''}
     </g>`;
 }
 
 function renderTrawlerFlotilla(unit, f, profile, phaseData) {
     const isSunk = isDestroyedPhaseData(phaseData);
-    return `<g class="naval-ship-core naval-flotilla-core${isSunk ? ' is-sunk-core' : ''}">
-        <path class="naval-sweep-cable" d="M-52 -21 C-20 -38 18 -36 48 -18 M-52 21 C-20 38 18 36 48 18"/>
-        ${renderMiniTrawler(-10, -16, f, 0)}
-        ${renderMiniTrawler(8, 0, f, 1)}
-        ${renderMiniTrawler(-12, 17, f, 2)}
-        <g class="naval-sweep-mines">
+    const isDamaged = isDamagedPhaseData(phaseData);
+    return `<g class="naval-ship-core naval-flotilla-core${isSunk ? ' is-sunk-core' : ''}${isDamaged ? ' is-damaged-core' : ''}">
+        <path class="naval-sweep-cable" d="M-52 -21 C-20 -38 18 -36 48 -18 M-52 21 C-20 38 18 36 48 18" opacity="${isSunk ? '.3' : '.7'}"/>
+        ${renderMiniTrawler(-10, -16, f, 0, isSunk, isDamaged)}
+        ${renderMiniTrawler(8, 0, f, 1, isSunk, isDamaged)}
+        ${renderMiniTrawler(-12, 17, f, 2, isSunk, isDamaged)}
+        <g class="naval-sweep-mines" opacity="${isSunk ? '.2' : '1'}">
             <circle cx="48" cy="-18" r="3.4"/>
             <circle cx="54" cy="18" r="3.4"/>
         </g>
-        ${isSunk ? renderNavalDamage(profile, true) : ''}
+        ${isDamaged || isSunk ? renderNavalDamage(profile, isSunk) : ''}
     </g>`;
 }
 
@@ -269,12 +310,15 @@ function renderLandingShip(unit, f, profile, phaseData) {
     const l = profile.length;
     const b = profile.beam;
     const isSunk = isDestroyedPhaseData(phaseData);
-    return `<g class="naval-ship-core naval-landing-core${isSunk ? ' is-sunk-core' : ''}">
+    const isDamaged = isDamagedPhaseData(phaseData);
+    return `<g class="naval-ship-core naval-landing-core${isSunk ? ' is-sunk-core' : ''}${isDamaged ? ' is-damaged-core' : ''}">
+        ${renderWake(profile, isSunk)}
         <ellipse class="naval-ship-shadow" cx="-8" cy="${b * .5}" rx="${l * .5}" ry="${b * .72}"/>
-        <path class="naval-hull" d="M${-l / 2} ${-b * .55} L${l * .32} ${-b * .55} L${l / 2} 0 L${l * .32} ${b * .55} L${-l / 2} ${b * .55} Z" fill="${c}" stroke="${cl}" stroke-width="2.2" opacity=".94"/>
-        <rect x="${-l * .34}" y="${-b * .32}" width="${l * .5}" height="${b * .64}" rx="2.8" fill="${cl}" opacity=".68"/>
-        <path class="naval-ramp" d="M${l * .38} ${-b * .28} L${l * .72} ${-b * .44} M${l * .38} ${b * .28} L${l * .72} ${b * .44}" stroke="#e7d8ad" stroke-width="2.2" stroke-linecap="round" opacity=".78"/>
+        <path class="naval-hull" d="M${-l / 2} ${-b * .55} L${l * .32} ${-b * .55} L${l / 2} 0 L${l * .32} ${b * .55} L${-l / 2} ${b * .55} Z" fill="${c}" stroke="${cl}" stroke-width="2.2" opacity="${isSunk ? '.5' : '.94'}"/>
+        <rect x="${-l * .34}" y="${-b * .32}" width="${l * .5}" height="${b * .64}" rx="2.8" fill="${cl}" opacity="${isSunk ? '.32' : '.68'}"/>
+        <path class="naval-ramp" d="M${l * .38} ${-b * .28} L${l * .72} ${-b * .44} M${l * .38} ${b * .28} L${l * .72} ${b * .44}" stroke="#e7d8ad" stroke-width="2.2" stroke-linecap="round" opacity="${isSunk ? '.28' : '.78'}"/>
         <path class="naval-beach-dust" d="M${l * .44} ${b * .48} C${l * .66} ${b * .62} ${l * .82} ${b * .48} ${l} ${b * .58}" fill="none"/>
+        ${isDamaged || isSunk ? renderNavalDamage(profile, isSunk) : ''}
     </g>`;
 }
 
@@ -290,7 +334,8 @@ function navalTokenShape(unit, f, cx, cy, phaseData, heading = 0, intent = null)
     else if (profile.role === 'landing-ship') body = renderLandingShip(unit, f, profile, phaseData);
     else body = renderBattleshipSilhouette(unit, f, profile, phaseData, intent);
 
-    return `<g class="naval-visual${roleClass}${stateClass}" transform="translate(${cx} ${cy}) rotate(${heading.toFixed(1)}) rotate(${listing})" data-heading="${heading.toFixed(1)}">
+    const scale = Number.isFinite(profile.scale) ? profile.scale : .84;
+    return `<g class="naval-visual${roleClass}${stateClass}" transform="translate(${cx} ${cy}) rotate(${heading.toFixed(1)}) rotate(${listing}) scale(${scale})" data-heading="${heading.toFixed(1)}">
         ${body}
     </g>`;
 }
@@ -329,7 +374,7 @@ function tokenShape(unit, phaseData, f, cx, cy, heading = 0, intent = null) {
     const r = getTokenRadius(unit.unitClass);
     const marker = unitClassMarker(cx, cy, unit.unitClass, cl);
     const ic = getUnitIcon(unit.id);
-    const iconOverlay = `<image href="assets/icons/${ic.icon}.png" x="${cx - ic.size / 2}" y="${cy - ic.size / 2}" width="${ic.size}" height="${ic.size}" opacity=".82" pointer-events="none"/>`;
+    const iconOverlay = ic.icon ? `<image href="assets/icons/${ic.icon}.png" x="${cx - ic.size / 2}" y="${cy - ic.size / 2}" width="${ic.size}" height="${ic.size}" opacity=".82" pointer-events="none"/>` : '';
     switch (f.shape) {
         case 'star': {
             const sw = r >= 11 ? '1.2' : '.8';
@@ -629,13 +674,13 @@ function strengthBadge(cx, cy, unit, vitals) {
     const staminaW = barW * stamina;
 
     return `<g class="strength-badge" opacity=".85">
-      <title>Kalan kuvvet: ${txt}${lossTxt ? ` · Kayıp: ${lossTxt}` : ''} · Stamina: ${vitals.staminaPercent}% (${vitals.staminaLabel})</title>
+      <title>Kalan kuvvet: ${txt}${lossTxt ? ` · Kayıp: ${lossTxt}` : ''} · Direnç: ${vitals.staminaPercent}% (${vitals.staminaLabel})</title>
       <text class="strength-badge-text" x="${cx}" y="${by + 20}" text-anchor="middle" fill="#d5c8a1" font-family="var(--mono)" font-size="12">${txt}${lossTxt ? ` ${lossTxt}` : ''}</text>
       <rect x="${cx - barW / 2}" y="${by + 26}" width="${barW}" height="${barH}" rx="3" fill="rgba(40,35,25,.6)"/>
       <rect x="${cx - barW / 2}" y="${by + 26}" width="${fillW}" height="${barH}" rx="3" fill="${barColor}"/>
       <rect x="${cx - barW / 2}" y="${by + 34}" width="${barW}" height="${barH}" rx="3" fill="rgba(40,35,25,.52)"/>
       <rect x="${cx - barW / 2}" y="${by + 34}" width="${staminaW}" height="${barH}" rx="3" fill="${staminaColor}"/>
-      <text class="strength-badge-meta" x="${cx}" y="${by + 50}" text-anchor="middle" fill="#9fb9c5" font-family="var(--mono)" font-size="9">STA ${vitals.staminaPercent}%</text>
+      <text class="strength-badge-meta" x="${cx}" y="${by + 50}" text-anchor="middle" fill="#9fb9c5" font-family="var(--mono)" font-size="9">DİR ${vitals.staminaPercent}%</text>
     </g>`;
 }
 
@@ -709,11 +754,9 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         const isEntryFrame = phaseIndex === entryIndex && !hasPrev;
 
         const prev = isEntryFrame ? getUnitEntryOrigin(u, targetBase) : (prevPositions[u.id] || targetBase);
-        const visible = phaseData ? 1 : 0.55;
-        // Tarihsel anchor noktası varsa cluster radial dispersion uygulama
-        // (küratöryel pozisyon korunur — historical-map-data'da elle seçilmiş
-        //  ariburnu/conkbayiri/seddulbahir gibi yakın 12-20px ayrımlar artık
-        //  yapay halkaya dönüşmez).
+        const visible = phaseData ? 1 : 0.78;
+        // Tarihsel anchor noktası varsa kaynak pozisyonu korunur; cluster sadece
+        // üst üste gelen sembolleri küçük bir okunabilirlik ofsetiyle ayırır.
         const locked = isLockedPhaseData(phaseData);
         const prevPhaseData = BATTLE_DATA.phases[prevPhaseIndex] ? u.phases[BATTLE_DATA.phases[prevPhaseIndex].id] : null;
         const prevLocked = isLockedPhaseData(prevPhaseData);
@@ -729,7 +772,7 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         const ty = normalizeValue(Math.round(targetPoint.y), VP_MIN_Y, VP_MAX_Y);
         const heading = getNavalHeading(u, sourcePoint, targetPoint, phaseIndex);
         const statusText = intent.statusText;
-        const staminaLabel = vitals.base ? ` – stamina ${vitals.staminaPercent}% – kayıp ${formatStrength(vitals.loss)}` : '';
+        const staminaLabel = vitals.base ? ` – direnç ${vitals.staminaPercent}% – kayıp ${formatStrength(vitals.loss)}` : '';
         const ariaLabel = `${u.name} – ${f.name} – ${intent.actionLabel} – ${intent.currentLocationName}${staminaLabel}`;
         const titleText = `${u.name} — ${intent.actionLabel} — ${intent.currentLocationName}${intent.targetLocationName && intent.targetLocationName !== intent.currentLocationName ? ` → ${intent.targetLocationName}` : ''}${staminaLabel}`;
         const pulseDur = vitals.stamina <= 0.35 ? 2.7 : vitals.lossRatio >= 0.35 ? 2.25 : 1.7;
@@ -766,11 +809,12 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
       data-target-x="${tx}" data-target-y="${ty}"
       style="transform:translate(${sx}px, ${sy}px);opacity:${visible};--stamina:${vitals.stamina || 1};--loss-ratio:${vitals.lossRatio || 0};--pulse-dur:${pulseDur}s">
       <title>${escapeAttr(titleText)}</title>
+      ${renderTokenHitTarget(u)}
       ${vitalAdornment(u, vitals, intent)}
       ${actionAdornment(u, intent)}
       <g class="unit-symbol">${tokenShape(u, phaseData, f, 0, 0, heading, intent)}</g>
       ${spriteMarkup}
-      <text x="0" y="${labelY}" text-anchor="middle" fill="${f.colorLight}" font-family="var(--mono)" font-size="${isNavalUnit(u) ? 14 : 15}" class="unit-label">
+      <text x="0" y="${labelY}" text-anchor="middle" fill="${f.colorLight}" font-family="var(--mono)" font-size="${isNavalUnit(u) ? 11 : 15}" class="unit-label">
         ${u.name.length > 20 ? u.name.slice(0, 18) + '…' : u.name}
       </text>
       ${strengthBadge(0, 0, u, vitals)}
@@ -864,7 +908,7 @@ export function renderUnits(animationUnits) {
     if (!animationUnits.length) {
         nodes.forEach((el) => {
             const base = baseOpacity(el);
-            el.style.opacity = String(Math.max(0.12, base * 0.26));
+            el.style.opacity = String(Math.max(0.58, base * 0.72));
             el.classList.add('is-muted');
             el.classList.remove('is-active');
         });
@@ -890,7 +934,7 @@ export function renderUnits(animationUnits) {
             el.classList.add('is-active');
             el.classList.remove('is-muted');
         } else {
-            el.style.opacity = String(Math.max(0.12, base * 0.3));
+            el.style.opacity = String(Math.max(0.58, base * 0.72));
             el.classList.add('is-muted');
             el.classList.remove('is-active');
         }

@@ -3,9 +3,19 @@
 // Ünite anchor'ları, rota polyline'ları ve kaynak izlenebilirliği
 // ══════════════════════════════════════════════════════════════
 
-import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from './coordinate-map.js?v=20260407-manual-r1';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from './coordinate-map.js?v=20260523-markers-r2';
+import { resolveCampaignMovement } from './campaign-movement.js?v=20260523-markers-r2';
 
 export const HISTORICAL_SOURCES = {
+    'peter-hart-gallipoli-2011': {
+        id: 'peter-hart-gallipoli-2011',
+        title: 'Peter Hart — Gallipoli (Profile Books, 2011)',
+        url: 'https://www.profilebooks.com/title/gallipoli/',
+        type: 'campaign-history',
+        dateRange: '1914-11-03/1916-01-09',
+        confidence: 'high',
+        note: 'Birincil anlatı kaynağı; birim hareketleri, çıkarmalar, Kirte ve Ağustos taarruzları kronolojisi (campaign-movement.js rehberinin temeli).'
+    },
     'national-archives-map-series': {
         id: 'national-archives-map-series',
         title: 'The National Archives — Gallipoli Campaign map series',
@@ -94,11 +104,11 @@ const LOC = {
     tuzgolu: { x: 1172, y: 1575 },
     kirectepe: { x: 1285, y: 1449 },
     anafartalar: { x: 1264, y: 1622 },
-    bigali: { x: 1314, y: 1762 },
+    bigali: { x: 1473, y: 1888 },
     conkbayiri: { x: 1236, y: 1744 },
     ariburnu: { x: 1246, y: 1788 },
     kabatepe: { x: 1199, y: 1919 },
-    eceabat: { x: 1404, y: 1958 },
+    eceabat: { x: 1437, y: 2004 },
     kilitbahir: { x: 1451, y: 2091 },
     bogaz: { x: 1475, y: 2103 },
     canakkale: { x: 1508, y: 2102 },
@@ -146,7 +156,7 @@ export const HISTORICAL_ROUTES = [
     {
         id: 'hms-queen-elizabeth-naval-approach',
         unitIds: ['hms-queen-elizabeth'],
-        start: '1914-11-03',
+        start: '1915-02-19',
         end: '1915-03-18',
         kind: 'route',
         confidence: 'medium',
@@ -180,7 +190,7 @@ export const HISTORICAL_ROUTES = [
     {
         id: 'suffren-naval-approach-damage',
         unitIds: ['suffren'],
-        start: '1914-11-03',
+        start: '1915-02-19',
         end: '1915-03-18',
         kind: 'route',
         confidence: 'medium',
@@ -214,7 +224,7 @@ export const HISTORICAL_ROUTES = [
     {
         id: 'bouvet-erenkoy-turn',
         unitIds: ['bouvet'],
-        start: '1914-11-03',
+        start: '1915-02-19',
         end: '1915-03-18',
         kind: 'route',
         confidence: 'high',
@@ -232,7 +242,7 @@ export const HISTORICAL_ROUTES = [
     {
         id: 'irresistible-erenkoy-mine-strike',
         unitIds: ['hms-irresistible'],
-        start: '1914-11-03',
+        start: '1915-02-19',
         end: '1915-03-18',
         kind: 'route',
         confidence: 'high',
@@ -244,13 +254,13 @@ export const HISTORICAL_ROUTES = [
             { x: 860, y: 2720 },
             { x: 1010, y: 2580 },
             { x: 1164, y: 2542 },
-            { x: 1216, y: 2468 }
+            { x: 1226, y: 2369 }
         ]
     },
     {
         id: 'ocean-rescue-mine-strike',
         unitIds: ['hms-ocean'],
-        start: '1914-11-03',
+        start: '1915-02-19',
         end: '1915-03-18',
         kind: 'route',
         confidence: 'high',
@@ -262,7 +272,7 @@ export const HISTORICAL_ROUTES = [
             { x: 900, y: 2760 },
             { x: 1050, y: 2650 },
             { x: 1220, y: 2540 },
-            { x: 1335, y: 2490 }
+            { x: 1273, y: 2410 }
         ]
     },
     {
@@ -454,14 +464,14 @@ export const HISTORICAL_ANCHORS = [
 
     { id: '7-tumen-seddulbahir-defense', unitId: '7-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'frontline', side: 'ottoman', confidence: 'medium', tolerance: 260, point: LOC.seddulbahir, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Güney yarımada kıyı savunması.' },
     { id: '7-tumen-v-beach-defense', unitId: '7-tumen', start: '1915-04-25', end: '1915-06-30', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 220, point: { x: 1033, y: 2399 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir V/W Beach savunması.' },
-    { id: '7-tumen-alcitepe-line', unitId: '7-tumen', start: '1915-07-01', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: LOC.alcitepe, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Helles/Alçıtepe savunma hattı.' },
+    { id: '7-tumen-alcitepe-line', unitId: '7-tumen', start: '1915-07-01', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1225, y: 2285 }, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Helles/Alçıtepe savunma hattı.' },
 
-    { id: '9-tumen-kilitbahir-defense', unitId: '9-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'frontline', side: 'ottoman', confidence: 'medium', tolerance: 260, point: LOC.kilitbahir, sourceIds: ['national-archives-map-series', 'dardanelles-defences-1915'], note: 'Boğaz ve güney tahkimat savunması.' },
+    { id: '9-tumen-kilitbahir-defense', unitId: '9-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'frontline', side: 'ottoman', confidence: 'medium', tolerance: 260, point: { x: 1375, y: 2135 }, sourceIds: ['national-archives-map-series', 'dardanelles-defences-1915'], note: 'Boğaz ve güney tahkimat savunması; Müstahkem Mevki komuta düğümünden ayrı savunma sektörü.' },
     { id: '9-tumen-helles-line', unitId: '9-tumen', start: '1915-04-25', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1060, y: 2325 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir/Kirte savunması.' },
 
     { id: '5-tumen-eceabat-reserve', unitId: '5-tumen', start: '1914-11-03', end: '1915-04-24', kind: 'inferred', confidence: 'medium', tolerance: 280, point: LOC.eceabat, sourceIds: ['national-archives-map-series', 'anzac-portal-gallipoli-maps'], note: 'Eceabat-Maydos güney savunma rezervi.' },
     { id: '5-tumen-seddulbahir-line', unitId: '5-tumen', start: '1915-04-25', end: '1915-06-30', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1080, y: 2320 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Seddülbahir/Kirte muharebe hattı.' },
-    { id: '5-tumen-kirte-line', unitId: '5-tumen', start: '1915-07-01', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: LOC.kirte, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Kirte/Alçıtepe siper hattı.' },
+    { id: '5-tumen-kirte-line', unitId: '5-tumen', start: '1915-07-01', end: '1916-01-09', kind: 'frontline', side: 'ottoman', confidence: 'high', tolerance: 260, point: { x: 1148, y: 2328 }, sourceIds: ['anzac-portal-gallipoli-maps'], note: 'Kirte/Alçıtepe siper hattı.' },
 
     { id: '29-div-x-beach-landing', unitId: '29-div', start: '1915-04-25', end: '1915-04-28', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 220, point: LOC.xBeach, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'X Beach/İkiz Koyu ayrı çıkarma noktası; V/W Beach ve River Clyde hattını tamamlayan Helles inişi.' },
     { id: '29-div-helles-front', unitId: '29-div', start: '1915-04-29', end: '1915-12-31', kind: 'frontline', side: 'allied', confidence: 'high', tolerance: 260, point: { x: 1039, y: 2325 }, sourceIds: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'], note: 'Helles köprübaşı ve Kirte yönü.' },
@@ -564,6 +574,13 @@ export function getHistoricalAnchorForUnit(unitId, isoDate) {
 export function getHistoricalPlacementForUnit(unitOrId, isoDate) {
     const unitId = typeof unitOrId === 'string' ? unitOrId : unitOrId?.id;
     if (!unitId || !isoDate) return null;
+
+    // ── ÖNCELİK 0: Kampanya Hareket Rehberi ("mekke") ──
+    // Birim bu günü kapsayan sürekli keyframe zaman çizelgesine sahipse,
+    // yumuşak interpolasyonlu konum buradan gelir (gün-gün akıcı hareket).
+    // Kapsam dışıysa null döner ve aşağıdaki eski anchor/route katmanına düşülür.
+    const guided = resolveCampaignMovement(unitId, isoDate);
+    if (guided && guided.point) return guided;
 
     const exactAnchor = HISTORICAL_ANCHORS.find((anchor) => anchor.unitId === unitId && anchor.exactDate === isoDate);
     if (exactAnchor) {

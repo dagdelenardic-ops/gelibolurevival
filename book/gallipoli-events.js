@@ -205,8 +205,8 @@ export const BOOK_WEEKLY_GUIDE = [
     "startIso": "1915-03-23",
     "endIso": "1915-03-29",
     "label": "23-29 Mart 1915",
-    "title": "5. Ordu'nun Kuruluşu",
-    "narration": "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı.",
+    "title": "5. Ordu Kuruluş Haftası",
+    "narration": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı.",
     "importance": "major"
   },
   {
@@ -8775,9 +8775,9 @@ export const BOOK_PHASE_EVENTS = [
   {
     "id": "event-0141",
     "src": "index_split_009.html",
-    "title": "5. Ordu'nun Kuruluşu · Haftalık Bağ",
+    "title": "5. Ordu Kuruluş Haftası · Haftalık Bağ",
     "titleEn": "4 Plans: Countdown to Disaster",
-    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 23 Mart'ta 5",
+    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
     "date": "23 Mart 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -8786,7 +8786,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
       "state": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
-      "weekly": "23 Mart'ta 5"
+      "weekly": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -8853,9 +8853,9 @@ export const BOOK_PHASE_EVENTS = [
   {
     "id": "event-0142",
     "src": "index_split_009.html",
-    "title": "5. Ordu'nun Kuruluşu · Haftalık Bağ",
+    "title": "5. Ordu Kuruluş Haftası · Haftalık Bağ",
     "titleEn": "4 Plans: Countdown to Disaster",
-    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
+    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
     "date": "24 Mart 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -8864,7 +8864,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
       "state": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
-      "weekly": "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
+      "weekly": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -8931,9 +8931,9 @@ export const BOOK_PHASE_EVENTS = [
   {
     "id": "event-0143",
     "src": "index_split_009.html",
-    "title": "5. Ordu'nun Kuruluşu · Haftalık Bağ",
+    "title": "5. Ordu Kuruluş Haftası · Haftalık Bağ",
     "titleEn": "4 Plans: Countdown to Disaster",
-    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
+    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
     "date": "25 Mart 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -8942,7 +8942,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
       "state": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
-      "weekly": "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
+      "weekly": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -9009,9 +9009,9 @@ export const BOOK_PHASE_EVENTS = [
   {
     "id": "event-0144",
     "src": "index_split_009.html",
-    "title": "5. Ordu'nun Kuruluşu · EPUB Kaydı",
+    "title": "5. Ordu Kuruluş Haftası · EPUB Kaydı",
     "titleEn": "4 Plans: Countdown to Disaster",
-    "narration": "Açık Olay: 26 Mart 1915 günü EPUB kaydı Planlar: Felaketin Eşiği safhasına ait açık tarihli bir kayıt içeriyor. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
+    "narration": "Açık Olay: 26 Mart 1915 günü EPUB kaydı Planlar: Felaketin Eşiği safhasına ait açık tarihli bir kayıt içeriyor. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
     "date": "26 Mart 1915",
     "type": "explicit",
     "dayType": "explicit",
@@ -9020,7 +9020,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "26 Mart 1915 günü EPUB kaydı Planlar: Felaketin Eşiği safhasına ait açık tarihli bir kayıt içeriyor.",
       "state": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
-      "weekly": "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
+      "weekly": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -9089,9 +9089,9 @@ export const BOOK_PHASE_EVENTS = [
   {
     "id": "event-0145",
     "src": "index_split_009.html",
-    "title": "5. Ordu'nun Kuruluşu · Haftalık Bağ",
+    "title": "5. Ordu Kuruluş Haftası · Haftalık Bağ",
     "titleEn": "4 Plans: Countdown to Disaster",
-    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
+    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
     "date": "27 Mart 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -9100,7 +9100,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
       "state": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
-      "weekly": "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
+      "weekly": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -9167,9 +9167,9 @@ export const BOOK_PHASE_EVENTS = [
   {
     "id": "event-0146",
     "src": "index_split_009.html",
-    "title": "5. Ordu'nun Kuruluşu · Haftalık Bağ",
+    "title": "5. Ordu Kuruluş Haftası · Haftalık Bağ",
     "titleEn": "4 Plans: Countdown to Disaster",
-    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
+    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
     "date": "28 Mart 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -9178,7 +9178,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
       "state": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
-      "weekly": "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
+      "weekly": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",
@@ -9245,9 +9245,9 @@ export const BOOK_PHASE_EVENTS = [
   {
     "id": "event-0147",
     "src": "index_split_009.html",
-    "title": "5. Ordu'nun Kuruluşu · Haftalık Bağ",
+    "title": "5. Ordu Kuruluş Haftası · Haftalık Bağ",
     "titleEn": "4 Plans: Countdown to Disaster",
-    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
+    "narration": "Açık Olay: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Operasyon Durumu: Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı. | Haftalık Bağlam: 24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı",
     "date": "29 Mart 1915",
     "type": "anchored",
     "dayType": "anchored",
@@ -9256,7 +9256,7 @@ export const BOOK_PHASE_EVENTS = [
     "detailParts": {
       "explicit": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
       "state": "Denizden zorlamadan kara harekâtı hazırlığına geçildi; çıkarma kuvvetleri toplandı.",
-      "weekly": "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
+      "weekly": "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı"
     },
     "evidenceCodes": [
       "WEEKLY_PLAN_USER",

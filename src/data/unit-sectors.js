@@ -15,6 +15,7 @@
 
 import { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } from './historical-map-data.js?v=20260523-markers-r2';
 import { getCanonicalPosition } from './canonical-positions.js?v=20260523-markers-r2';
+import { resolveCampaignMovement } from './campaign-movement.js?v=20260523-markers-r2';
 
 /**
  * Reserve/karargâh sayılan arka alan noktaları.
@@ -118,6 +119,22 @@ function classifyByCanonicalFallback(unitId, isoDate) {
  *       → anchor yok; engine fallback'a düşsün.
  */
 export function classifyUnitSector(unitId, isoDate) {
+    // ── ÖNCELİK 0: Kampanya Hareket Rehberi ("mekke") ──
+    // Rehber bu günü kapsıyorsa birim harita-üstü (locked) sayılır; reserve
+    // gate'i bu günü gizlemez. Pozisyon getHistoricalPlacementForUnit içinde
+    // aynı rehberden gelir, böylece sınıflandırma ile konum tutarlı kalır.
+    const guided = resolveCampaignMovement(unitId, isoDate);
+    if (guided && guided.point) {
+        return {
+            kind: 'locked',
+            source: 'movement',
+            sourceIds: guided.sourceIds || [],
+            note: guided.note || '',
+            confidence: guided.confidence || 'medium',
+            anchorId: guided.routeId || guided.id
+        };
+    }
+
     const route = findActiveRoute(unitId, isoDate);
     if (route) {
         return {

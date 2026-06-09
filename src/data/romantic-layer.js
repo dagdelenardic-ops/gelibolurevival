@@ -111,7 +111,7 @@ export const ROMANTIC_ENTRIES = [
         type: 'witness',
         faction: 'ottoman',
         source: 'Enis Şahin, cephe raporları',
-        text: 'İtilaf donanmasının %35\'i kaybedildi. Bouvet, Irresistible ve Ocean batırıldı. Bu, bölgedeki deniz savaşlarının en büyüğüydü. Türk topçuları, kıyı bataryalarından durmaksızın ateş etti.',
+        text: 'İtilaf taarruz hattı ağır darbe aldı: Bouvet, Irresistible ve Ocean batırıldı; Gaulois ve Inflexible ağır hasar aldı. Bu, bölgedeki deniz savaşlarının en büyüğüydü. Türk topçuları, kıyı bataryalarından durmaksızın ateş etti.',
         emoji: '💥',
     },
 
@@ -256,11 +256,12 @@ export const ROMANTIC_ENTRIES = [
 
     // ─── ANAFARTALAR VE CONKBAYIRI ───
     {
-        startDate: '1915-08-06',
-        endDate: '1915-08-15',
+        startDate: '1915-08-10',
+        endDate: '1915-08-10',
         type: 'anecdote',
         faction: 'ottoman',
         source: 'Enis Şahin',
+        priority: 4,
         text: 'Conkbayırı\'nda göğsüne doğru gelen bir şarapnel parçası, Mustafa Kemal\'in annesinin hediye ettiği saati parçaladı. Saat onu ölümden kurtardı. O saati daha sonra Liman von Sanders Paşa\'ya hediye edecekti.',
         emoji: '⌚',
     },
@@ -361,21 +362,32 @@ export const ROMANTIC_ENTRIES = [
     // ─── TAHLİYE DÖNEMİ ───
     {
         startDate: '1915-12-07',
-        endDate: '1915-12-20',
+        endDate: '1915-12-19',
         type: 'quote',
         faction: 'ottoman',
         source: 'Albay Mustafa Kemal, 10 Aralık 1915',
         text: 'Mustafa Kemal, Müttefiklerin çekileceğinden kuşku duymadı ve son bir saldırıyla hepsini denize dökmeyi önerdi. Üst komutanlar: "Boşuna harcayacak bir kuvvetimiz, hatta bir erimiz yoktur." Kemal bunun üzerine görevinden istifa etti.',
         emoji: '🚪',
     },
+    {
+        startDate: '1915-12-20',
+        endDate: '1915-12-20',
+        type: 'witness',
+        faction: 'allied',
+        source: 'Tahliye kayıtları',
+        priority: 4,
+        text: 'Arıburnu ve Anafartalar tahliyesi tamamlandı: 83.000 asker, 186 top ve 1.700 at neredeyse fark ettirmeden çekildi. Aylarca kanla alınamayan siperler, bir gecede sessizleşti.',
+        emoji: '🌒',
+    },
 
     // ─── SON TAHLİYE ───
     {
-        startDate: '1916-01-04',
+        startDate: '1916-01-09',
         endDate: '1916-01-09',
         type: 'witness',
         faction: 'ottoman',
         source: 'Enis Şahin',
+        priority: 4,
         text: 'Sabaha karşı 03.30: Cesarettepe\'deki iki lağımın patlatılmasından çıkan gürültü, İngiliz birliklerinin yarımadayı terk ettiğini Türklere hissettirdi. 433 günlük savaş sona ermişti.',
         emoji: '🌅',
     },
@@ -385,7 +397,7 @@ export const ROMANTIC_ENTRIES = [
         type: 'spirit',
         faction: 'ottoman',
         source: 'Enis Şahin',
-        text: '"Bu savaşın en önemli kazancı Çanakkale Ruhu\'nu ortaya çıkarmasıdır ki, bu ruh, Millî Mücadele\'de Türk Milleti\'nin en önemli silahlarından birisi olacaktır." Toplam kayıp: Türk 213.882, İtilaf ~410.000.',
+        text: '"Bu savaşın en önemli kazancı Çanakkale Ruhu\'nu ortaya çıkarmasıdır ki, bu ruh, Millî Mücadele\'de Türk Milleti\'nin en önemli silahlarından birisi olacaktır." Toplam kayıp: Osmanlı ~250.000, İtilaf ~250.000.',
         emoji: '🇹🇷',
     },
 
@@ -500,6 +512,7 @@ export const ROMANTIC_ENTRIES = [
         type: 'witness',
         faction: 'ottoman',
         source: 'Nazmi Bey Günlüğü, 18 Mart 1915',
+        priority: 4,
         text: 'Saat 13:58 — Bouvet, Erenköy hattındaki mayına çarptı. Nazmi Bey anlatısında patlama ve geminin çok kısa sürede batışı öne çıkar; kayıp sayısı kaynaklara göre değişmekle birlikte modern özetlerde yaklaşık 640 olarak verilir.',
         emoji: '💥',
     },
@@ -511,6 +524,7 @@ export const ROMANTIC_ENTRIES = [
         type: 'witness',
         faction: 'ottoman',
         source: 'Nazmi Bey Günlüğü, 18 Mart 1915',
+        priority: 3,
         text: 'Saat 16:14: HMS Irresistible mayına çarptı. Saat 18:05: Onu kurtarmaya gelen HMS Ocean da aynı mayın hattına girdi. Nazmi Bey: "Akşam karanlığında Ocean da yan yattı. İki büyük İngiliz zırhlısı daha Erenköy\'ün sularına gömüldü."',
         emoji: '⚓',
     },
@@ -634,11 +648,20 @@ export function getRomanticEntries(isoDate) {
 export function getRandomRomanticEntry(isoDate) {
     const entries = getRomanticEntries(isoDate);
     if (entries.length === 0) return null;
+    const highestPriority = Math.max(...entries.map((entry) => entry.priority || 0));
+    const priorityEntries = entries.filter((entry) => (entry.priority || 0) === highestPriority);
+    const spanDays = (entry) => {
+        const start = new Date(`${entry.startDate}T00:00:00Z`);
+        const end = new Date(`${entry.endDate}T00:00:00Z`);
+        return Math.max(0, Math.round((end - start) / 86400000));
+    };
+    const shortestSpan = Math.min(...priorityEntries.map(spanDays));
+    const candidates = priorityEntries.filter((entry) => spanDays(entry) === shortestSpan);
     // Deterministik seçim: tarih string'inin basit hash'i
     let hash = 0;
     for (let i = 0; i < isoDate.length; i++) {
         hash = ((hash << 5) - hash) + isoDate.charCodeAt(i);
         hash |= 0;
     }
-    return entries[Math.abs(hash) % entries.length];
+    return candidates[Math.abs(hash) % candidates.length];
 }

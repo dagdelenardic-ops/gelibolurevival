@@ -10,8 +10,10 @@
  * Format: { unitId: [ { start, end, location, note? } ] }
  *
  * Kurallar:
- * - Harita-dışı (off-map) sentinel'leri — birim artık render edilmemeli,
+ * - Harita-dışı (off-map) sentinel'leri — birim render edilmemeli,
  *   ama semantik ayrı tutulur (panel/istatistik/anlatı için):
+ *     · `not-formed` = henüz kurulmadı / sahnede yok
+ *     · `not-deployed` = henüz harekât sahnesinde yok
  *     · `sunk`      = battı (Bouvet, Irresistible, Ocean)
  *     · `withdrawn` = tiyatrodan çekildi (QE denizaltı tehdidi, Suffren onarım)
  *     · `evacuated` = tahliye edildi (ANZAC, NZ Tugayı, IX Kolordusu)
@@ -25,7 +27,7 @@ export const CANONICAL_POSITIONS = {
 
     '5-ordu': [
         // Liman von Sanders 24 Mart'ta komutayı devralır, karargâh Gelibolu'da
-        { start: '1914-11-03', end: '1915-03-23', location: 'gelibolu', note: 'Henüz 5. Ordu kurulmadı, bölge müstahkem mevki komutanlığında' },
+        { start: '1914-11-03', end: '1915-03-23', location: 'not-formed', note: 'Henüz 5. Ordu kurulmadı; bölge müstahkem mevki komutanlığında' },
         { start: '1915-03-24', end: '1915-04-24', location: 'gelibolu', note: '5. Ordu kuruldu, Liman von Sanders komutayı devraldı' },
         { start: '1915-04-25', end: '1915-08-05', location: 'gelibolu', note: 'Ordu karargâhı Gelibolu kasabasında' },
         { start: '1915-08-06', end: '1916-01-09', location: 'gelibolu', note: 'Anafartalar dahil tüm cepheyi yönetiyor' },
@@ -110,21 +112,24 @@ export const CANONICAL_POSITIONS = {
 
     'hms-queen-elizabeth': [
         // Amiral de Robeck'in bayrak gemisi
-        { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz bombardımanları' },
+        { start: '1914-11-03', end: '1915-02-18', location: 'not-deployed', note: 'Boğaz harekât sahnesinde değil' },
+        { start: '1915-02-19', end: '1915-03-17', location: 'bogaz', note: 'Boğaz bombardımanları' },
         { start: '1915-03-18', end: '1915-05-12', location: 'bogaz', note: '18 Mart muharebesi, hasar almadı' },
         { start: '1915-05-13', end: '1916-01-09', location: 'withdrawn', note: 'Denizaltı tehdidi nedeniyle Akdenize çekildi (Mayıs 1915)' },
     ],
 
     'hms-irresistible': [
         // Captain Douglas Dent (Albay) komutasında
-        { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
+        { start: '1914-11-03', end: '1915-02-18', location: 'not-deployed', note: 'Boğaz harekât sahnesinde değil' },
+        { start: '1915-02-19', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Erenköy dönüş havzasında mayına çarptı' },
         { start: '1915-03-19', end: '1916-01-09', location: 'sunk', note: '18 Mart 1915\'te battı' },
     ],
 
     'hms-ocean': [
         // Captain (Albay) Hayes-Sadler komutasında
-        { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
+        { start: '1914-11-03', end: '1915-02-18', location: 'not-deployed', note: 'Boğaz harekât sahnesinde değil' },
+        { start: '1915-02-19', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Irresistible\'ı kurtarmaya çalışırken Erenköy mayın hattında mayına çarptı' },
         { start: '1915-03-19', end: '1916-01-09', location: 'sunk', note: '18 Mart 1915\'te battı' },
     ],
@@ -138,14 +143,16 @@ export const CANONICAL_POSITIONS = {
 
     'bouvet': [
         // Fransız donanması
-        { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
+        { start: '1914-11-03', end: '1915-02-18', location: 'not-deployed', note: 'Boğaz harekât sahnesinde değil' },
+        { start: '1915-02-19', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart — Erenköy Koyu dönüşünde Nusret mayınına çarptı, 2 dakikada battı' },
         { start: '1915-03-19', end: '1916-01-09', location: 'sunk', note: '18 Mart 1915\'te battı, yaklaşık 640 kayıp' },
     ],
 
     'suffren': [
         // Fransız donanması
-        { start: '1914-11-03', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
+        { start: '1914-11-03', end: '1915-02-18', location: 'not-deployed', note: 'Boğaz harekât sahnesinde değil' },
+        { start: '1915-02-19', end: '1915-03-17', location: 'bogaz', note: 'Boğaz operasyonları' },
         { start: '1915-03-18', end: '1915-03-18', location: 'erenkoyu', note: '18 Mart\'ta Erenköy dönüş bölgesinde ağır hasar aldı' },
         { start: '1915-03-19', end: '1915-04-24', location: 'bogaz', note: 'Ağır hasarlı halde Boğaz dışına çekildi, tamir edildi' },
         { start: '1915-04-25', end: '1916-01-09', location: 'withdrawn', note: 'Çanakkale\'den çekildi' },
@@ -160,7 +167,7 @@ export const CANONICAL_POSITIONS = {
         { start: '1915-04-25', end: '1915-04-28', location: 'x-beach', note: 'X Beach/İkiz Koyu ve V/W Beach çıkarmalarının ilk köprübaşı' },
         { start: '1915-04-29', end: '1915-06-30', location: 'seddulbahir', note: 'V Beach, W Beach ve Seddülbahir köprübaşı; River Clyde sonrası tutunma' },
         { start: '1915-07-01', end: '1915-12-31', location: 'seddulbahir', note: 'Helles cephesi' },
-        { start: '1916-01-01', end: '1916-01-09', location: 'seddulbahir', note: 'Son tahliye' },
+        { start: '1916-01-01', end: '1916-01-09', location: 'seddulbahir', note: 'Son tahliye — gece gizlice sahile çekiliyor (helles-final-evacuation rotası)' },
     ],
 
     'ix-corps': [
@@ -195,7 +202,7 @@ export const CANONICAL_POSITIONS = {
         // Fransız Doğu Seferi Kolordusu
         { start: '1915-04-25', end: '1915-04-27', location: 'kumkale', note: 'Kumkale çıkarması (taktik manevra)' },
         { start: '1915-04-28', end: '1915-12-31', location: 'seddulbahir', note: 'Seddülbahir\'e geçiş, Helles cephesi sağ kanat' },
-        { start: '1916-01-01', end: '1916-01-09', location: 'seddulbahir', note: 'Son tahliye' },
+        { start: '1916-01-01', end: '1916-01-09', location: 'seddulbahir', note: 'Son tahliye — gece gizlice sahile çekiliyor (helles-final-evacuation rotası)' },
     ],
 };
 
@@ -215,12 +222,13 @@ export function getCanonicalPosition(unitId, isoDate) {
     return null;
 }
 
-/** Harita-dışı (render edilmeyen) son-durum sentinel'leri */
-export const OFF_MAP_LOCATIONS = new Set(['sunk', 'withdrawn', 'evacuated']);
+/** Harita-dışı (render edilmeyen) sentinel'ler */
+export const OFF_MAP_LOCATIONS = new Set(['not-formed', 'not-deployed', 'sunk', 'withdrawn', 'evacuated']);
+const UNIT_END_STATES = new Set(['sunk', 'withdrawn', 'evacuated']);
 
 /**
- * Birim belirtilen tarihte haritadan çıkmış mı? (battı / çekildi / tahliye)
- * Üçü de render dışıdır; semantik ayrımı için getUnitEndState kullan.
+ * Birim belirtilen tarihte harita dışında mı? (kurulmadı / sahneye gelmedi / battı / çekildi / tahliye)
+ * Son-durum semantiği için getUnitEndState kullan.
  */
 export function isUnitOffMap(unitId, isoDate) {
     const pos = getCanonicalPosition(unitId, isoDate);
@@ -234,5 +242,5 @@ export function isUnitOffMap(unitId, isoDate) {
  */
 export function getUnitEndState(unitId, isoDate) {
     const pos = getCanonicalPosition(unitId, isoDate);
-    return pos && OFF_MAP_LOCATIONS.has(pos.location) ? pos.location : null;
+    return pos && UNIT_END_STATES.has(pos.location) ? pos.location : null;
 }

@@ -3,7 +3,7 @@
 // Explicit faz tanımları ve entity eligibility kuralları
 // ══════════════════════════════════════════════════════════════
 
-import { ENTITY_TYPES, isEntityAllowedInPhase } from '../data/entity-types.js';
+import { ENTITY_TYPES, isEntityAllowedInPhase } from '../data/entity-types.js?v=20260523-markers-r2';
 
 /**
  * 5 campaign fazı — ISO date range ile.

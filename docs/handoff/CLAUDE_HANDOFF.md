@@ -20,11 +20,15 @@ Yerel proje dizini:
 
 Yerel sunucu:
 
-`python3 -m http.server 4173 --bind 127.0.0.1`
+`npm run serve`
 
 Son açılan URL:
 
-`http://127.0.0.1:4173/?v=20260407-manual-r1`
+`http://127.0.0.1:4174/?date=1915-03-18`
+
+Yayın/sağlamlık kapısı:
+
+`npm run qa`
 
 Harita asset:
 
@@ -46,7 +50,7 @@ Bu raster 2451x3467 boyutunda. `src/data/coordinate-map.js` içinde `MAP_WIDTH =
 - Yer adı/tabya/sahne etiketi üstünden sürükleme.
 - Arama, filtre, X/Y sayısal giriş, nudge, seçileni ortala.
 - JSON kopyalama/indirme.
-- LocalStorage key en son `gelibolu-overlay-editor-v3-manual-r1`.
+- LocalStorage key en son `gelibolu-overlay-editor-v4-logic-r2`.
 
 2. Raster harita renderer'a alındı:
 
@@ -76,7 +80,7 @@ Kullanıcının verdiği son JSON'dan bazı anchor'lar buraya işlendi.
 
 5. Modül cache/version hattı birleştirildi:
 
-Birçok import `?v=20260407-manual-r1` hattına çekildi. Bunun nedeni, ESM query string yüzünden aynı modülün birden fazla kopya olarak yüklenmesiydi. Bu durum `BATTLE_DATA` bir kopyada hydrate edilirken renderer'ın başka bir kopyaya bakmasına yol açabiliyordu.
+Tüm yerel ES module import'ları aynı runtime sürüm query'sine çekildi. Bunun nedeni, ESM query string yüzünden aynı modülün birden fazla kopya olarak yüklenmesiydi. Bu durum `BATTLE_DATA` bir kopyada hydrate edilirken renderer'ın başka bir kopyaya bakmasına yol açabiliyordu. Güncel runtime sürümü `index.html` içindeki `src/app.js?v=...` değerinden okunmalı; elle dosya dosya değiştirmek yerine `npm run version:runtime -- <sürüm>` kullanılmalı.
 
 ## Kullanıcının Verdiği Son JSON'dan İşlenen Anchor'lar
 
@@ -215,7 +219,7 @@ Kullanıcının işi kolaylaşır:
 
 Editör eski localStorage koordinatlarını yeni default'ların üstüne yazabilir. Şu an key:
 
-`gelibolu-overlay-editor-v3-manual-r1`
+`gelibolu-overlay-editor-v4-logic-r2`
 
 Yeni denemede key'i artır veya localStorage'ı temizle.
 
@@ -225,9 +229,7 @@ Yeni denemede key'i artır veya localStorage'ı temizle.
 
 `node --check src/app.js src/data/battle-data.js src/data/geo-calibration.js src/engine/phase-engine.js src/engine/position-engine.js src/render/token-renderer.js src/render/effects-renderer.js src/render/map-renderer.js src/render/timeline-renderer.js src/render/animation-orchestrator.js src/ui/unit-panel.js src/ui/autoplay-controller.js src/ui/narration-panel.js src/ui/map-editor.js`
 
-Browser-oriented module import testi temiz geçti:
-
-`node --input-type=module -e "await Promise.all([import('./src/render/map-renderer.js?v=20260407-manual-r1'), import('./src/render/token-renderer.js?v=20260407-manual-r1'), import('./src/render/effects-renderer.js?v=20260407-manual-r1'), import('./src/render/timeline-renderer.js?v=20260407-manual-r1'), import('./src/ui/map-editor.js?v=20260407-manual-r1'), import('./src/engine/phase-engine.js?v=20260407-manual-r1'), import('./src/engine/position-engine.js?v=20260407-manual-r1')]); console.log('browser modules import ok')"`
+Browser-oriented module/import kontrolleri artık `npm run qa` içinde çalışıyor.
 
 Playwright MCP bu ortamda çalışmadı:
 

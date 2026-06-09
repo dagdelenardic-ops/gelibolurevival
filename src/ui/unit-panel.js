@@ -10,6 +10,7 @@ import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260523-mark
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260523-markers-r2';
 import { getUnitDossier } from '../data/unit-dossiers.js?v=20260523-markers-r2';
 import { getHistoricalSourcesForIds, HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260523-markers-r2';
+import { getUnitItinerary } from '../data/campaign-movement.js?v=20260523-markers-r2';
 
 /** Faksiyon banner rengi — desatüre askeri tonlar */
 function getFactionBanner(faction) {
@@ -124,9 +125,45 @@ function ensurePanelExtensions(panel) {
     if (!title) return;
     title.insertAdjacentHTML('afterend', `
         <section id="panelDossier" class="panel-dossier"></section>
+        <section id="panelItinerary" class="panel-itinerary"></section>
         <section id="panelEvidence" class="panel-evidence"></section>
         <section id="panelDossierMedia" class="panel-dossier-media"></section>
     `);
+}
+
+const TR_MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+function formatIsoShort(iso) {
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return iso || '';
+    return `${Number(m[3])} ${TR_MONTHS[Number(m[2]) - 1] || ''} ${m[1]}`;
+}
+
+const LEG_GLYPH = { march: '→', hold: '◧', land: '⚓' };
+
+/** Birimin tüm sefer güzergâhı (nereden→nereye, gerekçe, kaynak) — wiki bölümü */
+function renderItinerary(unitId, currentIso) {
+    const legs = getUnitItinerary(unitId);
+    if (!legs.length) return '';
+    const rows = legs.map((leg, i) => {
+        const next = legs[i + 1];
+        const active = currentIso && leg.iso <= currentIso && (!next || next.iso > currentIso);
+        const fromTo = leg.moved
+            ? `${escapeHtml(leg.fromLabel)} <span class="leg-arrow">→</span> ${escapeHtml(leg.toLabel)}`
+            : escapeHtml(leg.fromLabel);
+        const glyph = leg.retreat ? '↩' : (LEG_GLYPH[leg.kind] || '•');
+        return `<li class="itinerary-leg${active ? ' is-active' : ''}${leg.retreat ? ' is-retreat' : ''}${leg.naval ? ' is-naval' : ''}">
+            <span class="leg-date">${escapeHtml(formatIsoShort(leg.iso))}</span>
+            <span class="leg-glyph" aria-hidden="true">${glyph}</span>
+            <span class="leg-body">
+                <span class="leg-route">${fromTo}</span>
+                ${leg.event ? `<small class="leg-event">${escapeHtml(leg.event)}</small>` : ''}
+            </span>
+        </li>`;
+    }).join('');
+    return `
+        <div class="panel-section-title">Hareket Güzergâhı</div>
+        <ol class="itinerary-list">${rows}</ol>
+    `;
 }
 
 function confidenceLabel(value) {
@@ -223,10 +260,12 @@ export function showUnitPanel(u, d, phase, animData) {
     const intent = deriveUnitIntent(u, phase || null, d || null, animData || null);
     const dossier = getUnitDossier(u.id);
     const dossierEl = document.getElementById('panelDossier');
+    const itineraryEl = document.getElementById('panelItinerary');
     const evidenceEl = document.getElementById('panelEvidence');
     const mediaEl = document.getElementById('panelDossierMedia');
 
     if (dossierEl) dossierEl.innerHTML = renderDossier(dossier, u.description);
+    if (itineraryEl) itineraryEl.innerHTML = renderItinerary(u.id, String(phase?.isoStart || ''));
     if (evidenceEl) evidenceEl.innerHTML = renderEvidence(d || {});
     if (mediaEl) mediaEl.innerHTML = renderDossierMedia(dossier);
 
@@ -343,18 +382,12 @@ export function attachUnitClicks(getCurrentPhaseIndex) {
         });
     }
 
-    // Also bind clicks on tactical route groups (arrows) to open unit details!
+    // Also bind clicks on tactical route groups (arrows) AND daily movement
+    // trails (gün-gün hareket okları) to open unit details!
     const routesLayer = document.getElementById('layer-routes');
     if (routesLayer && routesLayer.dataset.clickBound !== '1') {
         routesLayer.dataset.clickBound = '1';
-        routesLayer.addEventListener('click', (ev) => {
-            const el = ev.target.closest('.tactical-route-group');
-            if (!el) return;
-            const routeId = el.dataset.routeId;
-            const route = HISTORICAL_ROUTES.find((r) => r.id === routeId);
-            if (!route || !route.unitIds.length) return;
-            // Open the panel for the first unit associated with this route
-            const unitId = route.unitIds[0];
+        const openForUnitId = (unitId) => {
             const unit = BATTLE_DATA.units.find((u) => u.id === unitId);
             if (!unit) return;
             const phase = BATTLE_DATA.phases[getCurrentPhaseIndex()];
@@ -362,6 +395,21 @@ export function attachUnitClicks(getCurrentPhaseIndex) {
             const currentIso = String(phase.isoStart || phase.date);
             const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso] || null;
             showUnitPanel(unit, phaseData, phase, animData);
+        };
+        routesLayer.addEventListener('click', (ev) => {
+            const trail = ev.target.closest('.unit-move-trail');
+            if (trail && trail.dataset.unitId) { openForUnitId(trail.dataset.unitId); return; }
+            const el = ev.target.closest('.tactical-route-group');
+            if (!el) return;
+            const route = HISTORICAL_ROUTES.find((r) => r.id === el.dataset.routeId);
+            if (route && route.unitIds.length) openForUnitId(route.unitIds[0]);
+        });
+        routesLayer.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Enter' && ev.key !== ' ') return;
+            const trail = ev.target.closest('.unit-move-trail');
+            if (!trail || !trail.dataset.unitId) return;
+            ev.preventDefault();
+            openForUnitId(trail.dataset.unitId);
         });
     }
 }

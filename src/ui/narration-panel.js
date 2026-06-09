@@ -3,12 +3,12 @@
 // Desktop'ta destek paneli, mobilde story-first bottom sheet
 // ══════════════════════════════════════════════════════════════
 
-import { getNarrationIcon } from '../data/icon-registry.js';
-import { getRandomRomanticEntry } from '../data/romantic-layer.js';
-import { getEventImage } from '../data/event-images.js';
-import { getEventVideo } from '../data/event-videos.js';
-import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260508-sprint-r1';
-import { getGuidedCampaignChapter } from '../data/guided-campaign.js';
+import { getNarrationIcon } from '../data/icon-registry.js?v=20260523-markers-r2';
+import { getRandomRomanticEntry } from '../data/romantic-layer.js?v=20260523-markers-r2';
+import { getEventImage } from '../data/event-images.js?v=20260523-markers-r2';
+import { getEventVideo } from '../data/event-videos.js?v=20260523-markers-r2';
+import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260523-markers-r2';
+import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260523-markers-r2';
 
 const isMobileNarration = typeof window !== 'undefined' && window.innerWidth <= 768;
 const MOBILE_VIEW_MODES = ['story', 'story+map', 'map-focus'];
@@ -250,11 +250,11 @@ function updateRomanticQuote(isoDate) {
     el.innerHTML = `<div class="romantic-header"><span class="romantic-emoji">${entry.emoji || '📜'}</span><span class="romantic-label">${typeLabels[entry.type] || 'Kayıt'}</span></div><div class="romantic-text">${entry.text}</div><div class="romantic-source">— ${entry.source}</div>`;
 }
 
-/** Tarihsel olay görselini güncelle — { hasImage, context } döner */
+/** Tarihsel olay görselini güncelle — { hasImage, context, preferStill } döner */
 let lastImageUrl = '';
 function updateEventImage(isoDate) {
     const el = document.getElementById('eventImage');
-    if (!el) return { hasImage: false, context: '' };
+    if (!el) return { hasImage: false, context: '', preferStill: false };
 
     const img = getEventImage(isoDate);
     if (!img) {
@@ -263,30 +263,30 @@ function updateEventImage(isoDate) {
             el.innerHTML = '';
             lastImageUrl = '';
         }
-        return { hasImage: false, context: '' };
+        return { hasImage: false, context: '', preferStill: false };
     }
 
     if (img.url === lastImageUrl) {
-        return { hasImage: true, context: img.context || '' };
+        return { hasImage: true, context: img.context || '', preferStill: Boolean(img.preferStill) };
     }
     lastImageUrl = img.url;
 
     el.style.display = 'block';
     const posStyle = img.cropFocus ? ` style="object-position:${img.cropFocus}"` : '';
     el.innerHTML = `<img src="${img.url}" alt="${img.caption}" class="event-image-photo" loading="lazy" referrerpolicy="no-referrer"${posStyle} onerror="this.parentElement.style.display='none'"><div class="event-image-caption">${img.caption}</div><div class="event-image-source">${img.source}</div>`;
-    return { hasImage: true, context: img.context || '' };
+    return { hasImage: true, context: img.context || '', preferStill: Boolean(img.preferStill) };
 }
 
 /** Gerçek görüntü videosunu güncelle */
 let lastVideoFile = '';
-function updateEventVideo(hasImage, campaignPhaseId, animData) {
+function updateEventVideo(hasImage, campaignPhaseId, animData, preferStill = false, isoDate = '') {
     const el = document.getElementById('eventVideo');
     if (!el) return;
 
     const eventType = animData?.eventType || 'IDLE';
     const intensity = animData?.intensity ?? 0;
 
-    if (hasImage && intensity < 7) {
+    if (hasImage && (preferStill || intensity < 7)) {
         if (lastVideoFile) {
             el.style.display = 'none';
             el.innerHTML = '';
@@ -295,7 +295,7 @@ function updateEventVideo(hasImage, campaignPhaseId, animData) {
         return;
     }
 
-    const clip = getEventVideo(campaignPhaseId, eventType, intensity);
+    const clip = getEventVideo(campaignPhaseId, eventType, intensity, isoDate || animData?.date || '');
 
     if (!clip) {
         if (lastVideoFile) {
@@ -347,7 +347,7 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
     updatePriorityBadge(phase.mobilePriority);
 
     const imageResult = updateEventImage(phase.isoStart || '');
-    updateEventVideo(imageResult.hasImage, campaignPhaseId, animData);
+    updateEventVideo(imageResult.hasImage, campaignPhaseId, animData, imageResult.preferStill, phase.isoStart || '');
 
     const detailText = getDetailText(clean, weeklyContext);
     const summaryText = cleanText(phase.mobileSummary || imageResult.context || clean || weeklyContext);

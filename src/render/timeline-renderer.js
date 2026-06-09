@@ -3,9 +3,9 @@
 // Timeline UI oluşturma, aktif marker yönetimi
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { normalizeDateText } from '../engine/date-utils.js';
-import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260508-sprint-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { normalizeDateText } from '../engine/date-utils.js?v=20260523-markers-r2';
+import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260523-markers-r2';
 
 const isMobileTimeline = typeof window !== 'undefined' && window.innerWidth <= 768;
 
@@ -98,7 +98,14 @@ export function updateTimelineActiveState(currentPhaseIndex) {
 
 /** Aktif marker'ı görünür alana kaydır */
 export function focusActiveTimelineMarker() {
-    const marker = document.querySelector('.phase-marker.active, .story-chapter-marker.active');
-    if (!marker || typeof marker.scrollIntoView !== 'function') return;
-    marker.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    const marker = document.querySelector('.timeline .phase-marker.active');
+    if (marker && typeof marker.scrollIntoView === 'function') {
+        marker.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+
+    const storyMarker = document.querySelector('.story-chapter-strip .story-chapter-marker.active');
+    const strip = storyMarker?.closest('.story-chapter-strip');
+    if (!storyMarker || !strip || typeof strip.scrollTo !== 'function') return;
+    const left = storyMarker.offsetLeft - ((strip.clientWidth - storyMarker.offsetWidth) / 2);
+    strip.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
 }

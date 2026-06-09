@@ -3,26 +3,26 @@
 // Terrain, çakışma ve label sorunlarını ölçen geliştirici aracı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { ENTITY_TYPES } from '../data/entity-types.js';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { MAP_SCENE_LABELS, calibrationReport } from '../data/geo-calibration.js?v=20260508-sprint-r1';
-import { getTerrainAtPoint, clampToAllowedTerrain, waitForTerrainSampler } from '../data/terrain-zones.js';
-import { isUnitOffMap, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js';
+import { BATTLE_DATA, getMapLocationById } from '../data/battle-data.js?v=20260523-markers-r2';
+import { ENTITY_TYPES } from '../data/entity-types.js?v=20260523-markers-r2';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260523-markers-r2';
+import { MAP_SCENE_LABELS, calibrationReport } from '../data/geo-calibration.js?v=20260523-markers-r2';
+import { getTerrainAtPoint, clampToAllowedTerrain, waitForTerrainSampler } from '../data/terrain-zones.js?v=20260523-markers-r2';
+import { isUnitOffMap, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js?v=20260523-markers-r2';
 import {
     getHistoricalDataDiagnostics,
     getHistoricalPlacementForUnit,
     getHistoricalSourcesForIds
-} from '../data/historical-map-data.js?v=20260407-manual-r1';
-import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260508-sprint-r1';
+} from '../data/historical-map-data.js?v=20260523-markers-r2';
+import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260523-markers-r2';
 import {
     enforceCorridorSeparation,
     getClusterOffset,
     getNarrativeNavalPosition,
     getTerrainSafePointForUnit,
     isDestroyedPhaseData
-} from './position-engine.js?v=20260508-sprint-r1';
-import { resolveCampaignPhase } from './campaign-state-machine.js';
+} from './position-engine.js?v=20260523-markers-r2';
+import { resolveCampaignPhase } from './campaign-state-machine.js?v=20260523-markers-r2';
 
 const COLLISION_RADIUS = 64;
 const NAVAL_COLLISION_RADIUS = 86;

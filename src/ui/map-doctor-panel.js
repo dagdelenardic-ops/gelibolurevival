@@ -3,7 +3,7 @@
 // ?doctor=1 ile çalışan geliştirici yerleşim kalite paneli
 // ══════════════════════════════════════════════════════════════
 
-import { runMapDoctor } from '../engine/map-doctor.js?v=20260430-doctor-r2';
+import { runMapDoctor } from '../engine/map-doctor.js?v=20260523-markers-r2';
 
 const MAX_RENDERED_ISSUES = 80;
 const MARKER_LIMIT = 120;

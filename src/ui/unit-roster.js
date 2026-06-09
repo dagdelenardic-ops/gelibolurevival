@@ -3,9 +3,9 @@
 // Lists active rendered units while playback is paused.
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { showUnitPanel } from './unit-panel.js?v=20260508-sprint-r1';
-import { listReserveUnitsForIso } from '../data/unit-sectors.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { showUnitPanel } from './unit-panel.js?v=20260523-markers-r2';
+import { listReserveUnitsForIso } from '../data/unit-sectors.js?v=20260523-markers-r2';
 
 let rosterRoot = null;
 let rosterBound = false;
@@ -40,7 +40,7 @@ function ensureRosterRoot() {
     rosterRoot.innerHTML = `
         <div class="unit-roster-header">
             <div>
-                <span class="unit-roster-kicker">Pause Roster</span>
+                <span class="unit-roster-kicker">Duraklatma Listesi</span>
                 <strong id="unitRosterTitle">Aktif Birlikler</strong>
             </div>
             <button type="button" class="unit-roster-close" data-roster-action="close" aria-label="Birlik listesini kapat">×</button>

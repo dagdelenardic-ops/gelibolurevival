@@ -3,8 +3,8 @@
 // Adaptive hız: major fazlar 6s, minor fazlar 2.5s, narration uzunluğuna göre ek süre
 // ══════════════════════════════════════════════════════════════
 
-import { isMajorPhase } from '../engine/phase-engine.js?v=20260508-sprint-r1';
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
+import { isMajorPhase } from '../engine/phase-engine.js?v=20260523-markers-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 const MINOR_INTERVAL = isMobile ? 4000 : 3500;
@@ -64,14 +64,14 @@ function getAdaptiveInterval(phaseIndex) {
     if (!phase) return MINOR_INTERVAL;
 
     if (Number.isFinite(phase.autoplayHoldMs)) {
-        return isMobile ? phase.autoplayHoldMs : Math.max(1200, Math.round(phase.autoplayHoldMs * 0.95));
+        return Math.max(2500, isMobile ? phase.autoplayHoldMs : Math.round(phase.autoplayHoldMs * 0.95));
     }
 
     const iso = phase.isoStart || '';
 
     // Sessiz dönemlerde hızlı ama okunabilir geç (fotoğraflar ve bağlam görünsün)
     if (isQuietPeriod(iso)) {
-        return isMobile ? 1200 : 800;
+        return isMobile ? 3000 : 2500;
     }
 
     const major = isMajorPhase(phase);
@@ -79,7 +79,7 @@ function getAdaptiveInterval(phaseIndex) {
     // Sessiz dönemden çıkışta kademeli yavaşlama (ani 500ms→5s atlama yok)
     // Şubat 19 – Mart 15: orta hız (geçiş dönemi)
     if (!major && iso >= '1915-02-19' && iso <= '1915-03-15') {
-        return isMobile ? 3000 : 1800;
+        return isMobile ? 3000 : 2500;
     }
 
     const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;

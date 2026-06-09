@@ -1,13 +1,52 @@
-# 📌 PIN — Eve gelince buradan devam et
+# PIN — Devam Noktası
 
 ## Hızlı başlangıç
 ```bash
 cd /Users/gurursonmez/Downloads/gelibolurevival
-npx serve -l 8915 --no-clipboard
+npm run serve
 ```
-Sonra aç:
-- **Kalibrasyon stüdyosu** → http://localhost:8915/assets/calibrate.html
-- **Ana uygulama** → http://localhost:8915/
+
+Standart uygulama adresi:
+
+- Ana uygulama → http://127.0.0.1:4174/
+- Kritik test tarihi → http://127.0.0.1:4174/?date=1915-03-18
+- Kalibrasyon stüdyosu → http://127.0.0.1:4174/assets/calibrate.html
+
+## Yayın kapısı
+
+```bash
+npm run predeploy
+```
+
+Bu komut syntax, runtime import/version sözleşmeleri, asset sözleşmeleri,
+tarihsel sözleşmeler, repo hijyeni, kritik tarih matrisi, harita veri kapıları,
+sektör doğrulaması, HTTP smoke, deploy sözleşmesi ve `git diff --check`
+adımlarını tek seferde çalıştırır.
+
+Preview deploy:
+
+```bash
+npm run deploy:preview
+```
+
+Production deploy:
+
+```bash
+npm run deploy:prod
+```
+
+Runtime cache sürümünü elle dosya dosya değiştirme:
+
+```bash
+npm run version:runtime -- 20260523-logic-r3
+npm run qa
+```
+
+## Güncel karar
+
+Yeni tarihsel içerik, yeni UI veya yeni animasyon eklemeden önce `npm run qa`
+yeşil olmalı. Bundan sonra "devam" akışı rastgele hata avı değil; düşen kalite
+kapısını düzeltme ve aynı hata sınıfını kapıya bağlama akışı.
 
 ## Ne yapıldı (bu oturum)
 1. **`src/data/geo-calibration.js`** yeniden yazıldı

@@ -3,8 +3,8 @@
 // Faksiyonlar, askeri birimler, savaş fazları, konum bilgileri
 // ══════════════════════════════════════════════════════════════
 
-import { GEO_LOCATIONS } from './geo-calibration.js?v=20260508-sprint-r1';
-import { getDefaultVisualProfileId } from './unit-visual-profiles.js';
+import { GEO_LOCATIONS } from './geo-calibration.js?v=20260523-markers-r2';
+import { getDefaultVisualProfileId } from './unit-visual-profiles.js?v=20260523-markers-r2';
 
 export const BATTLE_DATA = {
     factions: {
@@ -38,35 +38,35 @@ export const BATTLE_DATA = {
             entityType: "infantry_unit", unitClass: "army_hq", side: "ottoman", anchorRegion: "gelibolu",
             commander: "Mareşal Liman von Sanders", strength: 84000,
             description: "Çanakkale Yarımadası'nın tüm savunmasını yöneten karargâh. Alman Mareşal Liman von Sanders Mart 1915'te Falkenhayn'ın emriyle komutayı devraldı ve savunma planını kökten yeniden örgütledi: büyük yedek kuvvetler oluşturdu, yarımada içi ulaşımı güçlendirdi, İtilaf'ın olası çıkarma noktalarını tahmin etmeye çalıştı. Bağlı kuvvetler: 3. Kolordu (Esat Paşa, 25.000), Çanakkale Müstahkem Mevki (Cevat Paşa, 20.000). Gelibolu kasabasında karargâh kurdu; tüm kara ve deniz savunması buradan koordine edildi. Von Sanders, 25 Nisan'da ANZAC'ın Arıburnu'na çıkacağını önceden tahmin edemedi — bu büyük eleştiri konusu oldu.",
-            phases: { "naval-assault": { x: 1095, y: 1785, status: "savunma", objective: "Tüm yarımada savunmasını yönet", outcome: "Deniz harekâtını başarıyla püskürttü" } }
+            phases: { "naval-assault": { x: 1473, y: 1888, status: "savunma", objective: "Tüm yarımada savunmasını yönet", outcome: "Deniz harekâtını başarıyla püskürttü" } }
         },
         {
             id: "3-kolordu", name: "3. Kolordu", faction: "ottoman", type: "kolordu",
             entityType: "infantry_unit", unitClass: "corps", side: "ottoman", anchorRegion: "conkbayiri",
             commander: "Tümg. Esat Paşa", strength: 25000,
             description: "Gelibolu Yarımadası'nın kuzey ve orta sektörlerini savunan ana kara kuvveti. Tümgeneral Esat Paşa komutasında Bigalı'da karargâh kurdu. 19. Tümen'i (Mustafa Kemal) ve birden fazla müstakil alayı bünyesinde barındırdı. Arıburnu-Conkbayırı cephesinin tüm savunma koordinasyonu Esat Paşa'nın elindeydi. En kritik kararı: 25 Nisan sabahı Mustafa Kemal'e müstakil hareket yetkisi tanımak — bu karar Arıburnu'ndaki zaferin temelini attı. Tüm kampanya boyunca Bigalı karargâhından hem Arıburnu hem Conkbayırı cepheleri koordine edildi.",
-            phases: { "naval-assault": { x: 1015, y: 1800, status: "savunma", objective: "Bigalı'da yarımada genelini savun", outcome: "Deniz saldırısını püskürttü" } }
+            phases: { "naval-assault": { x: 1473, y: 1888, status: "savunma", objective: "Bigalı'da yarımada genelini savun", outcome: "Deniz saldırısını püskürttü" } }
         },
         {
             id: "19-tumen", name: "19. Tümen", faction: "ottoman", type: "tümen",
             entityType: "infantry_unit", unitClass: "division", side: "ottoman", anchorRegion: "ariburnu",
             commander: "Yrb. Mustafa Kemal", strength: 9000,
             description: "Gelibolu'nun kaderini değiştiren efsanevi tümen. Kasım 1914'ten Nisan 1915'e Bigalı'da yedek olarak bekledi; 25 Nisan sabahı çıkarma haberi üzerine Mustafa Kemal derhal 57. Alayı öne sürdü. 'Size taarruzu değil, ölmeyi emrediyorum' emriyle başlayan karşı taarruz Conkbayırı'nı saatlerce tuttu. İlk günde tüm cephane tükennce Kemal 'süngü tak, yere yat' emrini verdi. 19 Mayıs 1915 Osmanlı genel taarruzunda ağır kayıplar vererek tümen yeniden yapılandı. Ağustos 1915'te Kemal Anafartalar Grup Komutanı olarak terfi etti. Kampanya boyunca üç kez yeniden yapılandırılan 19. Tümen, Gelibolu'nun en yıpratıcı muharebe birliğidir.",
-            phases: { "naval-assault": { x: 1045, y: 1845, status: "hazır", objective: "Bigalı'da yedek kuvvet olarak bekle", outcome: "Karaya çıkışa karşı hazır bekledi" } }
+            phases: { "naval-assault": { x: 1473, y: 1888, status: "hazır", objective: "Bigalı'da yedek kuvvet olarak bekle", outcome: "Karaya çıkışa karşı hazır bekledi" } }
         },
         {
             id: "57-alay", name: "57. Alay", faction: "ottoman", type: "piyade",
             entityType: "infantry_unit", unitClass: "regiment", side: "ottoman", anchorRegion: "ariburnu",
             commander: "Yrb. Hüseyin Avni Bey", strength: 3000,
             description: "19. Tümen komutanı Mustafa Kemal'in 25 Nisan 1915 sabahı 57. Alay'a verdiği \"Ben size taarruzu emretmiyorum, ölmeyi emrediyorum!\" emri, Türk askeri tarihinin en ünlü sözüdür. Alay, Yarbay Hüseyin Avni Bey komutasında 19. Tümen'in öncü birliği olarak Conkbayırı'na koşturdu; ilk günde subay kadrosunun büyük bölümü şehit düştü, Hüseyin Avni Bey de muharebeyi hayatta tamamlayamadı. Alay yüksek kayıplara rağmen ANZAC'ı günün sonuna kadar durdurdu. Şehitlerine saygı olarak 57. Alay'ın numarası sonraki Osmanlı ve Türk ordularında bir daha verilmedi — bu gelenek bugün Türk Silahlı Kuvvetleri'nde sürmektedir.",
-            phases: { "naval-assault": { x: 990, y: 1850, status: "hazır", objective: "Bigalı'da emir bekle", outcome: "25 Nisan taarruzu için hazır" } }
+            phases: { "naval-assault": { x: 1473, y: 1888, status: "hazır", objective: "Bigalı'da emir bekle", outcome: "25 Nisan taarruzu için hazır" } }
         },
         {
             id: "27-alay", name: "27. Alay", faction: "ottoman", type: "piyade",
             entityType: "infantry_unit", unitClass: "regiment", side: "ottoman", anchorRegion: "ariburnu",
             commander: "Yrb. Şefik Aker", strength: 3000,
             description: "19. Tümen'in diğer ana alayı, Arıburnu çıkarmasında Osmanlı savunmasının ilk temas noktasıydı. 25 Nisan'da ANZAC kuvvetleri kıyıya ayak basmadan önce sahil gözcüleri alarma geçirdi ve 27. Alay Yarbay Şefik Aker komutasında bölgeye süratle yönlendirildi. Üstün ANZAC ateş gücüne rağmen alay, kıyı şeridinde tutunmayı uzun süre engelledi. Kampanya boyunca Arıburnu-Conkbayırı sektöründe görev yaptı. Ağustos 1915 Conkbayırı taarruzunda da cephe savunmasında kritik mevzileri savundu.",
-            phases: { "naval-assault": { x: 1080, y: 2040, status: "hazır", objective: "Eceabat bölgesinde savunma", outcome: "Çıkarmaya karşı hazır konumda" } }
+            phases: { "naval-assault": { x: 1437, y: 2004, status: "hazır", objective: "Eceabat bölgesinde savunma", outcome: "Çıkarmaya karşı hazır konumda" } }
         },
         {
             id: "mustahkem-mevki", name: "Çanakkale Müstahkem Mevki Komutanlığı", faction: "ottoman", type: "kolordu",
@@ -94,7 +94,7 @@ export const BATTLE_DATA = {
             entityType: "infantry_unit", unitClass: "division", side: "ottoman", anchorRegion: "seddulbahir",
             commander: "Alb. Hasan Askeri Bey", strength: 10000,
             description: "Eceabat-Maydos bölgesinden başlayıp güney cephesine uzanan savunma hattında 7. ve 9. Tümenlerle birlikte görev yaptı. Albay Hasan Askeri Bey komutasında Kirte (Krithia) bölgesinde İngiliz ve Fransız kuvvetlerine karşı üç büyük Kirte taarruzunu durdurdu (Nisan-Haziran 1915). Bu muharebeler tümenin en ağır kayıplarını verdiği dönem oldu. Güney cephesinin tamamen siper savaşına dönüştüğü süreçte Hasan Askeri Bey'in savunma hattı düzeni bölgenin tutulmasında belirleyici rol oynadı.",
-            phases: { "naval-assault": { x: 1404, y: 1958, status: "savunma", objective: "Eceabat-Maydos bölgesinde savunma", outcome: "Kıyı savunma hattını destekledi" } }
+            phases: { "naval-assault": { x: 1437, y: 2004, status: "savunma", objective: "Eceabat-Maydos bölgesinde savunma", outcome: "Kıyı savunma hattını destekledi" } }
         },
 
         // ── OSMANLI DENİZ ──
@@ -183,7 +183,7 @@ export const BATTLE_DATA = {
             id: "bouvet", name: "Bouvet", faction: "french", type: "deniz",
             entityType: "ship", unitClass: "ship", side: "allied", anchorRegion: "bogaz",
             commander: "Kaptan Rageot de la Touche", strength: 721,
-            description: "18 Mart 1915 saat 13:58'de Nusret'in Erenköy hattındaki mayına çarparak yaklaşık 2 dakikada batan Fransız zırhlısı. Bouvet kaybı kaynaklara göre değişir; Osmanlı/Nazmi Bey anlatısında 721 mürettebattan 66 kurtulan verilirken, modern özetlerde kayıp çoğunlukla yaklaşık 640 olarak aktarılır. Kesin olan: Bouvet'in batışı, o günkü İtilaf kayıplarının en ağırıdır.",
+            description: "18 Mart 1915 saat 13:58'de Nusret'in Erenköy hattındaki mayına çarparak yaklaşık 2 dakikada batan Fransız zırhlısı. Bouvet kaybı kaynaklara göre değişir; bu model 721 kişilik mürettebat içinde yaklaşık 640 kayıp ve yaklaşık 80 kurtulan kabul eder. Kesin olan: Bouvet'in batışı, o günkü İtilaf kayıplarının en ağırıdır.",
             phases: { "naval-assault": { x: 1250, y: 2410, status: "taarruz", objective: "Osmanlı tabyalarını sustur", outcome: "Mayına çarparak battı – yaklaşık 640 kayıp" } }
         },
         {

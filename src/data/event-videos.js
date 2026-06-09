@@ -32,11 +32,11 @@ const VIDEO_CLIPS = {
 const PHASE_CLIPS = {
     // Deniz Harekâtı (Kasım 1914 – Nisan 1915)
     naval: {
-        BOMBARDMENT: ['bombardiman', 'cikarma-teknesi'],
+        BOMBARDMENT: ['bombardiman'],
         COMBAT:      ['bombardiman'],
-        NAVAL_PATROL:['cikarma-teknesi', 'asker-gecit'],
-        IDLE:        ['asker-gecit', 'kara-lojistik'],
-        _default:    ['bombardiman', 'cikarma-teknesi', 'asker-gecit'],
+        NAVAL_PATROL:['bombardiman'],
+        IDLE:        [],
+        _default:    ['bombardiman'],
     },
     // Kara Çıkarması (Nisan – Mayıs 1915)
     landing: {
@@ -70,31 +70,41 @@ const PHASE_CLIPS = {
     },
 };
 
-let lastClipId = null;
+function stableIndex(seed, length) {
+    if (!length) return 0;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+        hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash) % length;
+}
+
+function getPool(phaseClips, eventType) {
+    if (phaseClips[eventType]) return phaseClips[eventType];
+    return phaseClips._default || [];
+}
 
 /**
  * Kampanya fazı ve olay tipine göre uygun video klibini seç.
  * @param {string} campaignPhaseId - 'naval' | 'landing' | 'inland_combat' | 'stalemate' | 'evacuation'
  * @param {string} eventType - 'BOMBARDMENT' | 'COMBAT' | 'LANDING' | etc.
  * @param {number} intensity - 0-10
+ * @param {string} seedKey - tarih/faz anahtarı; aynı gün aynı klibi verir
  * @returns {{ file: string, desc: string } | null}
  */
-export function getEventVideo(campaignPhaseId, eventType, intensity) {
+export function getEventVideo(campaignPhaseId, eventType, intensity, seedKey = '') {
     // Düşük yoğunluklu olaylarda video gösterme
     if (intensity < 5) return null;
 
     const phaseClips = PHASE_CLIPS[campaignPhaseId];
     if (!phaseClips) return null;
 
-    const pool = phaseClips[eventType] || phaseClips._default;
+    const pool = getPool(phaseClips, eventType);
     if (!pool || !pool.length) return null;
 
-    // Son gösterilen klibi tekrarlama
-    let candidates = pool.filter(id => id !== lastClipId);
-    if (!candidates.length) candidates = pool;
-
-    const clipId = candidates[Math.floor(Math.random() * candidates.length)];
-    lastClipId = clipId;
+    const seed = `${seedKey || campaignPhaseId}:${eventType}:${intensity}`;
+    const clipId = pool[stableIndex(seed, pool.length)];
 
     const clip = VIDEO_CLIPS[clipId];
     return clip ? { file: clip.file, desc: clip.desc } : null;

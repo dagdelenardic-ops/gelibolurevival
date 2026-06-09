@@ -3,12 +3,12 @@
 // Base raster hariç tüm görünür harita katmanlarını yerleştirme aracı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260407-manual-r1';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260508-sprint-r1';
-import { hideUnitPanel } from './unit-panel.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260523-markers-r2';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260523-markers-r2';
+import { hideUnitPanel } from './unit-panel.js?v=20260523-markers-r2';
 
-const STORAGE_KEY = 'gelibolu-overlay-editor-v3-manual-r1';
+const STORAGE_KEY = 'gelibolu-overlay-editor-v4-logic-r2';
 const EXPORT_FILENAME = 'gelibolu-overlay-placements.json';
 
 const TYPE_LABELS = {

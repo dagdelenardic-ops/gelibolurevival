@@ -1,5 +1,5 @@
-const fs = require('fs');
-const { execSync } = require('child_process');
+import * as fs from 'node:fs';
+import { execSync } from 'node:child_process';
 
 const epubPath = process.argv[2] || 'book/Peter Hart - Gallipoli (2011, Profile Books Ltd) - libgen.li.epub';
 const outPath = process.argv[3] || 'book/gallipoli-events.js';
@@ -240,7 +240,7 @@ const CANONICAL_WEEKLY_GUIDE = [
   { startIso: '1915-03-02', title: 'Mayın Tarama Dönemi', narration: 'İtilaf donanması mayın tarama ve boğaz geçiş hazırlıklarını sürdürdü.', importance: 'minor' },
   { startIso: '1915-03-09', title: '18 Mart Deniz Muharebesi', narration: "18 Mart'ta büyük deniz saldırısı Nusret mayınları ve sahil topçusuyla durduruldu.", importance: 'major' },
   { startIso: '1915-03-16', title: 'Deniz Harekâtı Çöküşü', narration: "18 Mart yenilgisi sonrası İtilaf denizden zorlama planını geri çekti.", importance: 'major' },
-  { startIso: '1915-03-23', title: "5. Ordu'nun Kuruluşu", narration: "23 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı.", importance: 'major' },
+  { startIso: '1915-03-23', title: '5. Ordu Kuruluş Haftası', narration: "24 Mart'ta 5. Ordu kuruldu; Liman von Sanders komutayı devraldı.", importance: 'major' },
   { startIso: '1915-03-30', title: 'Bigalı Konuşlanması', narration: "Mart sonu - Nisan başında savunma güçlendirildi; Mustafa Kemal'in 19. Tümeni Bigalı'ya yerleşti.", importance: 'major' },
   { startIso: '1915-04-06', title: 'Çıkarma Öncesi Son Hazırlık', narration: 'İtilaf kuvvetleri çıkarma öncesi lojistik ve mevzi keşiflerini yoğunlaştırdı.', importance: 'minor' },
   { startIso: '1915-04-13', title: 'İhtiyat Düzeni', narration: "15 Nisan civarında Osmanlı ihtiyat birlikleri kritik karşı taarruz noktalarına kaydırıldı.", importance: 'major' },

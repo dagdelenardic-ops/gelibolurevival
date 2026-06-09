@@ -4,13 +4,13 @@
 // Çalıştırma:
 //   node scripts/verify-sectors.mjs
 //
-// Loader hook ile `?v=...` query string'lerini soyar (kodun esas imports'unu
+// Loader hook ile `?v=20260523-markers-r2` query string'lerini soyar (kodun esas imports'unu
 // dokunmadan test edebilmek için).
 
 import { register } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
-// Inline ES module loader hook: ?v=... query'lerini kaldır
+// Inline ES module loader hook: ?v=20260523-markers-r2 query'lerini kaldır
 const stripQueryLoader = `
 export async function resolve(specifier, context, nextResolve) {
     const cleaned = specifier.replace(/\\?v=[^&]+/g, '');
@@ -19,12 +19,17 @@ export async function resolve(specifier, context, nextResolve) {
 `;
 register(`data:text/javascript,${encodeURIComponent(stripQueryLoader)}`, pathToFileURL('./'));
 
-const { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } = await import('../src/data/historical-map-data.js');
+const { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } = await import('../src/data/historical-map-data.js?v=20260523-markers-r2');
 const {
     classifyUnitSector,
     isReserveAnchor,
     listReserveUnitsForIso
-} = await import('../src/data/unit-sectors.js');
+} = await import('../src/data/unit-sectors.js?v=20260523-markers-r2');
+const {
+    CANONICAL_POSITIONS,
+    getCanonicalPosition,
+    OFF_MAP_LOCATIONS
+} = await import('../src/data/canonical-positions.js?v=20260523-markers-r2');
 
 // Battle data normalde geo-calibration ve ona bağlı tüm zinciri çeker, ki
 // onlar tarayıcı API'lerine bağımlı olabilir. Burada birim ID'leri manuel
@@ -56,6 +61,21 @@ const KEY_DATES = [
     { iso: '1916-01-09', label: 'Helles tahliyesi (son gün)' }
 ];
 
+function getUnitAvailabilityNote(unitId, isoDate) {
+    const canon = getCanonicalPosition(unitId, isoDate);
+    if (canon && OFF_MAP_LOCATIONS.has(canon.location)) {
+        return canon.note || canon.location;
+    }
+
+    const segments = CANONICAL_POSITIONS[unitId];
+    if (!Array.isArray(segments) || !segments.length) return '';
+    const firstStart = segments[0]?.start;
+    const lastEnd = segments[segments.length - 1]?.end;
+    if (firstStart && isoDate < firstStart) return 'Henüz harekât sahnesinde değil';
+    if (lastEnd && isoDate > lastEnd) return 'Kanonik aralık dışında';
+    return '';
+}
+
 console.log('\n══════════════════════════════════════════════════════════');
 console.log(' GELIBOLU REVIVAL — Sektör Sınıflandırma Doğrulaması');
 console.log('══════════════════════════════════════════════════════════\n');
@@ -82,12 +102,15 @@ for (const { iso, label } of KEY_DATES) {
     console.log(`\n[${iso}] ${label}`);
     const onMap = [];
     const reserve = [];
+    const inactive = [];
     const unknown = [];
 
     for (const unit of LAND_UNITS) {
         const sector = classifyUnitSector(unit.id, iso);
         if (!sector) {
-            unknown.push(unit);
+            const availabilityNote = getUnitAvailabilityNote(unit.id, iso);
+            if (availabilityNote) inactive.push({ unit, availabilityNote });
+            else unknown.push(unit);
         } else if (sector.kind === 'reserve') {
             reserve.push({ unit, sector });
         } else if (sector.kind === 'locked') {
@@ -106,6 +129,13 @@ for (const { iso, label } of KEY_DATES) {
         console.log(`  İhtiyatta (off-map): ${reserve.length} birim`);
         reserve.forEach(({ unit, sector }) => {
             console.log(`    ◆ ${unit.name.padEnd(28)} → ${sector.locationLabel}`);
+        });
+    }
+
+    if (inactive.length) {
+        console.log(`  Harita dışında / sahnede değil: ${inactive.length} birim`);
+        inactive.forEach(({ unit, availabilityNote }) => {
+            console.log(`    ◇ ${unit.name.padEnd(28)} → ${availabilityNote}`);
         });
     }
 

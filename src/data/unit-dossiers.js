@@ -50,17 +50,17 @@ export const UNIT_DOSSIERS = {
     },
     '7-tumen': {
         unitId: '7-tumen',
-        summary: 'Seddülbahir güney savunmasının ana Osmanlı tümenlerinden biri. V/W Beach ve Alçıtepe hattında görünür olmalıdır.',
-        media: [{ type: 'image', url: `${P}/v-beach-river-clyde.jpg`, caption: 'V Beach ve River Clyde bağlamı', credit: 'Royal Museums Greenwich' }],
+        summary: 'Güney yarımada savunma kademesi. Aslen Saros/Bulair ihtiyatındaydı (Liman von Sanders kuzey çıkarması endişesiyle); Maidos üzerinden güneye kaydırılıp Helles/Alçıtepe siper savunmasını takviye etti. (V/W Beach ilk savunması 9. Tümen 26. Alay\'ındı.)',
+        media: [{ type: 'image', url: `${P}/v-beach-river-clyde.jpg`, caption: 'Helles güney cephesi bağlamı', credit: 'Royal Museums Greenwich' }],
         sourceRefs: ['anzac-portal-gallipoli-maps', 'national-archives-map-series'],
-        timelineNotes: ['25 Nisan V/W Beach savunması yüksek güvenli anchor ile izlenir.', 'Temmuz sonrası Alçıtepe hattına çekilir.']
+        timelineNotes: ['Saros/Bulair ihtiyatından güney sektöre intikal.', 'Temmuz sonrası Alçıtepe hattına çekilir.']
     },
     '9-tumen': {
         unitId: '9-tumen',
-        summary: 'Boğaz tahkimatı ve Helles savunması arasında duran Osmanlı tümeni. Kilitbahir-Seddülbahir ekseninde izlenir.',
-        media: [{ type: 'image', url: `${P}/ottoman-heavy-gun.jpg`, caption: 'Boğaz savunma topçusu', credit: 'Bundesarchiv / Wikimedia Commons' }],
+        summary: 'Güney sektörün asli savunucusu Osmanlı tümeni (Alb. Halil Sami Bey). 25 Nisan\'da 26. Alay V/W Beach ve Seddülbahir\'i savundu; 28 Nisan\'a kadar Seddülbahir-Kirte hattında İngiliz/Fransız köprübaşını çevreledi.',
+        media: [{ type: 'image', url: `${P}/v-beach-river-clyde.jpg`, caption: 'V Beach / Seddülbahir savunması', credit: 'Royal Museums Greenwich' }],
         sourceRefs: ['national-archives-map-series', 'dardanelles-defences-1915', 'anzac-portal-gallipoli-maps'],
-        timelineNotes: ['Deniz döneminde Kilitbahir hattı.', 'Kara döneminde Helles/Seddülbahir savunması.']
+        timelineNotes: ['25 Nisan: 26. Alay V/W Beach savunması; River Clyde\'a direniş.', '28 Nisan: Seddülbahir-Kirte hattı köprübaşı çevrelemesi.']
     },
     '5-tumen': {
         unitId: '5-tumen',

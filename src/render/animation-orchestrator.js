@@ -4,9 +4,10 @@
 // → eventType + intensity + unit states → zengin savaş animasyonları
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260508-sprint-r1';
-import { FRONTLINES } from '../data/frontlines.js?v=20260508-sprint-r1';
-import { getUnitVitals } from '../data/casualty-model.js';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { FRONTLINES } from '../data/frontlines.js?v=20260523-markers-r2';
+import { getUnitVitals } from '../data/casualty-model.js?v=20260523-markers-r2';
+import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260523-markers-r2';
 import {
     renderAdvanceArrow,
     renderRetreatArrow,
@@ -22,7 +23,7 @@ import {
     renderMineExplosion,
     renderCasualtyIndicator,
     renderEngagementContact,
-} from './animation-language.js';
+} from './animation-language.js?v=20260523-markers-r2';
 
 /**
  * Cephe adı → harita geometrisi eşleştirmesi.
@@ -67,6 +68,43 @@ const FACTION_COLORS = {
     anzac: '#27864a',
     french: '#7b4ea3',
 };
+
+/**
+ * Birim hareket izleri — bir birim O GÜN gerçekten yürüdüyse (prev→next yer
+ * değiştirme günlük-yürüyüş ölçeğindeyse) yönünü gösteren soluk ilerleme oku.
+ * Holding birimler (Δ≈0), ışınlanma ve sahneye giriş (>eşik) çizilmez.
+ * Belgesel "bu birim şu an nereye ilerliyor" ipucu; campaign-movement.js
+ * march legleri buradan görünür olur.
+ */
+export function renderUnitMovementTrails(prevPositions, nextPositions, units, currentIso = '') {
+    if (!prevPositions || !nextPositions) return '';
+    const list = Array.isArray(units) ? units : BATTLE_DATA.units;
+    let out = '';
+    for (const u of list) {
+        const prev = prevPositions[u.id];
+        const next = nextPositions[u.id];
+        if (!prev || !next) continue;
+        const dist = Math.hypot(next.x - prev.x, next.y - prev.y);
+        // Sadece günlük yürüyüş ölçeği: jitter (<16px) ve ışınlanma/giriş (>220px) hariç.
+        if (dist < 16 || dist > 220) continue;
+        const color = (BATTLE_DATA.factions[u.faction] && BATTLE_DATA.factions[u.faction].color) || '#8a8a8a';
+        // Geri çekilme legi (ör. NZ'nin Conkbayırı'ndan sürülmesi) soluk geri-çekilme
+        // oku; ileri hareket dolu ilerleme oku.
+        const leg = currentIso ? resolveCampaignMovement(u.id, currentIso) : null;
+        const arrow = leg && leg.retreat
+            ? renderRetreatArrow(prev, next, color)
+            : renderAdvanceArrow(prev, next, color);
+        // Ok'u tıklanabilir yap: birime ait kalın görünmez bir vuruş çizgisi +
+        // grup data-unit-id → tıklayınca o birimin wiki paneli açılır.
+        const tooltip = leg ? `${u.name}: ${leg.fromLabel || ''}${leg.toLabel && leg.toLabel !== leg.fromLabel ? ' → ' + leg.toLabel : ''}${leg.legEvent ? ' — ' + leg.legEvent : ''}` : u.name;
+        out += `<g class="unit-move-trail" data-unit-id="${u.id}" tabindex="0" role="button" aria-label="${String(tooltip).replace(/"/g, '&quot;')}" style="cursor:pointer">
+            <title>${String(tooltip).replace(/</g, '&lt;')}</title>
+            <line x1="${prev.x}" y1="${prev.y}" x2="${next.x}" y2="${next.y}" stroke="transparent" stroke-width="26" stroke-linecap="round"/>
+            ${arrow}
+        </g>`;
+    }
+    return out;
+}
 
 /** Frontline ID'den noktaları al */
 function getFrontlinePoints(frontlineId) {

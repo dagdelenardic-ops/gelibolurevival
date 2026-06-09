@@ -3,7 +3,7 @@
 // Cephe hatları, engagement corridors, kontrollü savaş efektleri
 // ══════════════════════════════════════════════════════════════
 
-import { FRONTLINES } from '../data/frontlines.js?v=20260508-sprint-r1';
+import { FRONTLINES } from '../data/frontlines.js?v=20260523-markers-r2';
 
 function stringSeed(value) {
     let h = 0;
@@ -27,8 +27,8 @@ export function renderFrontlines(campaignPhase, isoDate) {
     const container = document.getElementById('layer-zones') || document.getElementById('battleEffects');
     if (!container) return;
 
-    // Sadece inland_combat ve stalemate fazlarında frontline göster
-    if (!['inland_combat', 'stalemate'].includes(campaignPhase.id)) {
+    // Çıkarma günlerinden itibaren kara temas hatlarını göster.
+    if (!['landing', 'inland_combat', 'stalemate'].includes(campaignPhase.id)) {
         container.innerHTML = '';
         return;
     }

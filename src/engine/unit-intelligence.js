@@ -3,7 +3,7 @@
 // Faz ve animasyon verisinden birlik niyeti/odağı türetir
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, LOCATION_BY_ID, BASE_PHASE_ID } from '../data/battle-data.js?v=20260508-sprint-r1';
+import { BATTLE_DATA, LOCATION_BY_ID, BASE_PHASE_ID } from '../data/battle-data.js?v=20260523-markers-r2';
 
 export const ACTION_META = {
     defending: { label: 'Savunma hattında', badge: 'SAV', color: '#cdb67a' },
@@ -13,7 +13,8 @@ export const ACTION_META = {
     landing: { label: 'Çıkarma yapıyor', badge: 'CIK', color: '#7eaec8' },
     advancing: { label: 'İlerliyor', badge: 'ILR', color: '#c9a84c' },
     retreating: { label: 'Geri çekiliyor', badge: 'GER', color: '#9b7b7b' },
-    supporting: { label: 'Destek veriyor', badge: 'DST', color: '#a6a08f' }
+    supporting: { label: 'Destek veriyor', badge: 'DST', color: '#a6a08f' },
+    minelaying: { label: 'Mayın döşüyor', badge: 'MYN', color: '#8b3a3a' }
 };
 
 const FRONT_LOCATION_IDS = {
@@ -133,6 +134,7 @@ function deriveActionKey(unit, statusText, objectiveText, outcomeText, animUnit,
     const isBattery = unit.entityType === 'artillery_battery';
 
     if (/tahliye|geri cekil|geri cek|cekil/.test(haystack)) return 'retreating';
+    if (isShip && /mayin|döse|mine/.test(haystack)) return 'minelaying';
     if ((isShip || isBattery) && (eventType === 'bombardment' || animState === 'bombardment')) return 'bombarding';
     if (isShip && (/bombala|bombard|tabya|top atesi|yok et|sustur/.test(haystack) || animState === 'bombardment')) return 'bombarding';
     if (!isShip && !isBattery && /cikarma|karaya cik|sahile in/.test(haystack)) {

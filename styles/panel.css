@@ -323,7 +323,7 @@
     }
 }
 
-/* ── Pause Roster ── */
+/* ── Duraklatma Listesi ── */
 .unit-roster {
     position: fixed;
     left: 14px;
@@ -556,4 +556,163 @@
         width:auto;
         max-height:34vh
     }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Birim Detay Paneli — Hareket Güzergâhı (itinerary, wiki bölümü)
+   ══════════════════════════════════════════════════════════════ */
+.panel-itinerary { margin: 6px 0 4px; }
+.itinerary-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    border-left: 1px solid var(--border-light);
+}
+.itinerary-leg {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 6px 8px;
+    align-items: start;
+    padding: 6px 6px 6px 10px;
+    border-bottom: 1px solid rgba(58,56,48,.4);
+}
+.itinerary-leg.is-active {
+    background: rgba(192,184,152,.10);
+    border-left: 2px solid var(--accent);
+    margin-left: -1px;
+}
+.itinerary-leg .leg-date {
+    font-family: var(--mono);
+    font-size: .62rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    padding-top: 1px;
+}
+.itinerary-leg .leg-glyph { color: var(--accent); font-size: .8rem; line-height: 1; padding-top: 1px; }
+.itinerary-leg.is-naval .leg-glyph { color: var(--british-l); }
+.itinerary-leg.is-retreat .leg-glyph { color: var(--text-dim); }
+.itinerary-leg .leg-body { min-width: 0; }
+.itinerary-leg .leg-route { font-size: .74rem; color: var(--text); display: block; }
+.itinerary-leg .leg-route .leg-arrow { color: var(--accent); margin: 0 2px; }
+.itinerary-leg .leg-event { display: block; margin-top: 2px; color: var(--text-muted); font-size: .62rem; line-height: 1.4; }
+.itinerary-leg.is-active .leg-route { color: var(--accent-light); }
+
+/* ══════════════════════════════════════════════════════════════
+   Günlük Hareket Defteri (movement ledger)
+   ══════════════════════════════════════════════════════════════ */
+.movement-ledger {
+    position: fixed;
+    left: 14px;
+    bottom: 92px;
+    width: min(330px, 90vw);
+    z-index: 5;
+    font-family: var(--sans);
+    background: linear-gradient(195deg, rgba(26,28,24,.97), rgba(14,16,20,.97));
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    box-shadow: 0 14px 40px rgba(0,0,0,.5);
+    backdrop-filter: blur(6px);
+    overflow: hidden;
+}
+.ledger-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 12px;
+    background: linear-gradient(90deg, var(--red-dim), rgba(40,35,25,.5));
+    border: none;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.ledger-toggle-icon { color: var(--gold); }
+.ledger-toggle-label { flex: 1; text-align: left; }
+.ledger-toggle-count {
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 9px;
+    background: var(--accent-dim);
+    color: var(--bg);
+    font-size: .64rem;
+    font-weight: 700;
+    text-align: center;
+}
+.ledger-toggle-count:empty { display: none; }
+.ledger-toggle-chevron { transition: transform .25s ease; color: var(--text-muted); }
+.movement-ledger.is-collapsed .ledger-toggle-chevron { transform: rotate(-90deg); }
+.movement-ledger.is-collapsed .ledger-body { display: none; }
+.ledger-body { max-height: min(48vh, 460px); overflow-y: auto; }
+.ledger-date {
+    padding: 8px 12px 4px;
+    font-family: var(--mono);
+    font-size: .64rem;
+    color: var(--accent-light);
+    letter-spacing: .03em;
+}
+.ledger-group-title {
+    padding: 8px 12px 2px;
+    font-family: var(--mono);
+    font-size: .58rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--accent);
+}
+.ledger-group-title.is-muted { color: var(--text-dim); }
+.ledger-empty {
+    padding: 6px 12px 10px;
+    color: var(--text-muted);
+    font-size: .68rem;
+    line-height: 1.45;
+}
+.ledger-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 6px 8px;
+    align-items: start;
+    width: 100%;
+    padding: 7px 12px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(58,56,48,.35);
+    text-align: left;
+    cursor: pointer;
+    color: var(--text);
+}
+.ledger-row:hover, .ledger-row:focus-visible {
+    background: rgba(192,184,152,.10);
+    outline: none;
+}
+.ledger-dot {
+    width: 9px; height: 9px;
+    margin-top: 4px;
+    border-radius: 50%;
+    background: var(--unit-color, var(--accent));
+    box-shadow: 0 0 6px var(--unit-color, var(--accent));
+}
+.ledger-glyph { font-family: var(--mono); color: var(--accent); padding-top: 2px; font-size: .8rem; }
+.ledger-row.is-moving .ledger-glyph { color: var(--gold); }
+.ledger-row.is-retreat .ledger-glyph { color: var(--text-dim); }
+.ledger-main { min-width: 0; }
+.ledger-name { display: block; font-size: .73rem; font-weight: 600; }
+.ledger-tag { color: var(--british-l); font-size: .68rem; }
+.ledger-route { display: block; font-size: .68rem; color: var(--text-muted); margin-top: 1px; }
+.ledger-route .ledger-arrow { color: var(--gold); margin: 0 3px; }
+.ledger-route .ledger-from, .ledger-route .ledger-to { color: var(--text); }
+.ledger-route .ledger-hold { color: var(--text-dim); }
+.ledger-reason { display: block; margin-top: 2px; color: var(--text-dim); font-size: .6rem; line-height: 1.4; }
+
+@media(max-width:768px){
+    .movement-ledger {
+        left: 10px;
+        right: 10px;
+        bottom: 84px;
+        width: auto;
+    }
+    .ledger-body { max-height: 38vh; }
 }

@@ -10,7 +10,9 @@ const CAMPAIGN_STATS = {
     ottoman: {
         name: 'Osmanlı Devleti',
         deployed: 315000,
+        fatalityLabel: 'Dar askerî ölüm kaydı',
         killed: 56643,
+        fatalityNote: 'Geniş ölüm aralığı kaynak tanımına göre 66.000-86.692 olarak verilir.',
         wounded: 107007,
         missing: 11178,
         sick: 76000,
@@ -19,6 +21,7 @@ const CAMPAIGN_STATS = {
     allied: {
         name: 'İtilaf Devletleri',
         deployed: 489000,
+        fatalityLabel: 'Ölü',
         killed: 44092,
         wounded: 97037,
         missing: 12000,
@@ -103,7 +106,7 @@ function createPanel() {
                     </div>
                 `).join('')}
             </div>` : ''}
-            <div class="stats-source">Kaynak: Peter Hart, <em>Gallipoli</em> (2011); TDV İslam Ansiklopedisi</div>
+            <div class="stats-source">Kaynaklar: Peter Hart, <em>Gallipoli</em> (2011); Australian DVA / Anzac Portal kayıp tabloları; TDV İslam Ansiklopedisi</div>
         </div>
     `;
     document.body.appendChild(el);
@@ -129,7 +132,8 @@ function renderSide(side) {
         <div class="stats-side">
             <div class="stats-side-name" style="color:${side.color}">${side.name}</div>
             <div class="stats-row"><span>Sevk Edilen</span><span>${side.deployed.toLocaleString('tr-TR')}</span></div>
-            <div class="stats-row"><span>Şehit / Ölü</span><span>${side.killed.toLocaleString('tr-TR')}</span></div>
+            <div class="stats-row"><span>${side.fatalityLabel || 'Şehit / Ölü'}</span><span>${side.killed.toLocaleString('tr-TR')}</span></div>
+            ${side.fatalityNote ? `<div class="stats-note">${side.fatalityNote}</div>` : ''}
             <div class="stats-row"><span>Yaralı</span><span>${side.wounded.toLocaleString('tr-TR')}</span></div>
             <div class="stats-row"><span>Kayıp / Esir</span><span>${side.missing.toLocaleString('tr-TR')}</span></div>
             <div class="stats-row"><span>Hastalık / Sevk</span><span>${(side.sick || 0).toLocaleString('tr-TR')}</span></div>

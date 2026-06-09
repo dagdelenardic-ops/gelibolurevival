@@ -1,0 +1,24 @@
+{
+  "name": "gelibolu-revival",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 4174 --bind 127.0.0.1",
+    "qa": "node scripts/qa-full.mjs",
+    "qa:full": "node scripts/qa-full.mjs",
+    "qa:assets": "node scripts/check-asset-contracts.mjs",
+    "qa:contracts": "node scripts/check-runtime-contracts.mjs",
+    "qa:history": "node scripts/check-historical-contracts.mjs",
+    "qa:hygiene": "node scripts/check-repo-hygiene.mjs",
+    "qa:deploy": "node scripts/check-deploy-contracts.mjs",
+    "qa:matrix": "node scripts/qa-release-matrix.mjs",
+    "qa:http": "node scripts/qa-http-smoke.mjs",
+    "qa:map": "node scripts/qa-map-gates.mjs",
+    "qa:sectors": "node scripts/verify-sectors.mjs",
+    "predeploy": "npm run qa && npm run qa:deploy",
+    "deploy:preview": "npm run predeploy && vercel",
+    "deploy:prod": "npm run predeploy && vercel --prod",
+    "version:runtime": "node scripts/bump-runtime-version.mjs"
+  }
+}

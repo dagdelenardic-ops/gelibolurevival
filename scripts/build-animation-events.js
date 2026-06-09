@@ -1,5 +1,8 @@
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const inputPath = process.argv[2] || path.join(__dirname, '..', 'book', 'gallipoli-events.js');
 const outputPath = process.argv[3] || path.join(__dirname, '..', 'book', 'animation-events.json');
