@@ -54,6 +54,9 @@ function sampleHeight(u, v) {
     return (top + (bot - top) * ty);
 }
 function heightAtMap(x, y) { return sampleHeight(x / MAP_W, y / MAP_H) * ZSCALE; }
+const mapXfromW = (wx) => (wx / WORLD_W + 0.5) * MAP_W;
+const mapYfromW = (wz) => (wz / WORLD_H + 0.5) * MAP_H;
+function heightAtWorld(wx, wz) { return heightAtMap(mapXfromW(wx), mapYfromW(wz)); }
 
 // ── hypsometric color ramp (matches Blender terrain) ──
 function hypso(h) {
@@ -222,6 +225,19 @@ function tintMesh(obj, hex, intensity = 1) {
     });
 }
 
+// Gemi gövdesini tarafa göre hafifçe tonla (Osmanlı kırmızımsı, İtilaf mavi-gri) →
+// deniz muharebesinde kimin kim olduğu net okunur.
+function tintShip(obj, hex, faction) {
+    const fc = new THREE.Color(hex);
+    const amt = faction === 'ottoman' ? 0.4 : 0.28;
+    obj.traverse((n) => {
+        if (n.isMesh && n.material && n.material.color) {
+            n.material = n.material.clone();
+            n.material.color.lerp(fc, amt);
+        }
+    });
+}
+
 function makeToken(unit) {
     const group = new THREE.Group();
     const tpl = models[modelForUnit(unit)];
@@ -233,6 +249,7 @@ function makeToken(unit) {
         model.scale.setScalar(scale);
         model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.material = n.material.clone(); } });
         if (modelForUnit(unit) === 'flag') tintMesh(model, factionColor(unit.faction));
+        else if (modelForUnit(unit) === 'battleship') tintShip(model, factionColor(unit.faction), unit.faction);
         group.add(model);
     } else {
         model = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 6),
@@ -260,6 +277,12 @@ function isWaterUnit(unit) { return unit.entityType === 'ship' || unit.entityTyp
 let minefield = null;
 const fx = [];                 // aktif patlama/duman partikülleri
 let smokeTex = null;
+
+// ── Muharebe koreografisi: tracer mermi yayları, namlu alevi, isabet, gemi izi ──
+const projectiles = [];
+let tracerTex = null, wakeTex = null;
+const combat = { active: false, naval: false, intensity: 0, pairs: [], fireTimer: 0, salvoIdx: 0 };
+const sideOf = (f) => (f === 'ottoman' ? 'ottoman' : 'allied');
 const TR = (s) => String(s || '').toLowerCase()
     .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
 
@@ -314,6 +337,9 @@ function updateFX(dt) {
         if (f.kind === 'flash') {
             f.sprite.scale.setScalar(0.1 + u * 0.9);
             f.sprite.material.opacity = (1 - u) * 0.9;
+        } else if (f.kind === 'wake') {
+            f.sprite.scale.setScalar(0.35 + u * 1.05);
+            f.sprite.material.opacity = (1 - u) * 0.4;
         } else {
             f.sprite.scale.setScalar(0.2 + u * 1.4);
             f.sprite.position.y += dt * 0.5;
@@ -326,11 +352,105 @@ function updateFX(dt) {
     }
 }
 
-function isSunk(unit, phase) {
-    if (!isWaterUnit(unit)) return false;
-    const pd = unit.phases?.[phase?.id];
-    const txt = TR((pd?.status || '') + ' ' + (pd?.outcome || ''));
-    return /(batt|batir|batik|sunk|imha|kayb|hasar agir)/.test(txt);
+// ── Namlu alevi (ateş açan birimde kısa parlama) ──
+function spawnMuzzle(pos) {
+    if (!tracerTex) tracerTex = makeRadialTexture([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,200,110,0.9)'], [1, 'rgba(255,140,40,0)']]);
+    const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tracerTex, color: 0xffdf9a, blending: THREE.AdditiveBlending, transparent: true, opacity: 1, depthWrite: false }));
+    m.position.set(pos.x, pos.y + 0.22, pos.z); m.scale.setScalar(0.18);
+    scene.add(m); fx.push({ sprite: m, age: 0, delay: 0, life: 0.2, kind: 'flash' });
+}
+
+// ── Tracer: ateş eden birimden hedefe balistik yay çizen parlak mermi izi ──
+function spawnTracer(from, to, naval) {
+    if (!tracerTex) tracerTex = makeRadialTexture([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,200,110,0.9)'], [1, 'rgba(255,140,40,0)']]);
+    spawnMuzzle(from);
+    const col = naval ? 0xfff0c8 : 0xffd060;
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tracerTex, color: col, blending: THREE.AdditiveBlending, transparent: true, opacity: 1, depthWrite: false }));
+    s.scale.setScalar(naval ? 0.3 : 0.22);
+    s.position.set(from.x, from.y + 0.22, from.z);
+    scene.add(s);
+    const dist = Math.hypot(to.x - from.x, to.z - from.z);
+    projectiles.push({
+        sprite: s,
+        from: { x: from.x, y: from.y + 0.22, z: from.z },
+        to: { x: to.x, y: to.y + 0.12, z: to.z },
+        age: 0, life: Math.max(0.5, Math.min(1.15, dist * 0.06 + 0.45)),
+        arc: Math.min(3.4, 0.8 + dist * 0.2), naval,
+    });
+}
+
+function updateProjectiles(dt) {
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i]; p.age += dt;
+        const u = p.age / p.life;
+        if (u >= 1) {
+            scene.remove(p.sprite); p.sprite.material.dispose(); projectiles.splice(i, 1);
+            spawnBurst(new THREE.Vector3(p.to.x, p.to.y, p.to.z));   // isabet patlaması
+            continue;
+        }
+        p.sprite.position.x = p.from.x + (p.to.x - p.from.x) * u;
+        p.sprite.position.z = p.from.z + (p.to.z - p.from.z) * u;
+        p.sprite.position.y = p.from.y + (p.to.y - p.from.y) * u + p.arc * Math.sin(Math.PI * u);
+        p.sprite.material.opacity = u < 0.12 ? u / 0.12 : 1;
+    }
+}
+
+// O günün aksiyonuna göre karşıt cepheleri eşle, ateş hattı kur
+function buildCombat(animData, sideTokens) {
+    const st = animData?.animationState || {};
+    const type = animData?.eventType || '';
+    const intensity = Number(animData?.intensity || 0);
+    const ottActive = /fight|bombard|march/i.test(st.ottoman || '');
+    const allyActive = /fight|bombard|march/i.test(st.allied || '');
+    const isCombatType = /COMBAT|BOMBARDMENT|NAVAL/i.test(type);
+    const haveBoth = sideTokens.ottoman.length && sideTokens.allied.length;
+    combat.pairs = []; combat.active = false;
+    if (!haveBoth || intensity < 2 || (!ottActive && !allyActive && !isCombatType)) return;
+    combat.intensity = intensity;
+    const MAXR = 18;
+    const addPairs = (attackers, targets) => {
+        attackers.forEach((a) => {
+            let best = null, bd = Infinity;
+            targets.forEach((t) => {
+                const d = (a.x - t.x) ** 2 + (a.z - t.z) ** 2;
+                if (d < bd) { bd = d; best = t; }
+            });
+            if (best && bd <= MAXR * MAXR) {
+                combat.pairs.push({
+                    from: { x: a.x, y: a.y, z: a.z },
+                    to: { x: best.x, y: best.y, z: best.z },
+                    naval: a.water || best.water,
+                });
+            }
+        });
+    };
+    if (ottActive || isCombatType) addPairs(sideTokens.ottoman, sideTokens.allied);
+    if (allyActive || isCombatType) addPairs(sideTokens.allied, sideTokens.ottoman);
+    const cap = Math.max(3, Math.min(14, intensity + 2));
+    if (combat.pairs.length > cap) combat.pairs = combat.pairs.slice(0, cap);
+    combat.active = combat.pairs.length > 0;
+    combat.fireTimer = 0; combat.salvoIdx = 0;
+}
+
+function updateCombat(dt) {
+    if (!combat.active || !combat.pairs.length) return;
+    combat.fireTimer -= dt;
+    if (combat.fireTimer > 0) return;
+    combat.fireTimer = Math.max(0.32, 1.15 - combat.intensity * 0.085);
+    const salvo = Math.min(combat.pairs.length, 1 + Math.floor(combat.intensity / 3));
+    for (let k = 0; k < salvo; k++) {
+        const p = combat.pairs[(combat.salvoIdx++) % combat.pairs.length];
+        const j = ((combat.salvoIdx * 53) % 11) / 11 - 0.5;
+        spawnTracer(p.from, { x: p.to.x + j * 0.8, y: p.to.y, z: p.to.z + j * 0.8 }, p.naval);
+    }
+}
+
+// Hareket eden geminin kıçında köpük izi
+function spawnWake(pos) {
+    if (!wakeTex) wakeTex = makeRadialTexture([[0, 'rgba(255,255,255,0.95)'], [0.5, 'rgba(220,238,245,0.5)'], [1, 'rgba(220,238,245,0)']]);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: wakeTex, color: 0xdfeef4, transparent: true, opacity: 0.4, depthWrite: false }));
+    s.position.set(pos.x, WATER_Y + 0.03, pos.z); s.scale.setScalar(0.35);
+    scene.add(s); fx.push({ sprite: s, age: 0, delay: 0, life: 1.6, kind: 'wake' });
 }
 
 function ensureSmoke(tk) {
@@ -348,22 +468,53 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
     const cx = [], cz = [];
     let hasShips = false;
     const landPts = [];
+    const sideTokens = { ottoman: [], allied: [] };
+    // 1) Geçerli birimleri topla
+    const live = [];
     Object.keys(positions || {}).forEach((id) => {
         const pos = positions[id];
         if (!pos) return;
         const unit = UNITS_BY_ID.get(id);
         if (!unit) return;
+        live.push({ id, unit, mx: pos.x, my: pos.y, onWater: isWaterUnit(unit), ox: 0, oz: 0, sinking: !!pos.sinking });
+    });
+    // 2) Aynı konumdaki birimleri kümeye ayır; üst üste binmesinler diye halka ofseti uygula
+    const groups = new Map();
+    live.forEach((L) => {
+        const key = Math.round(L.mx / 30) + ':' + Math.round(L.my / 30);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(L);
+    });
+    groups.forEach((arr) => {
+        const n = arr.length;
+        if (n < 2) return;
+        arr.forEach((L, i) => {
+            const ring = Math.floor(i / 8);
+            const inRing = i % 8;
+            const per = Math.min(8, n - ring * 8);
+            const ang = (inRing / per) * Math.PI * 2 + ring * 0.4;
+            const rad = (L.onWater ? 0.62 : 0.5) * (ring + 1);
+            L.ox = Math.cos(ang) * rad; L.oz = Math.sin(ang) * rad;
+        });
+    });
+    // 3) Token oluştur/güncelle (dağıtılmış konumlarda)
+    live.forEach((L) => {
+        const { id, unit, onWater } = L;
         seen.add(id);
         let tk = tokens.get(id);
         if (!tk) { tk = { group: makeToken(unit), unit }; tokens.set(id, tk); }
-        const onWater = isWaterUnit(unit);
-        if (onWater) hasShips = true; else landPts.push(new THREE.Vector3(wX(pos.x), heightAtMap(pos.x, pos.y), wZ(pos.y)));
-        const ty = onWater ? WATER_Y + 0.05 : heightAtMap(pos.x, pos.y);
-        const tgt = new THREE.Vector3(wX(pos.x), ty, wZ(pos.y));
+        const wx = wX(L.mx) + L.ox, wz = wZ(L.my) + L.oz;
+        if (onWater) hasShips = true;
+        const ty = onWater ? WATER_Y + 0.05 : heightAtWorld(wx, wz);
+        const tgt = new THREE.Vector3(wx, ty, wz);
+        if (!onWater) landPts.push(tgt.clone());
         tk.target = tgt;
         if (!tk.placed) { tk.group.position.copy(tgt); tk.placed = true; }
         tk.group.visible = true;
-        tk.sunk = isSunk(unit, phase);   // batan gemi durumu (animate'te uygulanır)
+        // Batış: kanonik tek otorite (yarın 'sunk' olan gemi bugün batar).
+        // Eski metin taraması nusret'in "...batırdı" ifadesini yanlış eşliyordu — kaldırıldı.
+        tk.sunk = L.sinking;
+        if (!tk.sunk) sideTokens[sideOf(unit.faction)].push({ x: tgt.x, y: tgt.y, z: tgt.z, water: onWater });
         cx.push(tgt.x); cz.push(tgt.z);
     });
     // hide/remove stale
@@ -375,29 +526,29 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
     const naval = hasShips || /NAVAL/i.test(animData?.eventType || '');
     if (minefield) minefield.visible = naval;
 
-    // Yüksek yoğunluklu günlerde top mermisi patlamaları (kıyı + deniz hedefleri)
-    const intensity = Number(animData?.intensity || 0);
-    if (intensity >= 6) {
-        const targets = landPts.length ? landPts : cx.map((x, i) => new THREE.Vector3(x, WATER_Y, cz[i]));
-        const n = Math.min(targets.length, intensity >= 8 ? 5 : 3);
-        for (let i = 0; i < n; i++) {
-            const base = targets[(i * 7) % targets.length];
-            const jx = ((i * 131 % 7) / 7 - 0.5) * 1.2, jz = ((i * 97 % 5) / 5 - 0.5) * 1.2;
-            spawnBurst(new THREE.Vector3(base.x + jx, base.y, base.z + jz), i * 0.28);
-        }
+    // Muharebe koreografisi: o günün cephelerine göre karşı tarafları eşle.
+    // Tracer mermi yayları + namlu alevleri animate() döngüsünde sürekli atılır.
+    buildCombat(animData, sideTokens);
+    // Sinematik çerçeveleme: önce o günün FİİLİ çatışmasına (tracer hattı) yakın plan,
+    // çatışma yoksa tüm birimlere geniş açı. Böylece autoplay her muharebeyi yakından gösterir.
+    let bx0, bx1, bz0, bz1;
+    if (combat.active && combat.pairs.length) {
+        const xs = [], zs = [];
+        combat.pairs.forEach((p) => { xs.push(p.from.x, p.to.x); zs.push(p.from.z, p.to.z); });
+        bx0 = Math.min(...xs); bx1 = Math.max(...xs); bz0 = Math.min(...zs); bz1 = Math.max(...zs);
+    } else if (cx.length) {
+        bx0 = Math.min(...cx); bx1 = Math.max(...cx); bz0 = Math.min(...cz); bz1 = Math.max(...cz);
     }
-    // sinematik çerçeveleme: o günün aksiyonuna pan + dolly
-    if (cx.length) {
-        const minx = Math.min(...cx), maxx = Math.max(...cx);
-        const minz = Math.min(...cz), maxz = Math.max(...cz);
-        const mx = (minx + maxx) / 2, mz = (minz + maxz) / 2;
-        const radius = Math.max(maxx - minx, maxz - minz) / 2 + 2.2;
+    if (bx0 !== undefined) {
+        const mx = (bx0 + bx1) / 2, mz = (bz0 + bz1) / 2;
+        const tight = combat.active && combat.pairs.length;
+        const radius = Math.max(bx1 - bx0, bz1 - bz0) / 2 + (tight ? 1.6 : 2.2);
         const idle = performance.now() - lastUserInput;
         // oynatım sırasında her fazda çerçevele; manuel modda sadece uzun boşlukta
         const trigger = (opts.autoplay && idle > 1200) || idle > 5200;
         if (trigger) {
             autoFrame.target.set(mx, 0.9, mz);
-            autoFrame.dist = Math.max(10, Math.min(40, radius * 2.4));
+            autoFrame.dist = Math.max(tight ? 8 : 10, Math.min(40, radius * (tight ? 2.0 : 2.4)));
             autoFrame.t = 0; autoFrame.active = true;
         }
     }
@@ -470,7 +621,16 @@ function animate() {
     const t = clock.elapsedTime;
     tokens.forEach((tk) => {
         if (!tk.group.visible) return;
-        if (tk.target && !tk.sunk) tk.group.position.lerp(tk.target, Math.min(1, dt * 3.2));
+        if (tk.target) {
+            if (tk.sunk) {
+                // batarken yatayda (mayın hattına) süzülmeye devam et; y/eğim sink koduna ait
+                const k = Math.min(1, dt * 3.2);
+                tk.group.position.x += (tk.target.x - tk.group.position.x) * k;
+                tk.group.position.z += (tk.target.z - tk.group.position.z) * k;
+            } else {
+                tk.group.position.lerp(tk.target, Math.min(1, dt * 3.2));
+            }
+        }
         if (isWaterUnit(tk.unit)) {
             if (tk.sunk) {
                 tk.group.position.y += (WATER_Y - 0.14 - tk.group.position.y) * Math.min(1, dt * 1.5);
@@ -482,6 +642,12 @@ function animate() {
                 tk.group.rotation.z = Math.sin(t * 1.1 + tk.group.position.z) * 0.02;
                 tk.group.rotation.x = 0;
                 if (tk._smoke) tk._smoke.visible = false;
+                // hareket halindeki gemi kıçında köpük izi bırakır
+                if (tk.target) {
+                    const moved = Math.hypot(tk.group.position.x - tk.target.x, tk.group.position.z - tk.target.z);
+                    tk._wakeT = (tk._wakeT || 0) - dt;
+                    if (moved > 0.12 && tk._wakeT <= 0) { tk._wakeT = 0.16; spawnWake(tk.group.position); }
+                }
             }
         }
         if (tk._smoke && tk._smoke.visible) {
@@ -496,6 +662,8 @@ function animate() {
         }
     });
     updateFX(dt);
+    updateProjectiles(dt);
+    updateCombat(dt);
     // water shimmer
     if (water) water.position.y = WATER_Y + Math.sin(t * 0.6) * 0.01;
     // auto-frame
@@ -620,6 +788,7 @@ export async function initScene3D(container, opts = {}) {
     window.GELIBOLU_3D = {
         tokenCount: () => tokens.size,
         visibleTokens: () => [...tokens.values()].filter((t) => t.group.visible).map((t) => t.unit.id),
+        sunkTokens: () => [...tokens.values()].filter((t) => t.sunk && t.group.visible).map((t) => t.unit.id),
         focus: (x, y, dist = 14) => {
             autoFrame.active = false;   // manuel odak otomatik çerçevelemeyi ezsin
             controls.target.set(wX(x), heightAtMap(x, y) + 0.5, wZ(y));

@@ -7,7 +7,7 @@ import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=2026061
 import { ENTITY_TYPES } from './data/entity-types.js?v=20260614-director-r1';
 import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260614-director-r1';
 import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260614-director-r1';
-import { isUnitOffMap } from './data/canonical-positions.js?v=20260614-director-r1';
+import { isUnitOffMap, getUnitEndState } from './data/canonical-positions.js?v=20260614-director-r1';
 import { normalizeDateText } from './engine/date-utils.js?v=20260614-director-r1';
 import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260614-director-r1';
 import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260614-director-r1';
@@ -233,6 +233,15 @@ function formatPhaseIndicator(phase) {
     return `${cleanPhaseTitle(phase.title)} – ${phase.date}`;
 }
 
+// İso tarihe +1 gün (batış-günü tespiti için: yarın 'sunk' mı?)
+function nextIsoDay(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!m) return '';
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+}
+
 // ── Başlangıç Konumları ──
 function initPositions() {
     const startPhase = BATTLE_DATA.phases[currentPhaseIndex];
@@ -242,7 +251,11 @@ function initPositions() {
         if (isUnitOffMap(u.id, iso)) return;
         const d = u.phases[startPhase.id];
         // off-map (reserve/karargah) birimleri ilk render'da da gösterme
-        if (d && !d.offMap) currentPositions[u.id] = { x: d.x, y: d.y };
+        if (d && !d.offMap) {
+            const entry = { x: d.x, y: d.y };
+            if (getUnitEndState(u.id, nextIsoDay(iso)) === 'sunk') entry.sinking = true;
+            currentPositions[u.id] = entry;
+        }
     });
 }
 
@@ -609,7 +622,10 @@ function setActivePhase(i) {
 
         // ── CORRIDOR SEPARATION: karşı taraflarla örtüşmeyi engelle ──
         const separated = enforceCorridorSeparation(pd.x, pd.y, u, campaignPhase.id);
-        nextPositions[u.id] = { x: separated.x, y: separated.y };
+        const entry = { x: separated.x, y: separated.y };
+        // Batış dramı: bugün görünür ama YARIN kanonik durumu 'sunk' ise → bugün bat.
+        if (getUnitEndState(u.id, nextIsoDay(currentIso)) === 'sunk') entry.sinking = true;
+        nextPositions[u.id] = entry;
     });
 
     const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
