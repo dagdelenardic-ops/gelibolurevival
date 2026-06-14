@@ -1,0 +1,108 @@
+/* ══════════════════════════════════════════════════════════════
+   Gelibolu Revival — 3B Rölyef Harita katmanı (three.js overlay)
+   ══════════════════════════════════════════════════════════════ */
+
+.scene3d-host {
+    position: fixed;
+    z-index: 2;
+    display: none;
+    background: #10141d;
+    overflow: hidden;
+}
+
+/* yer adı etiketleri (CSS2D) */
+.scene3d-place {
+    color: #f2e6cf;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px #000, 0 0 8px #000a;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(14, 16, 20, .35);
+    border: 1px solid rgba(242, 222, 171, .18);
+    white-space: nowrap;
+    transform: translateY(-6px);
+    pointer-events: none;
+    user-select: none;
+}
+
+/* hover tooltip (birim adı) */
+.scene3d-tooltip {
+    position: fixed;
+    z-index: 30;
+    pointer-events: none;
+    background: rgba(14, 16, 20, .92);
+    color: #f2dfab;
+    border: 1px solid rgba(242, 222, 171, .3);
+    border-radius: 5px;
+    padding: 4px 9px;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    box-shadow: 0 4px 16px #000a;
+    max-width: 240px;
+}
+
+/* 3B / 2B görünüm anahtarı */
+.view3d-toggle {
+    position: fixed;
+    top: 64px;
+    right: 14px;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(20,24,30,.92), rgba(34,40,50,.92));
+    border: 1px solid rgba(242, 222, 171, .28);
+    color: #f2e6cf;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    cursor: pointer;
+    box-shadow: 0 6px 20px #0008;
+    transition: transform .15s ease, border-color .15s ease, background .2s ease;
+}
+.view3d-toggle:hover { transform: translateY(-1px); border-color: rgba(242, 222, 171, .55); }
+.view3d-toggle .v3d-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #c4645a; box-shadow: 0 0 8px #c4645a;
+}
+.view3d-toggle[data-mode="2d"] .v3d-dot { background: #7a9ab0; box-shadow: 0 0 8px #7a9ab0; }
+
+/* 3B ipucu rozeti (ilk açılışta) */
+.scene3d-hint {
+    position: fixed;
+    bottom: calc(var(--timeline-h, 120px) + 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 24;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: rgba(14,16,20,.86);
+    border: 1px solid rgba(242,222,171,.22);
+    color: #d8cfb8;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    animation: hint3dFade 6s ease forwards;
+}
+@keyframes hint3dFade {
+    0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    12% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    82% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    .view3d-toggle { top: auto; bottom: calc(var(--timeline-h, 120px) + 14px); right: 10px; padding: 6px 11px; font-size: 11px; }
+    .scene3d-place { font-size: 9px; padding: 1px 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scene3d-hint { animation: none; opacity: 1; }
+}

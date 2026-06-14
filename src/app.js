@@ -3,32 +3,35 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260523-markers-r2';
-import { ENTITY_TYPES } from './data/entity-types.js?v=20260523-markers-r2';
-import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260523-markers-r2';
-import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260523-markers-r2';
-import { isUnitOffMap } from './data/canonical-positions.js?v=20260523-markers-r2';
-import { normalizeDateText } from './engine/date-utils.js?v=20260523-markers-r2';
-import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260523-markers-r2';
-import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260523-markers-r2';
-import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation } from './engine/position-engine.js?v=20260523-markers-r2';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260523-markers-r2';
-import { renderTokens, applyTokenSlideWithTrail, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260523-markers-r2';
-import { renderBattleEffects } from './render/effects-renderer.js?v=20260523-markers-r2';
-import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260523-markers-r2';
-import { animateCamera } from './render/camera.js?v=20260523-markers-r2';
-import { initTouchZoom } from "./engine/touch-zoom.js?v=20260523-markers-r2";
+import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260614-director-r1';
+import { ENTITY_TYPES } from './data/entity-types.js?v=20260614-director-r1';
+import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260614-director-r1';
+import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260614-director-r1';
+import { isUnitOffMap } from './data/canonical-positions.js?v=20260614-director-r1';
+import { normalizeDateText } from './engine/date-utils.js?v=20260614-director-r1';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260614-director-r1';
+import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260614-director-r1';
+import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation } from './engine/position-engine.js?v=20260614-director-r1';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260614-director-r1';
+import { renderTokens, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260614-director-r1';
+import { reconcileTokens, quakeMap } from './render/token-animator.js?v=20260614-director-r1';
+import { renderBattleEffects } from './render/effects-renderer.js?v=20260614-director-r1';
+import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260614-director-r1';
+import { animateCamera } from './render/camera.js?v=20260614-director-r1';
+import { frameActiveSectors, resolveActiveSectors, renderDirectorOverlay } from './render/director.js?v=20260614-director-r1';
+import { initTouchZoom } from "./engine/touch-zoom.js?v=20260614-director-r1";
 
-import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260523-markers-r2';
-import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260523-markers-r2';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260523-markers-r2';
-import { hideUnitPanel, attachUnitClicks } from './ui/unit-panel.js?v=20260523-markers-r2';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying } from './ui/autoplay-controller.js?v=20260523-markers-r2';
-import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260523-markers-r2';
-import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260523-markers-r2';
-import { initOnboarding } from './ui/onboarding.js?v=20260523-markers-r2';
-import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260523-markers-r2';
-import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260523-markers-r2';
+import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260614-director-r1';
+import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260614-director-r1';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260614-director-r1';
+import { hideUnitPanel, attachUnitClicks, showUnitPanel } from './ui/unit-panel.js?v=20260614-director-r1';
+import { GEO_LOCATIONS } from './data/geo-calibration.js?v=20260614-director-r1';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying, getAutoPlayIntervalForPhase } from './ui/autoplay-controller.js?v=20260614-director-r1';
+import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260614-director-r1';
+import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260614-director-r1';
+import { initOnboarding } from './ui/onboarding.js?v=20260614-director-r1';
+import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260614-director-r1';
+import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260614-director-r1';
 
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
@@ -39,7 +42,79 @@ let terrainRefreshVersion = 0;
 let keyboardNavBound = false;
 const CAMPAIGN_START_ISO = '1914-11-03';
 
+// ── 3B rölyef harita katmanı (three.js) — dinamik yüklenir, hata izole edilir ──
+let scene3d = null;
+let scene3dPref = (() => {
+    try { return localStorage.getItem('gelibolu-view') || (isMobile ? '2d' : '3d'); }
+    catch { return isMobile ? '2d' : '3d'; }
+})();
+
 function getCurrentPhaseIndex() { return currentPhaseIndex; }
+
+function update3DPhase() {
+    if (!scene3d || !scene3d.is3DReady()) return;
+    const p = BATTLE_DATA.phases[currentPhaseIndex];
+    if (!p) return;
+    const iso = String(p.isoStart || normalizeDateText(p.date, currentPhaseIndex));
+    const animData = window.ANIMATION_EVENTS_BY_DATE?.[iso] || null;
+    scene3d.setPhase3D(p, currentPositions, animData, { autoplay: getIsAutoPlaying() });
+}
+
+function setView3D(on, persist = true) {
+    if (!scene3d) return;
+    scene3dPref = on ? '3d' : '2d';
+    if (persist) { try { localStorage.setItem('gelibolu-view', scene3dPref); } catch {} }
+    scene3d.show3D(on);
+    document.getElementById('scene3d')?.setAttribute('aria-hidden', on ? 'false' : 'true');
+    const btn = document.getElementById('view3dToggle');
+    if (btn) {
+        btn.dataset.mode = on ? '3d' : '2d';
+        btn.querySelector('.v3d-label').textContent = on ? '3B Rölyef' : '2B Harita';
+    }
+    if (on) update3DPhase();
+}
+
+function buildView3DToggle() {
+    if (document.getElementById('view3dToggle')) return;
+    const btn = document.createElement('button');
+    btn.id = 'view3dToggle';
+    btn.className = 'view3d-toggle';
+    btn.type = 'button';
+    btn.dataset.mode = scene3dPref;
+    btn.innerHTML = `<span class="v3d-dot"></span><span class="v3d-label">${scene3dPref === '3d' ? '3B Rölyef' : '2B Harita'}</span>`;
+    btn.setAttribute('aria-label', '2B harita ile 3B rölyef arasında geçiş yap');
+    btn.addEventListener('click', () => setView3D(scene3dPref !== '3d'));
+    document.body.appendChild(btn);
+    if (scene3dPref === '3d') {
+        const hint = document.createElement('div');
+        hint.className = 'scene3d-hint';
+        hint.textContent = 'Sürükle: döndür · Tekerlek: yakınlaş · Birime tıkla: detay';
+        document.body.appendChild(hint);
+        setTimeout(() => hint.remove(), 6500);
+    }
+}
+
+async function initThreeLayer() {
+    const host = document.getElementById('scene3d');
+    if (!host) return;
+    try {
+        const mod = await import('./render/scene3d.js?v=20260614-director-r1');
+        await mod.initScene3D(host, {
+            units: BATTLE_DATA.units,
+            locations: GEO_LOCATIONS,
+            onUnitClick: (unit, phase, animData) => {
+                const pd = unit.phases?.[phase.id] || { status: 'Bilinmiyor', objective: 'Bilinmiyor', outcome: 'Bilinmiyor' };
+                showUnitPanel(unit, pd, phase, animData);
+            },
+        });
+        scene3d = mod;
+        buildView3DToggle();
+        setView3D(scene3dPref === '3d', false);
+        update3DPhase();
+    } catch (err) {
+        console.warn('3B katmanı yüklenemedi (2B harita aktif):', err);
+    }
+}
 
 function getRequestedStartIso() {
     if (typeof window === 'undefined') return '';
@@ -54,11 +129,20 @@ function applyRequestedStartPhase() {
 }
 
 function scheduleIdleTask(callback) {
+    // Tek-seferlik tetik: requestIdleCallback ile setTimeout yarışır, ilki kazanır.
+    // GİZLİ SEKME TUZAĞI: tarayıcılar arka plan sekmesinde requestIdleCallback'i
+    // TAMAMEN askıya alır (timeout dahil) — eski kod yalnızca RIC'e güvendiği için
+    // arka planda açılan sekmede zengin hidrasyon (433 günlük timeline) HİÇ
+    // yüklenmiyor, kullanıcı 6-fazlık bootstrap'ta kalıyordu. setTimeout gizli
+    // sekmede de (throttled olsa da) çalışır → güvenlik ağı.
+    let fired = false;
+    const run = () => { if (fired) return; fired = true; callback(); };
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-        window.requestIdleCallback(callback, { timeout: 2200 });
+        window.requestIdleCallback(run, { timeout: 2200 });
+        setTimeout(run, 2500);
         return;
     }
-    setTimeout(callback, 800);
+    setTimeout(run, 800);
 }
 
 function loadAnimationEventsInBackground() {
@@ -206,13 +290,6 @@ function shouldMoveCamera(prev, next) {
     return centerShift > 180 || zoomRatio > 1.2 || zoomRatio < 0.83;
 }
 
-const FRONT_CAMERA_TARGETS = {
-    Deniz: { x: 1120, y: 1650, w: 980, h: 820, locationIds: ['bogaz', 'canakkale', 'kilitbahir', 'erenkoyu'] },
-    Arıburnu: { x: 760, y: 1430, w: 820, h: 700, locationIds: ['ariburnu', 'conkbayiri', 'bigali'] },
-    Seddülbahir: { x: 760, y: 2040, w: 900, h: 780, locationIds: ['seddulbahir', 'kirte', 'alcitepe', 'morto-koyu'] },
-    Anafartalar: { x: 850, y: 1320, w: 760, h: 680, locationIds: ['suvla', 'anafartalar', 'kirectepe', 'conkbayiri'] }
-};
-
 const EVACUATION_CAMERA_TARGETS = {
     north: { x: 720, y: 1320, w: 980, h: 860, locationIds: ['suvla', 'ariburnu', 'anafartalar', 'conkbayiri', 'kirectepe'] },
     south: { x: 740, y: 2030, w: 980, h: 860, locationIds: ['seddulbahir', 'kirte', 'alcitepe', 'morto-koyu'] }
@@ -253,33 +330,8 @@ function targetFromPoints(points, options = {}) {
     });
 }
 
-function normalizeAnimName(value) {
-    return String(value || '')
-        .toLowerCase()
-        .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
-        .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .replace(/[^a-z0-9\s.-]/g, '').replace(/\s+/g, ' ').trim();
-}
-
-function getAnimationUnitIds(animData) {
-    if (!Array.isArray(animData?.units) || !animData.units.length) return null;
-    const names = animData.units.map((unit) => normalizeAnimName(unit.name)).filter(Boolean);
-    if (!names.length) return null;
-    return new Set(BATTLE_DATA.units
-        .filter((unit) => {
-            const modelName = normalizeAnimName(unit.name);
-            return names.some((name) => modelName === name || modelName.includes(name) || name.includes(modelName));
-        })
-        .map((unit) => unit.id));
-}
-
 function buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData) {
     const iso = String(phase?.isoStart || '');
-    const fronts = Array.isArray(animData?.fronts) ? animData.fronts : [];
-    const activeUnitIds = getAnimationUnitIds(animData);
-    const activePoints = Object.entries(nextPositions || {})
-        .filter(([unitId]) => !activeUnitIds || activeUnitIds.has(unitId))
-        .map(([, point]) => point);
 
     if (iso >= '1915-12-07' && iso <= '1915-12-20') {
         return { ...EVACUATION_CAMERA_TARGETS.north, reason: 'evacuation-north' };
@@ -288,32 +340,25 @@ function buildPhaseCameraTarget(phase, campaignPhase, nextPositions, animData) {
         return { ...EVACUATION_CAMERA_TARGETS.south, reason: 'evacuation-south' };
     }
 
-    // Deniz dönemi (18 Mart vb.): Boğaz cephesi kararlı, küratörlü bir çerçeveye
-    // sahiptir; naval fazların buildMapFocus'u tüm haritaya açıldığından bu
-    // çerçeve mapFocus'tan ÖNCE gelir — yoksa deniz muharebesi tüm-harita zoom'da
-    // minik kalır. (Kara sahneleri aşağıdaki kararlı mapFocus carry-forward'ı kullanır.)
-    if (fronts.length === 1 && fronts[0] === 'Deniz' && FRONT_CAMERA_TARGETS.Deniz) {
-        return { ...FRONT_CAMERA_TARGETS.Deniz, reason: 'front:Deniz' };
+    // ── YÖNETMEN: o gün savaş NEREDE(ler)se oraya çerçevele. ──
+    // Tek cephe → yakın, sinematik kutu. İki+ cephe AYNI ANDA aktifse →
+    // ikisini de kapsayan GENİŞ AÇI birleşik çerçeve. Anlamlı aksiyon günü
+    // (intensity≥3 ya da çok-cepheli) küratörlü mapFocus'u ezer; sessiz
+    // günlerde belgesel kararlılığı için mapFocus korunur.
+    const sectors = resolveActiveSectors(animData, phase, nextPositions);
+    const intensity = Number(animData?.intensity || 0);
+    if (sectors.length >= 2 || (sectors.length === 1 && intensity >= 3)) {
+        const framed = frameActiveSectors(animData, phase, nextPositions);
+        if (framed) return framed;
     }
 
-    // Belgesel kararlılığı: küratörlü sahne odağı (mapFocus / anchor mapFocusOverride)
-    // gün-gün hareket eden birim kutusundan ÖNCE gelir. Böylece kamera her gün
-    // yeniden çerçevelemez; yalnızca sahne (anchor) değişince yumuşakça kayar.
+    // Belgesel kararlılığı: küratörlü sahne odağı (sessiz / geçiş günleri).
     if (phase?.mapFocus) return { ...phase.mapFocus, reason: 'guided-campaign' };
 
-    if (fronts.length === 1 && FRONT_CAMERA_TARGETS[fronts[0]]) {
-        return { ...FRONT_CAMERA_TARGETS[fronts[0]], reason: `front:${fronts[0]}` };
-    }
-
-    if (activePoints.length >= 2 && Number(animData?.intensity || 0) >= 4) {
-        const target = targetFromPoints(activePoints, {
-            padding: Number(animData?.intensity || 0) >= 7 ? 250 : 190,
-            minW: 760,
-            minH: 620,
-            maxW: 1450,
-            maxH: 1100
-        });
-        if (target) return { ...target, reason: 'active-units' };
+    // Tek aktif cephe ama düşük yoğunluk: yine de o cepheye çerçevele.
+    if (sectors.length >= 1) {
+        const framed = frameActiveSectors(animData, phase, nextPositions);
+        if (framed) return framed;
     }
 
     if (Array.isArray(phase?.locationIds) && phase.locationIds.length) {
@@ -446,14 +491,14 @@ async function initMapEditorIfRequested() {
         return;
     }
 
-    const { initMapEditor } = await import('./ui/map-editor.js?v=20260523-markers-r2');
+    const { initMapEditor } = await import('./ui/map-editor.js?v=20260614-director-r1');
     initMapEditor();
 }
 
 async function initMapDoctorIfRequested() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('doctor') !== '1') return;
-    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260523-markers-r2');
+    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260614-director-r1');
     initMapDoctorPanel();
 }
 
@@ -492,6 +537,7 @@ function setActivePhase(i) {
         if (ind) ind.textContent = formatPhaseIndicator(p);
         updateMapDateIndicator(p.date);
         updateMapSceneState(p, animData, cameraTarget);
+        renderDirectorOverlay(resolveActiveSectors(animData, p, currentPositions), document.querySelector('.map-container'));
         applyGuidedFocus(p);
         updateMovementLedger(p, currentPositions, animData);
         refreshUnitRoster(nextIndex);
@@ -569,15 +615,25 @@ function setActivePhase(i) {
     const animData = window.ANIMATION_EVENTS_BY_DATE?.[currentIso];
     const cameraTarget = applyPhaseCamera(p, campaignPhase, nextPositions, animData);
 
+    // ── 3B rölyef katmanını bu günün konumlarıyla güncelle ──
+    if (scene3d && scene3d.is3DReady()) scene3d.setPhase3D(p, nextPositions, animData, { autoplay: getIsAutoPlaying() });
+
+    // ── Yönetmen şeridi: hangi cephe(ler)de ne oluyor — net, daima okunur ──
+    renderDirectorOverlay(resolveActiveSectors(animData, p, nextPositions), document.querySelector('.map-container'));
+
     // Günlük hareket defteri: o gün hangi deniz/kara birliği nereden→nereye.
     updateMovementLedger(p, nextPositions, animData);
 
     const tg = document.getElementById('unitTokens');
     if (tg) {
         const nextMarkup = renderTokens(p.id, prevPositions, nextPositions, nextIndex, fromPhaseIndex, currentIso, animData);
-        tg.innerHTML = nextMarkup;
-        const tokenNodes = [...tg.querySelectorAll('.unit-token')];
-        requestAnimationFrame(() => applyTokenSlideWithTrail(tokenNodes));
+        // Keyed reconcile: token DOM'u kalıcı, hareket rAF tween ile yürür.
+        // Timeline'da 2+ faz sıçrandıysa yürütmek anlamsız — anında konuşlan.
+        const isScrubJump = Math.abs(nextIndex - fromPhaseIndex) > 2;
+        const budgetMs = getIsAutoPlaying()
+            ? Math.round(getAutoPlayIntervalForPhase(nextIndex) * 0.58)
+            : 1900;
+        reconcileTokens(tg, nextMarkup, { budgetMs, instant: isScrubJump });
     }
     if (isMobile) {
         if (animData) triggerPhaseSfx(animData, campaignPhase.id);
@@ -603,6 +659,10 @@ function setActivePhase(i) {
             renderAtmosphere(animData.animationState);
             renderTransition(animData.sceneTransition);
             triggerPhaseSfx(animData, campaignPhase.id);
+            // Game feel: büyük bombardıman/muharebe günlerinde kısa harita sarsıntısı
+            const fxIntensity = Number(animData.intensity || 0);
+            if (fxIntensity >= 8) quakeMap('heavy');
+            else if (fxIntensity >= 7 && animData.eventType === 'BOMBARDMENT') quakeMap('light');
         } else {
             renderUnits(undefined);
             renderAtmosphere(null);
@@ -694,6 +754,9 @@ async function init() {
     scheduleIdleTask(() => {
         hydrateRichTimelineInBackground();
     });
+
+    // 3B rölyef harita katmanını arka planda kur (three.js, dinamik import)
+    initThreeLayer();
 
     // Ses kontrolleri ve müzik
     renderAudioControls();

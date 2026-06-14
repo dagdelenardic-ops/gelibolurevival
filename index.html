@@ -80,10 +80,21 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <!-- Styles -->
-<link rel="stylesheet" href="styles/base.css?v=20260523-markers-r2">
-    <link rel="stylesheet" href="styles/map.css?v=20260523-markers-r2">
-<link rel="stylesheet" href="styles/timeline.css?v=20260523-markers-r2">
-<link rel="stylesheet" href="styles/panel.css?v=20260523-markers-r2">
+<link rel="stylesheet" href="styles/base.css?v=20260614-director-r1">
+    <link rel="stylesheet" href="styles/map.css?v=20260614-director-r1">
+<link rel="stylesheet" href="styles/timeline.css?v=20260614-director-r1">
+<link rel="stylesheet" href="styles/panel.css?v=20260614-director-r1">
+<link rel="stylesheet" href="styles/scene3d.css?v=20260614-director-r1">
+
+<!-- three.js (ES modules via CDN) — gerçek zamanlı 3B rölyef harita -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
 <script>
   window.loadAnimationEvents = function loadAnimationEvents(){
     if(window.ANIMATION_EVENTS_READY) return window.ANIMATION_EVENTS_READY;
@@ -105,7 +116,7 @@
     return window.ANIMATION_EVENTS_READY;
   };
 </script>
-    <script type="module" src="src/app.js?v=20260523-markers-r2"></script>
+    <script type="module" src="src/app.js?v=20260614-director-r1"></script>
 <!-- Vercel Analytics -->
 <script>
 if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
@@ -132,6 +143,7 @@ if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
 </div>
 <header class="topbar"></header>
 <main class="map-container"></main>
+<div id="scene3d" class="scene3d-host" aria-hidden="true"></div>
 <footer class="timeline"></footer>
 <div id="phaseLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 <aside id="unitPanel" class="unit-panel" role="dialog" aria-modal="true" aria-label="Birim detay paneli" aria-hidden="true" inert hidden>

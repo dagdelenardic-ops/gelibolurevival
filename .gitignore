@@ -17,3 +17,8 @@ node_modules/
 /assets/reference-console.html
 /test-results/
 /playwright-report/
+
+# 3D source kept local (regenerable from blend); runtime needs only heightmap.png + *.jpg + models/*.glb
+/assets/3d/*.blend
+/assets/3d/gelibolu-hero.png
+/assets/3d/gelibolu-topdown.png

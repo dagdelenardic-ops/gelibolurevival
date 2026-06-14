@@ -115,7 +115,10 @@ body{
 .cinematic-intro{
   position:fixed;inset:0;z-index:10010;
   display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(180deg,#080a0c 0%,#0e1014 40%,#1a1510 80%,#0e1014 100%);
+  background:
+    linear-gradient(180deg,rgba(8,10,12,.80) 0%,rgba(14,16,20,.66) 42%,rgba(26,21,16,.74) 82%,rgba(14,16,20,.94) 100%),
+    url('../assets/3d/gelibolu-hero.jpg') center/cover no-repeat,
+    #0e1014;
   transition:opacity .8s ease
 }
 .cinematic-intro.hidden{opacity:0;pointer-events:none}
