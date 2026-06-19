@@ -3,40 +3,42 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260614-director-r1';
-import { ENTITY_TYPES } from './data/entity-types.js?v=20260614-director-r1';
-import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260614-director-r1';
-import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260614-director-r1';
-import { isUnitOffMap, getUnitEndState } from './data/canonical-positions.js?v=20260614-director-r1';
-import { normalizeDateText } from './engine/date-utils.js?v=20260614-director-r1';
-import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260614-director-r1';
-import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260614-director-r1';
-import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation } from './engine/position-engine.js?v=20260614-director-r1';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260614-director-r1';
-import { renderTokens, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260614-director-r1';
-import { reconcileTokens, quakeMap } from './render/token-animator.js?v=20260614-director-r1';
-import { renderBattleEffects } from './render/effects-renderer.js?v=20260614-director-r1';
-import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260614-director-r1';
-import { animateCamera } from './render/camera.js?v=20260614-director-r1';
-import { frameActiveSectors, resolveActiveSectors, renderDirectorOverlay } from './render/director.js?v=20260614-director-r1';
-import { initTouchZoom } from "./engine/touch-zoom.js?v=20260614-director-r1";
+import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { ENTITY_TYPES } from './data/entity-types.js?v=20260618-3d-spectacle-r2';
+import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260618-3d-spectacle-r2';
+import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260618-3d-spectacle-r2';
+import { isUnitOffMap, getUnitEndState } from './data/canonical-positions.js?v=20260618-3d-spectacle-r2';
+import { normalizeDateText } from './engine/date-utils.js?v=20260618-3d-spectacle-r2';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260618-3d-spectacle-r2';
+import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260618-3d-spectacle-r2';
+import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation, getUnitEntryOrigin } from './engine/position-engine.js?v=20260618-3d-spectacle-r2';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260618-3d-spectacle-r2';
+import { renderTokens, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260618-3d-spectacle-r2';
+import { reconcileTokens, quakeMap } from './render/token-animator.js?v=20260618-3d-spectacle-r2';
+import { renderBattleEffects } from './render/effects-renderer.js?v=20260618-3d-spectacle-r2';
+import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260618-3d-spectacle-r2';
+import { animateCamera } from './render/camera.js?v=20260618-3d-spectacle-r2';
+import { frameActiveSectors, resolveActiveSectors, renderDirectorOverlay } from './render/director.js?v=20260618-3d-spectacle-r2';
+import { initTouchZoom } from "./engine/touch-zoom.js?v=20260618-3d-spectacle-r2";
 
-import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260614-director-r1';
-import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260614-director-r1';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260614-director-r1';
-import { hideUnitPanel, attachUnitClicks, showUnitPanel } from './ui/unit-panel.js?v=20260614-director-r1';
-import { GEO_LOCATIONS } from './data/geo-calibration.js?v=20260614-director-r1';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying, getAutoPlayIntervalForPhase } from './ui/autoplay-controller.js?v=20260614-director-r1';
-import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260614-director-r1';
-import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260614-director-r1';
-import { initOnboarding } from './ui/onboarding.js?v=20260614-director-r1';
-import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260614-director-r1';
-import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260614-director-r1';
+import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260618-3d-spectacle-r2';
+import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260618-3d-spectacle-r2';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260618-3d-spectacle-r2';
+import { hideUnitPanel, attachUnitClicks, showUnitPanel } from './ui/unit-panel.js?v=20260618-3d-spectacle-r2';
+import { GEO_LOCATIONS } from './data/geo-calibration.js?v=20260618-3d-spectacle-r2';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying, getAutoPlayIntervalForPhase } from './ui/autoplay-controller.js?v=20260618-3d-spectacle-r2';
+import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260618-3d-spectacle-r2';
+import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260618-3d-spectacle-r2';
+import { initOnboarding } from './ui/onboarding.js?v=20260618-3d-spectacle-r2';
+import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260618-3d-spectacle-r2';
+import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260618-3d-spectacle-r2';
 
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
 const currentPositions = {};
-const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+// innerWidth=0 tuzağı: bazı yükleme anlarında innerWidth 0 gelir; bunu "mobil" sayarsak
+// masaüstü yanlışlıkla 2B'ye düşer. Sadece 0<width<=768 gerçekten mobil sayılır.
+const isMobile = typeof window !== 'undefined' && window.innerWidth > 0 && window.innerWidth <= 768;
 let richTimelineHydrationStarted = false;
 let terrainRefreshVersion = 0;
 let keyboardNavBound = false;
@@ -98,7 +100,7 @@ async function initThreeLayer() {
     const host = document.getElementById('scene3d');
     if (!host) return;
     try {
-        const mod = await import('./render/scene3d.js?v=20260614-director-r1');
+        const mod = await import('./render/scene3d.js?v=20260618-3d-spectacle-r2');
         await mod.initScene3D(host, {
             units: BATTLE_DATA.units,
             locations: GEO_LOCATIONS,
@@ -253,7 +255,9 @@ function initPositions() {
         // off-map (reserve/karargah) birimleri ilk render'da da gösterme
         if (d && !d.offMap) {
             const entry = { x: d.x, y: d.y };
-            if (getUnitEndState(u.id, nextIsoDay(iso)) === 'sunk') entry.sinking = true;
+            const endNext = getUnitEndState(u.id, nextIsoDay(iso));
+            if (endNext === 'sunk') entry.sinking = true;
+            else if (endNext === 'withdrawn' || endNext === 'evacuated') entry.evacuating = true;
             currentPositions[u.id] = entry;
         }
     });
@@ -504,14 +508,14 @@ async function initMapEditorIfRequested() {
         return;
     }
 
-    const { initMapEditor } = await import('./ui/map-editor.js?v=20260614-director-r1');
+    const { initMapEditor } = await import('./ui/map-editor.js?v=20260618-3d-spectacle-r2');
     initMapEditor();
 }
 
 async function initMapDoctorIfRequested() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('doctor') !== '1') return;
-    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260614-director-r1');
+    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260618-3d-spectacle-r2');
     initMapDoctorPanel();
 }
 
@@ -623,8 +627,15 @@ function setActivePhase(i) {
         // ── CORRIDOR SEPARATION: karşı taraflarla örtüşmeyi engelle ──
         const separated = enforceCorridorSeparation(pd.x, pd.y, u, campaignPhase.id);
         const entry = { x: separated.x, y: separated.y };
-        // Batış dramı: bugün görünür ama YARIN kanonik durumu 'sunk' ise → bugün bat.
-        if (getUnitEndState(u.id, nextIsoDay(currentIso)) === 'sunk') entry.sinking = true;
+        // Final dramı: bugün görünür ama YARIN kanonik son-durumu değişiyorsa, bugün oyna.
+        const endNext = getUnitEndState(u.id, nextIsoDay(currentIso));
+        if (endNext === 'sunk') entry.sinking = true;
+        else if (endNext === 'withdrawn' || endNext === 'evacuated') entry.evacuating = true;
+        // Amfibi çıkarma: İtilaf piyadesi ilk göründüğü gün denizden kıyıya süzülür (3B).
+        if (!(u.id in prevPositions) && u.entityType === 'infantry_unit'
+            && (u.faction === 'anzac' || u.faction === 'british' || u.faction === 'french')) {
+            entry.enterFrom = getUnitEntryOrigin(u, { x: separated.x, y: separated.y });
+        }
         nextPositions[u.id] = entry;
     });
 
@@ -659,7 +670,6 @@ function setActivePhase(i) {
     } else {
         renderBattleEffects(nextIndex);
         renderFrontlines(campaignPhase, currentIso);
-        renderLandCombatFX(campaignPhase, animData);
 
         const { routes: animRoutes, fx: animFx } = orchestrateAnimations(animData, nextPositions);
         // Birim hareket izleri: o gün gerçekten yürüyen birimlerin yön okları
@@ -668,7 +678,13 @@ function setActivePhase(i) {
         const routesLayer = document.getElementById('layer-routes');
         if (routesLayer) routesLayer.innerHTML = animRoutes + moveTrails;
         const combatLayer = document.getElementById('layer-combat-fx');
-        if (combatLayer) combatLayer.innerHTML += animFx;
+        // Reset (eskiden += idi → orkestratör FX'i her faz birikip bellek
+        // sızdırıyor + her tikte tüm birikmiş SMIL'i resetliyordu). Kara savaşı
+        // FX'i bu reset'in ÜSTÜNE eklenmeli; o yüzden renderLandCombatFX artık
+        // combatLayer sıfırlandıktan SONRA çağrılır (kendi .land-combat-fx'ini
+        // ekler, orkestratör FX'ini silmez).
+        if (combatLayer) combatLayer.innerHTML = animFx;
+        renderLandCombatFX(campaignPhase, animData);
 
         if (animData) {
             if (animData.units?.length) renderAnimationUnits(animData);

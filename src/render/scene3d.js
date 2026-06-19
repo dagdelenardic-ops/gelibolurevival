@@ -27,7 +27,7 @@ const FACTION_COLOR = {
 function factionColor(f) { return FACTION_COLOR[f] || 0xcccccc; }
 
 let renderer, labelRenderer, scene, camera, controls, clock;
-let terrain, water, sun;
+let terrain, water, sun, hemi;
 let heightData = null, hw = 0, hh = 0;
 let raf = 0, visible = false, ready = false;
 const models = {};            // name -> THREE.Object3D template
@@ -184,7 +184,7 @@ async function buildTerrain() {
 
 function loadModels() {
     const loader = new GLTFLoader();
-    const list = ['battleship', 'cannon', 'mine', 'flag'];
+    const list = ['battleship', 'cannon', 'mine', 'flag', 'soldier'];
     return Promise.all(list.map((name) => new Promise((res) => {
         loader.load(`${ASSET}/models/${name}.glb`,
             (g) => { models[name] = g.scene; res(); },
@@ -211,6 +211,7 @@ function modelForUnit(unit) {
     const et = unit.entityType;
     if (et === 'ship' || et === 'landing_boat') return 'battleship';
     if (et === 'artillery_battery') return 'cannon';
+    if (et === 'infantry_unit' && models.soldier) return 'soldier';   // kara birliği = asker
     return 'flag';
 }
 
@@ -238,6 +239,16 @@ function tintShip(obj, hex, faction) {
     });
 }
 
+// Token'ın tüm mesh'lerine opaklık uygula (tahliye solması için).
+function setTokenOpacity(tk, op) {
+    tk.group.traverse((n) => {
+        if (n.isMesh && n.material) {
+            n.material.transparent = op < 1;
+            n.material.opacity = op;
+        }
+    });
+}
+
 function makeToken(unit) {
     const group = new THREE.Group();
     const tpl = models[modelForUnit(unit)];
@@ -245,11 +256,12 @@ function makeToken(unit) {
     if (tpl) {
         model = tpl.clone(true);
         const et = unit.entityType;
-        const scale = et === 'ship' ? 0.52 : et === 'artillery_battery' ? 0.6 : et === 'landing_boat' ? 0.42 : 0.78;
+        const scale = et === 'ship' ? 0.52 : et === 'artillery_battery' ? 0.6 : et === 'landing_boat' ? 0.42 : et === 'infantry_unit' ? 1.1 : 0.78;
         model.scale.setScalar(scale);
         model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.material = n.material.clone(); } });
-        if (modelForUnit(unit) === 'flag') tintMesh(model, factionColor(unit.faction));
-        else if (modelForUnit(unit) === 'battleship') tintShip(model, factionColor(unit.faction), unit.faction);
+        const mk = modelForUnit(unit);
+        if (mk === 'flag' || mk === 'soldier') tintMesh(model, factionColor(unit.faction));
+        else if (mk === 'battleship') tintShip(model, factionColor(unit.faction), unit.faction);
         group.add(model);
     } else {
         model = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 6),
@@ -476,27 +488,40 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
         if (!pos) return;
         const unit = UNITS_BY_ID.get(id);
         if (!unit) return;
-        live.push({ id, unit, mx: pos.x, my: pos.y, onWater: isWaterUnit(unit), ox: 0, oz: 0, sinking: !!pos.sinking });
+        live.push({ id, unit, mx: pos.x, my: pos.y, onWater: isWaterUnit(unit), ox: 0, oz: 0, sinking: !!pos.sinking, evacuating: !!pos.evacuating, enterFrom: pos.enterFrom || null });
     });
-    // 2) Aynı konumdaki birimleri kümeye ayır; üst üste binmesinler diye halka ofseti uygula
-    const groups = new Map();
+    // 2) Çakışma çözümü: token'lar birbirinin içine girmesin.
+    //    (a) Tam üst üste olanlara deterministik küçük açılım,
+    //    (b) aynı ortamdaki (deniz/kara) çiftleri model ayak izine göre birbirinden it.
+    const seedJit = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); };
+    const cellCount = new Map();
     live.forEach((L) => {
-        const key = Math.round(L.mx / 30) + ':' + Math.round(L.my / 30);
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(L);
+        const key = (L.onWater ? 'W' : 'L') + Math.round(L.mx / 8) + ',' + Math.round(L.my / 8);
+        const k = cellCount.get(key) || 0; cellCount.set(key, k + 1);
+        if (k > 0) {                       // aynı noktada >1 birim → deterministik açılım
+            const a = (seedJit(L.id) % 360) * Math.PI / 180, r = 0.5 + k * 0.3;
+            L.ox = Math.cos(a) * r; L.oz = Math.sin(a) * r;
+        }
     });
-    groups.forEach((arr) => {
-        const n = arr.length;
-        if (n < 2) return;
-        arr.forEach((L, i) => {
-            const ring = Math.floor(i / 8);
-            const inRing = i % 8;
-            const per = Math.min(8, n - ring * 8);
-            const ang = (inRing / per) * Math.PI * 2 + ring * 0.4;
-            const rad = (L.onWater ? 0.62 : 0.5) * (ring + 1);
-            L.ox = Math.cos(ang) * rad; L.oz = Math.sin(ang) * rad;
-        });
-    });
+    for (let it = 0; it < 8; it++) {        // separation relaxation
+        for (let i = 0; i < live.length; i++) {
+            for (let j = i + 1; j < live.length; j++) {
+                const A = live[i], B = live[j];
+                if (A.onWater !== B.onWater) continue;       // farklı ortamı itme
+                const ax = wX(A.mx) + A.ox, az = wZ(A.my) + A.oz;
+                const bx = wX(B.mx) + B.ox, bz = wZ(B.my) + B.oz;
+                let dx = bx - ax, dz = bz - az; let d = Math.hypot(dx, dz);
+                const minSep = A.onWater ? 1.55 : 0.95;       // gemiler uzun → daha geniş
+                if (d > 1e-3 && d < minSep) {
+                    const push = (minSep - d) / 2; dx /= d; dz /= d;
+                    A.ox -= dx * push; A.oz -= dz * push;
+                    B.ox += dx * push; B.oz += dz * push;
+                } else if (d <= 1e-3) {                        // tam çakışma artığı
+                    A.ox -= 0.3; B.ox += 0.3;
+                }
+            }
+        }
+    }
     // 3) Token oluştur/güncelle (dağıtılmış konumlarda)
     live.forEach((L) => {
         const { id, unit, onWater } = L;
@@ -509,12 +534,20 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
         const tgt = new THREE.Vector3(wx, ty, wz);
         if (!onWater) landPts.push(tgt.clone());
         tk.target = tgt;
-        if (!tk.placed) { tk.group.position.copy(tgt); tk.placed = true; }
+        if (!tk.placed) {
+            // Amfibi giriş: ilk kez görünen çıkarma birliği denizden başlasın, tween kıyıya taşısın.
+            if (L.enterFrom) tk.group.position.set(wX(L.enterFrom.x), WATER_Y + 0.05, wZ(L.enterFrom.y));
+            else tk.group.position.copy(tgt);
+            tk.placed = true;
+        }
         tk.group.visible = true;
         // Batış: kanonik tek otorite (yarın 'sunk' olan gemi bugün batar).
         // Eski metin taraması nusret'in "...batırdı" ifadesini yanlış eşliyordu — kaldırıldı.
         tk.sunk = L.sinking;
-        if (!tk.sunk) sideTokens[sideOf(unit.faction)].push({ x: tgt.x, y: tgt.y, z: tgt.z, water: onWater });
+        // Tahliye/çekilme: yarın 'evacuated'/'withdrawn' → bugün gece sisine karışarak sol.
+        tk.evac = L.evacuating;
+        if (!tk.evac && tk._evacOp !== undefined && tk._evacOp < 1) { tk._evacOp = 1; setTokenOpacity(tk, 1); }
+        if (!tk.sunk && !tk.evac) sideTokens[sideOf(unit.faction)].push({ x: tgt.x, y: tgt.y, z: tgt.z, water: onWater });
         cx.push(tgt.x); cz.push(tgt.z);
     });
     // hide/remove stale
@@ -555,15 +588,35 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
     applyAtmosphere(animData);
 }
 
+function blendHex(a, b, t) {
+    const c = new THREE.Color(a); c.lerp(new THREE.Color(b), t); return c.getHex();
+}
+
+// Sezona (aya) göre ışık/sis: 14 aylık kampanya boyunca atmosfer değişir.
+function seasonPalette(iso) {
+    const m = Number(String(iso || '').slice(5, 7)) || 3;
+    if (m === 11 || m === 12 || m <= 2)          // Kış (Kasım-Şubat): soğuk, alçak güneş, kasvetli
+        return { fog: 0x2f3742, sun: 0xc2cdda, sunInt: 1.7, sky: 0x9fb0c4, ground: 0x1c232c, sunPos: [-22, 17, 13] };
+    if (m >= 3 && m <= 5)                          // İlkbahar (Mart-Mayıs): serin, açık
+        return { fog: 0x3a4150, sun: 0xffe6c2, sunInt: 2.2, sky: 0xddc7a8, ground: 0x202830, sunPos: [-18, 26, 10] };
+    if (m >= 6 && m <= 8)                          // Yaz (Haziran-Ağustos): sert sıcak, yüksek güneş, tozlu pus
+        return { fog: 0x5a4f3a, sun: 0xfff1cf, sunInt: 2.9, sky: 0xe8d2a0, ground: 0x2a2620, sunPos: [-7, 34, 7] };
+    return { fog: 0x46443e, sun: 0xffdca0, sunInt: 2.1, sky: 0xd8b98a, ground: 0x241f17, sunPos: [-20, 24, 12] }; // Sonbahar
+}
+
 function applyAtmosphere(animData) {
     if (!scene.fog) return;
+    const iso = animData?.date || currentPhase?.isoStart || '';
     const type = animData?.eventType || '';
     const intensity = Number(animData?.intensity || 0);
-    let fogCol = 0x3a4150, sunInt = 2.2;
-    if (type === 'BOMBARDMENT' || intensity >= 8) { fogCol = 0x4a4036; sunInt = 1.6; }
-    else if (type === 'NAVAL' || type === 'NAVAL_ASSAULT') { fogCol = 0x36424f; }
+    const p = seasonPalette(iso);
+    let fogCol = p.fog, sunInt = p.sunInt;
+    // Olay tipi sezonun üstüne katman: bombardıman dumanı → sıcak pus + sönük güneş.
+    if (type === 'BOMBARDMENT' || intensity >= 8) { fogCol = blendHex(fogCol, 0x4a4036, 0.5); sunInt *= 0.72; }
+    else if (type === 'NAVAL' || type === 'NAVAL_ASSAULT') { fogCol = blendHex(fogCol, 0x36424f, 0.4); }
     scene.fog.color.setHex(fogCol);
-    if (sun) sun.intensity = sunInt;
+    if (sun) { sun.intensity = sunInt; sun.color.setHex(p.sun); sun.position.set(p.sunPos[0], p.sunPos[1], p.sunPos[2]); }
+    if (hemi) { hemi.color.setHex(p.sky); hemi.groundColor.setHex(p.ground); }
 }
 
 function onPointerMove(e) {
@@ -621,6 +674,15 @@ function animate() {
     const t = clock.elapsedTime;
     tokens.forEach((tk) => {
         if (!tk.group.visible) return;
+        // Tahliye: gece sisine karışarak sol (yerinde fade-out)
+        if (tk.evac) {
+            tk._evacOp = (tk._evacOp ?? 1) - dt * 0.45;   // ~2.2 sn
+            const op = Math.max(0, tk._evacOp);
+            setTokenOpacity(tk, op);
+            tk.group.position.y += dt * 0.05;
+            if (op <= 0.001) tk.group.visible = false;
+            return;
+        }
         if (tk.target) {
             if (tk.sunk) {
                 // batarken yatayda (mayın hattına) süzülmeye devam et; y/eğim sink koduna ait
@@ -749,7 +811,7 @@ export async function initScene3D(container, opts = {}) {
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
     // lights
-    const hemi = new THREE.HemisphereLight(0xddc7a8, 0x202830, 0.7);
+    hemi = new THREE.HemisphereLight(0xddc7a8, 0x202830, 0.7);
     scene.add(hemi);
     sun = new THREE.DirectionalLight(0xffe6c2, 2.2);
     sun.position.set(-18, 26, 10);
@@ -789,6 +851,7 @@ export async function initScene3D(container, opts = {}) {
         tokenCount: () => tokens.size,
         visibleTokens: () => [...tokens.values()].filter((t) => t.group.visible).map((t) => t.unit.id),
         sunkTokens: () => [...tokens.values()].filter((t) => t.sunk && t.group.visible).map((t) => t.unit.id),
+        evacTokens: () => [...tokens.values()].filter((t) => t.evac).map((t) => t.unit.id),
         focus: (x, y, dist = 14) => {
             autoFrame.active = false;   // manuel odak otomatik çerçevelemeyi ezsin
             controls.target.set(wX(x), heightAtMap(x, y) + 0.5, wZ(y));

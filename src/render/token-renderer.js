@@ -3,33 +3,155 @@
 // Birlik token SVG oluşturma, animasyon, highlight
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
-import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260523-markers-r2';
-import { normalizeValue } from '../engine/date-utils.js?v=20260523-markers-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r2';
+import { normalizeValue } from '../engine/date-utils.js?v=20260618-3d-spectacle-r2';
 import {
     unitSeed,
     getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, getNavalDisplayOffset, isDestroyedPhaseData,
     isLockedPhaseData
-} from '../engine/position-engine.js?v=20260523-markers-r2';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260523-markers-r2';
-import { snapToSeaWater } from '../data/terrain-zones.js?v=20260523-markers-r2';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260523-markers-r2';
-import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260523-markers-r2';
-import { getUnitIcon } from '../data/icon-registry.js?v=20260523-markers-r2';
-import { getUnitVisualProfile, getSpriteSetId, hasRuntimeSpriteAtlas } from '../data/unit-visual-profiles.js?v=20260523-markers-r2';
+} from '../engine/position-engine.js?v=20260618-3d-spectacle-r2';
+import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260618-3d-spectacle-r2';
+import { snapToSeaWater } from '../data/terrain-zones.js?v=20260618-3d-spectacle-r2';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260618-3d-spectacle-r2';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260618-3d-spectacle-r2';
+import { getUnitVisualProfile, getSpriteSetId, hasRuntimeSpriteAtlas } from '../data/unit-visual-profiles.js?v=20260618-3d-spectacle-r2';
 
-let tokenTrailTimer = null;
-const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
+// ══════════════════════════════════════════════════════════════
+// SANCAK SİSTEMİ — dönem bayrakları (1915)
+// Kara birimleri direk + dalgalanan sancakla temsil edilir:
+//   Osmanlı → al sancak (hilal-yıldız), İngiliz → Union Jack,
+//   ANZAC → mavi ensign (UJ kanton + Güney Haçı), Fransız → trikolor.
+// Gemiler kıçlarında küçük ensign taşır (İngiliz → White Ensign).
+// ══════════════════════════════════════════════════════════════
 
-/** Faction SVG ikonu (legend için) */
-export function factionSVG(f, s) {
-    const c = f.color;
-    switch (f.shape) {
-        case 'star': return `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 3 Q6 10 3 13 Q6 18 12 21 Q18 18 21 13 Q18 10 12 3Z" fill="${c}" opacity=".85"/><circle cx="13" cy="12" r="2.5" fill="none" stroke="#fff" stroke-width="1"/><polygon points="8,12 9,11 9.5,12 9,13" fill="#fff" opacity=".9"/></svg>`;
-        case 'diamond': return `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="${c}" opacity=".85"/><path d="M12 18 L12 6 M8 14 Q12 19 16 14" fill="none" stroke="#fff" stroke-width="1.2"/><line x1="8" y1="8" x2="16" y2="8" stroke="#fff" stroke-width=".8"/></svg>`;
-        case 'circle': return `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="${c}" opacity=".85"/><path d="M12 14 L6 8 M12 14 L18 8 M12 14 L9 6 M12 14 L15 6 M12 14 L12 5 M12 14 L3 10 M12 14 L21 10" stroke="#fff" stroke-width=".7" opacity=".9"/><path d="M5 14 Q12 18 19 14" fill="none" stroke="#fff" stroke-width="1"/></svg>`;
-        case 'triangle': return `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="${c}" opacity=".85"/><path d="M8 16 C8 10 10 7 12 5 C14 7 16 10 16 16 M10 15 C10 11 11 8 12 6.5 C13 8 14 11 14 15" fill="none" stroke="#fff" stroke-width=".8" opacity=".9"/></svg>`;
+const FLAG_CREAM = '#f1e7cd';
+const FLAG_RED = '#a83a31';
+const FLAG_UJ_NAVY = '#2b4470';
+
+/** unitClass → sancak ölçüleri (2451×3467 harita için) */
+const FLAG_DIMS = {
+    army_hq: { W: 58, H: 36, pole: 86 },
+    corps: { W: 52, H: 32, pole: 78 },
+    division: { W: 47, H: 29, pole: 70 },
+    brigade: { W: 41, H: 26, pole: 62 },
+    regiment: { W: 37, H: 23, pole: 56 },
+    battery: { W: 37, H: 23, pole: 56 }
+};
+
+function getFlagDims(unitClass) {
+    return FLAG_DIMS[unitClass] || FLAG_DIMS.brigade;
+}
+
+/** N köşeli yıldız path'i (rotDeg=0 → bir ucu sağa bakar) */
+function starPath(cx, cy, rOut, points = 5, rotDeg = -90) {
+    const rIn = rOut * (points >= 7 ? .52 : .42);
+    let d = '';
+    for (let i = 0; i < points * 2; i++) {
+        const r = i % 2 === 0 ? rOut : rIn;
+        const a = (Math.PI / points) * i + rotDeg * Math.PI / 180;
+        d += `${i === 0 ? 'M' : 'L'}${(cx + Math.cos(a) * r).toFixed(2)} ${(cy + Math.sin(a) * r).toFixed(2)}`;
     }
+    return d + 'Z';
+}
+
+/** Dalgalı kumaş konturu: gönder kenarı (x=0) düz, uçkur ucu hafif S dalgalı */
+function flagClothPath(W, H, amp) {
+    const a = Number.isFinite(amp) ? amp : Math.max(1.5, H * .085);
+    return `M0 0 C${(W * .3).toFixed(1)} ${(-a).toFixed(1)} ${(W * .62).toFixed(1)} ${(a * .85).toFixed(1)} ${W} ${(-a * .62).toFixed(1)} ` +
+        `L${W} ${(H - a * .62).toFixed(1)} C${(W * .62).toFixed(1)} ${(H + a).toFixed(1)} ${(W * .3).toFixed(1)} ${(H - a * .85).toFixed(1)} 0 ${H} Z`;
+}
+
+/**
+ * Bayrak zemini + deseni (lokal 0..W, 0..H — clip'lenecek şekilde taşmalı çizer).
+ * variant: faction id veya 'white-ensign' (Royal Navy savaş sancağı).
+ */
+function renderFlagFace(variant, W, H) {
+    const over = `x="${-W * .12}" y="${-H * .35}" width="${W * 1.26}" height="${H * 1.7}"`;
+    switch (variant) {
+        case 'ottoman': {
+            const field = '#a32e27';
+            const cy = H / 2;
+            const r = H * .31;
+            const cx = W * .40;
+            return `<rect ${over} fill="${field}"/>
+                <circle cx="${cx}" cy="${cy}" r="${r}" fill="${FLAG_CREAM}"/>
+                <circle cx="${(cx + r * .38).toFixed(1)}" cy="${cy}" r="${(r * .82).toFixed(1)}" fill="${field}"/>
+                <path d="${starPath(cx + r * 1.5, cy, H * .145, 5, 0)}" fill="${FLAG_CREAM}"/>`;
+        }
+        case 'british': {
+            const diag = `M0 0 L${W} ${H} M${W} 0 L0 ${H}`;
+            const cross = `M${W / 2} 0 L${W / 2} ${H} M0 ${H / 2} L${W} ${H / 2}`;
+            return `<rect ${over} fill="${FLAG_UJ_NAVY}"/>
+                <path d="${diag}" stroke="${FLAG_CREAM}" stroke-width="${(H * .26).toFixed(1)}"/>
+                <path d="${diag}" stroke="${FLAG_RED}" stroke-width="${(H * .09).toFixed(1)}"/>
+                <path d="${cross}" stroke="${FLAG_CREAM}" stroke-width="${(H * .34).toFixed(1)}"/>
+                <path d="${cross}" stroke="${FLAG_RED}" stroke-width="${(H * .18).toFixed(1)}"/>`;
+        }
+        case 'anzac': {
+            const cw = W * .5, ch = H * .52;
+            const canton = `<rect x="0" y="0" width="${cw}" height="${ch}" fill="${FLAG_UJ_NAVY}"/>
+                <path d="M0 0 L${cw} ${ch} M${cw} 0 L0 ${ch}" stroke="${FLAG_CREAM}" stroke-width="${(H * .07).toFixed(1)}"/>
+                <path d="M${cw / 2} 0 L${cw / 2} ${ch} M0 ${ch / 2} L${cw} ${ch / 2}" stroke="${FLAG_CREAM}" stroke-width="${(H * .11).toFixed(1)}"/>
+                <path d="M${cw / 2} 0 L${cw / 2} ${ch} M0 ${ch / 2} L${cw} ${ch / 2}" stroke="${FLAG_RED}" stroke-width="${(H * .055).toFixed(1)}"/>`;
+            // Güney Haçı (uçkur yarısı) + Commonwealth yıldızı (kanton altı)
+            const stars = [
+                { x: W * .74, y: H * .15, r: H * .085 },
+                { x: W * .62, y: H * .44, r: H * .08 },
+                { x: W * .74, y: H * .82, r: H * .085 },
+                { x: W * .875, y: H * .42, r: H * .075 },
+                { x: W * .79, y: H * .55, r: H * .05 }
+            ].map((s) => `<path d="${starPath(s.x, s.y, s.r, 5)}" fill="${FLAG_CREAM}"/>`).join('');
+            return `<rect ${over} fill="#22365c"/>${canton}${stars}
+                <path d="${starPath(W * .25, H * .78, H * .15, 7)}" fill="${FLAG_CREAM}"/>`;
+        }
+        case 'french':
+            return `<rect ${over} fill="#33518f"/>
+                <rect x="${(W / 3).toFixed(1)}" y="${-H * .35}" width="${(W / 3).toFixed(1)}" height="${H * 1.7}" fill="${FLAG_CREAM}"/>
+                <rect x="${(W * 2 / 3).toFixed(1)}" y="${-H * .35}" width="${(W / 3 + W * .14).toFixed(1)}" height="${H * 1.7}" fill="#ab3a30"/>`;
+        case 'white-ensign': {
+            const cw = W * .44, ch = H * .5;
+            return `<rect ${over} fill="${FLAG_CREAM}"/>
+                <path d="M${W / 2} 0 L${W / 2} ${H} M0 ${H / 2} L${W} ${H / 2}" stroke="${FLAG_RED}" stroke-width="${(H * .16).toFixed(1)}"/>
+                <rect x="0" y="0" width="${cw}" height="${ch}" fill="${FLAG_UJ_NAVY}"/>
+                <path d="M0 0 L${cw} ${ch} M${cw} 0 L0 ${ch}" stroke="${FLAG_CREAM}" stroke-width="${(H * .055).toFixed(1)}"/>
+                <path d="M${cw / 2} 0 L${cw / 2} ${ch} M0 ${ch / 2} L${cw} ${ch / 2}" stroke="${FLAG_CREAM}" stroke-width="${(H * .09).toFixed(1)}"/>
+                <path d="M${cw / 2} 0 L${cw / 2} ${ch} M0 ${ch / 2} L${cw} ${ch / 2}" stroke="${FLAG_RED}" stroke-width="${(H * .045).toFixed(1)}"/>`;
+        }
+        default:
+            return `<rect ${over} fill="#6b675a"/>`;
+    }
+}
+
+/**
+ * Komple kumaş: clip + desen + uçkur gölgesi + kontur (+ SMIL dalgalanma).
+ * Lokal koordinat: gönder üst köşesi (0,0), kumaş 0..W × 0..H.
+ */
+function renderFlagCloth(variant, W, H, clipId, opts = {}) {
+    const cloth = flagClothPath(W, H, opts.waveAmp);
+    const flutter = opts.flutterDur
+        ? `<animateTransform attributeName="transform" type="skewY" values="0;-2.4;0;2.6;0" dur="${opts.flutterDur}s" repeatCount="indefinite"/>`
+        : '';
+    const shade = opts.shade === false
+        ? ''
+        : `<path d="${cloth}" fill="url(#flagShadeG)" opacity=".9"/>`;
+    return `<g class="unit-flag-cloth">
+        ${flutter}
+        <clipPath id="${clipId}"><path d="${cloth}"/></clipPath>
+        <g clip-path="url(#${clipId})">${renderFlagFace(variant, W, H)}</g>
+        ${shade}
+        <path d="${cloth}" fill="none" stroke="rgba(24,16,11,.85)" stroke-width="${opts.outline ?? 1.4}" stroke-linejoin="round"/>
+    </g>`;
+}
+
+/** Faction SVG ikonu (legend için) — harita sancaklarıyla aynı dil */
+export function factionSVG(f, s) {
+    const W = 21, H = 13;
+    return `<svg width="${Math.round(s * 2.2)}" height="${Math.round(s * 1.5)}" viewBox="0 0 30 20">
+        <line x1="3.5" y1="18.5" x2="3.5" y2="1.5" stroke="#4a3b26" stroke-width="1.6"/>
+        <circle cx="3.5" cy="1.6" r="1.3" fill="#c9a85c"/>
+        <g transform="translate(4.6 2.6)">${renderFlagCloth(f.id, W, H, `lgf-${f.id}`, { shade: false, outline: .9, waveAmp: 1.1 })}</g>
+    </svg>`;
 }
 
 const NAVAL_VISUAL_PROFILES = {
@@ -130,8 +252,8 @@ function renderTokenHitTarget(unit) {
         return `<rect class="unit-hit-target" x="${-width / 2}" y="${-height / 2}" width="${width}" height="${height}" rx="14" aria-hidden="true"/>`;
     }
 
-    const radius = Math.max(28, getTokenRadius(unit.unitClass) + 10);
-    return `<circle class="unit-hit-target" cx="0" cy="0" r="${radius}" aria-hidden="true"/>`;
+    const dims = getFlagDims(unit.unitClass);
+    return `<rect class="unit-hit-target" x="-18" y="${-(dims.pole + 20)}" width="${dims.W + 32}" height="${dims.pole + 44}" rx="12" aria-hidden="true"/>`;
 }
 
 function getNavalVisualProfile(unit) {
@@ -201,6 +323,23 @@ function renderSmoke(profile, color, isSunk, isDamaged) {
     }).join('');
 }
 
+/**
+ * Kıç ensign'i — top-down silüette kıçtan geriye doğru uzanan küçük sancak.
+ * rotate(180) kumaşı kıç yönüne çevirir (desen 13px'te simetrik, sorun değil).
+ */
+function renderSternEnsign(unit, profile, isSunk) {
+    if (isSunk) return '';
+    const variant = unit.faction === 'british'
+        ? 'white-ensign'
+        : unit.faction === 'anzac' ? 'british' : unit.faction;
+    const W = 15, H = 9.5;
+    const stern = -profile.length / 2;
+    return `<g class="naval-ensign" transform="translate(${(stern - 1.5).toFixed(1)} 0) rotate(180)" opacity=".94" aria-hidden="true">
+        <line x1="-4" y1="0" x2="1.5" y2="0" stroke="#3a2d1d" stroke-width="1.3"/>
+        <g transform="translate(1.5 ${-H / 2})">${renderFlagCloth(variant, W, H, `ens-${unit.id}`, { shade: false, outline: .8, waveAmp: 1, flutterDur: '2.1' })}</g>
+    </g>`;
+}
+
 function renderBattleshipSilhouette(unit, f, profile, phaseData, intent) {
     const c = f.color;
     const cl = f.colorLight;
@@ -236,6 +375,7 @@ function renderBattleshipSilhouette(unit, f, profile, phaseData, intent) {
             ${isFlagship ? `<polygon points="${bridge.x + 1},${bridge.y - 28} ${bridge.x + 17},${bridge.y - 24} ${bridge.x + 1},${bridge.y - 19}" fill="#f6e5a7" opacity=".9"/>` : ''}
         </g>` : ''}
         ${unit.id === 'nusret' ? renderMinelayerRails(profile, cl, isSunk, activeMinelaying) : ''}
+        ${renderSternEnsign(unit, profile, isSunk)}
         ${isDamaged || isSunk ? renderNavalDamage(profile, isSunk) : ''}
     </g>`;
 }
@@ -335,7 +475,7 @@ function navalTokenShape(unit, f, cx, cy, phaseData, heading = 0, intent = null)
     else body = renderBattleshipSilhouette(unit, f, profile, phaseData, intent);
 
     const scale = Number.isFinite(profile.scale) ? profile.scale : .84;
-    return `<g class="naval-visual${roleClass}${stateClass}" transform="translate(${cx} ${cy}) rotate(${heading.toFixed(1)}) rotate(${listing}) scale(${scale})" data-heading="${heading.toFixed(1)}">
+    return `<g class="naval-visual${roleClass}${stateClass}" transform="translate(${cx} ${cy}) rotate(${heading.toFixed(1)}) rotate(${listing}) scale(${scale})" data-heading="${heading.toFixed(1)}" data-listing="${listing}" data-scale="${scale}">
         ${body}
     </g>`;
 }
@@ -346,71 +486,60 @@ function getTokenRadius(unitClass) {
     return radii[unitClass] || 27;
 }
 
-/** unitClass bazlı NATO-style boyut işareti */
-function unitClassMarker(cx, cy, unitClass, cl) {
-    const y = cy - getTokenRadius(unitClass) - 8;
-    switch (unitClass) {
-        case 'army_hq':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="14" font-weight="bold" font-family="var(--mono)">★★★</text>`;
-        case 'corps':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="13" font-weight="bold" font-family="var(--mono)">XX</text>`;
-        case 'division':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="11" font-family="var(--mono)">××</text>`;
-        case 'brigade':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="11" font-family="var(--mono)">×</text>`;
-        case 'regiment':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="10" font-family="var(--mono)">III</text>`;
-        case 'battery':
-            return `<text x="${cx}" y="${y}" text-anchor="middle" fill="${cl}" font-size="11" font-family="var(--mono)">⌇</text>`;
-        default:
-            return '';
-    }
+/** unitClass bazlı kademe işareti — sancağın üstünde parşömen yazı */
+function unitClassMarker(unitClass, W, pole) {
+    const labels = {
+        army_hq: '★★★', corps: 'XX', division: '××',
+        brigade: '×', regiment: 'III', battery: '⌇⌇'
+    };
+    const label = labels[unitClass];
+    if (!label) return '';
+    const size = unitClass === 'army_hq' ? 15 : unitClass === 'corps' ? 14 : 12;
+    return `<text class="unit-echelon-marker" x="${(1.2 + W * .52).toFixed(1)}" y="${-(pole + 10)}" text-anchor="middle"
+        fill="#ead9ab" stroke="rgba(22,15,10,.85)" stroke-width="2.6" paint-order="stroke"
+        font-size="${size}" font-weight="bold" font-family="var(--mono)">${label}</text>`;
+}
+
+/**
+ * Kara birimi sancak token'ı — taban pimi birimin harita konumudur,
+ * direk yukarı uzanır, dönem bayrağı dalgalanır.
+ */
+function flagTokenShape(unit, f, phaseData, intent) {
+    const { W, H, pole } = getFlagDims(unit.unitClass);
+    const destroyed = isDestroyedPhaseData(phaseData);
+    const seed = unitSeed(unit.id);
+    const combatActive = ['engaged', 'bombarding', 'landing', 'advancing'].includes(intent?.actionKey);
+    const flutterDur = destroyed
+        ? 0
+        : combatActive
+            ? (1.25 + (seed % 3) * .12).toFixed(2)
+            : (3 + (seed % 5) * .24).toFixed(2);
+    const cloth = renderFlagCloth(unit.faction, W, H, `fcl-${unit.id}`, { flutterDur });
+    const firing = ['engaged', 'bombarding'].includes(intent?.actionKey);
+    const flashes = firing && !destroyed ? `<g class="unit-flag-combat" aria-hidden="true">
+        <circle class="flag-muzzle" cx="-12" cy="-7" r="2.7" style="--mz-delay:0s"/>
+        <circle class="flag-muzzle" cx="13" cy="-4" r="2.3" style="--mz-delay:.46s"/>
+        <circle class="flag-muzzle" cx="4" cy="-14" r="2.5" style="--mz-delay:.92s"/>
+    </g>` : '';
+    return `<g class="unit-flag-standard${destroyed ? ' is-flag-fallen' : ''}">
+        <ellipse class="flag-ground-shadow" cx="2.5" cy="3.8" rx="${Math.max(11, W * .26).toFixed(1)}" ry="4.2" fill="rgba(8,6,4,.34)"/>
+        <g${destroyed ? ' transform="rotate(-38)"' : ''}>
+            <line x1="0" y1="3" x2="0" y2="${-pole}" stroke="#3a2d1d" stroke-width="3"/>
+            <line x1="-.8" y1="3" x2="-.8" y2="${-pole}" stroke="rgba(216,188,138,.38)" stroke-width=".9"/>
+            <circle cx="0" cy="${-pole - 3}" r="3.1" fill="#c9a85c" stroke="rgba(38,26,15,.85)" stroke-width=".9"/>
+            <g transform="translate(1.2 ${-pole})">${cloth}</g>
+        </g>
+        <circle class="flag-base-pin" cx="0" cy="0" r="6.6" fill="${f.color}" stroke="#ead9ab" stroke-width="1.7"/>
+        <circle cx="0" cy="0" r="2.1" fill="#ead9ab" opacity=".85"/>
+        ${flashes}
+        ${destroyed ? '' : unitClassMarker(unit.unitClass, W, pole)}
+    </g>`;
 }
 
 /** Token şekli (harita üstü birlik sembolü) */
 function tokenShape(unit, phaseData, f, cx, cy, heading = 0, intent = null) {
-    const c = f.color, cl = f.colorLight;
     if (isNavalUnit(unit)) return navalTokenShape(unit, f, cx, cy, phaseData, heading, intent);
-    const r = getTokenRadius(unit.unitClass);
-    const marker = unitClassMarker(cx, cy, unit.unitClass, cl);
-    const ic = getUnitIcon(unit.id);
-    const iconOverlay = ic.icon ? `<image href="assets/icons/${ic.icon}.png" x="${cx - ic.size / 2}" y="${cy - ic.size / 2}" width="${ic.size}" height="${ic.size}" opacity=".82" pointer-events="none"/>` : '';
-    switch (f.shape) {
-        case 'star': {
-            const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
-                `<path d="M${cx + 5} ${cy - 1} A6 6 0 1 0 ${cx + 5} ${cy + 1} A4.5 4.5 0 1 1 ${cx + 5} ${cy - 1}Z" fill="${cl}" opacity=".85" transform="rotate(-30,${cx},${cy})"/>` +
-                `<polygon points="${cx - 4},${cy - 2} ${cx - 3.2},${cy - 0.2} ${cx - 5.2},${cy + 0.8} ${cx - 3.4},${cy + 0.8} ${cx - 3},${cy + 2.8} ${cx - 2},${cy + 1} ${cx - 0.5},${cy + 2.6} ${cx - 0.8},${cy + 0.5} ${cx + 1},${cy + 1.2} ${cx - 0.2},${cy - 0.6}" fill="${cl}" opacity=".85" transform="rotate(-30,${cx},${cy})"/>` + iconOverlay + marker;
-        }
-        case 'diamond': {
-            const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
-                `<line x1="${cx}" y1="${cy - 6}" x2="${cx}" y2="${cy + 5}" stroke="${cl}" stroke-width="1.2" opacity=".85"/>` +
-                `<line x1="${cx - 3}" y1="${cy - 6}" x2="${cx + 3}" y2="${cy - 6}" stroke="${cl}" stroke-width="1" opacity=".85"/>` +
-                `<path d="M${cx - 5} ${cy + 2} Q${cx - 4} ${cy + 6} ${cx} ${cy + 5} Q${cx + 4} ${cy + 6} ${cx + 5} ${cy + 2}" fill="none" stroke="${cl}" stroke-width="1.1" opacity=".85"/>` +
-                `<circle cx="${cx}" cy="${cy - 7.5}" r="1.3" fill="none" stroke="${cl}" stroke-width=".8" opacity=".7"/>` + iconOverlay + marker;
-        }
-        case 'circle': {
-            const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
-                `<path d="M${cx - 7} ${cy + 2} Q${cx} ${cy + 5} ${cx + 7} ${cy + 2}" fill="none" stroke="${cl}" stroke-width=".8" opacity=".7"/>` +
-                Array.from({ length: 9 }, (_, i) => {
-                    const a = -Math.PI + ((i + 1) * Math.PI / 10);
-                    const x1 = cx + Math.cos(a) * 2.5;
-                    const y1 = cy + 2 + Math.sin(a) * 2.5;
-                    const x2 = cx + Math.cos(a) * 7;
-                    const y2 = cy + 2 + Math.sin(a) * 7;
-                    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${cl}" stroke-width=".6" opacity=".8"/>`;
-                }).join('') +
-                `<circle cx="${cx}" cy="${cy + 2}" r="2.5" fill="${cl}" opacity=".7"/>` + iconOverlay + marker;
-        }
-        case 'triangle': {
-            const sw = r >= 11 ? '1.2' : '.8';
-            return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" stroke="${cl}" stroke-width="${sw}" opacity=".92" filter="url(#subtleGlow)"/>` +
-                `<path d="M${cx} ${cy - 7} C${cx + 1.5} ${cy - 4} ${cx + 4} ${cy - 2} ${cx + 4} ${cy + 1} C${cx + 4} ${cy + 3} ${cx + 2} ${cy + 3} ${cx + 1} ${cy + 1} L${cx + 1} ${cy + 5} L${cx - 1} ${cy + 5} L${cx - 1} ${cy + 1} C${cx - 2} ${cy + 3} ${cx - 4} ${cy + 3} ${cx - 4} ${cy + 1} C${cx - 4} ${cy - 2} ${cx - 1.5} ${cy - 4} ${cx} ${cy - 7}Z" fill="${cl}" opacity=".8"/>` +
-                `<line x1="${cx - 3}" y1="${cy + 5}" x2="${cx + 3}" y2="${cy + 5}" stroke="${cl}" stroke-width=".8" opacity=".7"/>` + iconOverlay + marker;
-        }
-    }
+    return flagTokenShape(unit, f, phaseData, intent);
 }
 
 function escapeAttr(value) {
@@ -460,7 +589,39 @@ function getAnimatedUnitState(unit, animData) {
 
 function getTokenVitals(unit, isoDate, animData) {
     const { unitState, intensity } = getAnimatedUnitState(unit, animData);
-    return getUnitVitals(unit.id, isoDate, intensity, unitState, unit.strength || 0);
+    return {
+        vitals: getUnitVitals(unit.id, isoDate, intensity, unitState, unit.strength || 0),
+        unitState,
+        intensity
+    };
+}
+
+/**
+ * Görsel imza: token'ın İÇ markup'ını etkileyen ayrık durumların özeti.
+ * token-animator bu imza değişmedikçe iç DOM'a dokunmaz — duman, dalga,
+ * SMIL animasyonları kesintisiz akar. Günlük değişen sayılar (kuvvet
+ * badge'i, title) imza dışıdır; animatör onları yerinde yamar.
+ * Gemi rotası (heading) bilinçli olarak imza dışı: animatör tween'ler.
+ */
+function computeVisualSig(unit, phaseData, intent, vitals, hasSprite) {
+    const sunk = isDestroyedPhaseData(phaseData) ? 'sunk' : '';
+    const damaged = isDamagedPhaseData(phaseData) ? 'dmg' : '';
+    const stressed = !!vitals?.base && !isNavalUnit(unit)
+        && (vitals.stamina <= 0.58 || vitals.lossRatio >= 0.18 || (vitals.todayLoss || 0) >= 180);
+    const vitalTier = !stressed
+        ? ''
+        : (vitals.stamina <= 0.24 || vitals.lossRatio >= 0.4)
+            ? 'crit'
+            : (vitals.stamina <= 0.42 || vitals.lossRatio >= 0.24)
+                ? 'fat'
+                : 'mild';
+    const tickBucket = stressed ? Math.min(4, Math.max(1, Math.round(vitals.lossRatio * 8))) : 0;
+    return [
+        intent?.actionKey || '',
+        intent?.actionColor || '',
+        sunk, damaged, vitalTier, tickBucket,
+        hasSprite ? 'spr' : 'sym'
+    ].join('|');
 }
 
 function getVitalClass(vitals) {
@@ -486,7 +647,11 @@ function actionAdornment(unit, intent) {
     }
 
     const r = getTokenRadius(unit.unitClass) + 3;
-    return `<g class="unit-action-adornment" aria-hidden="true">
+    // Sancak token'ı: süsler taban pimini değil BAYRAK BAŞINI çevreler.
+    const fd = getFlagDims(unit.unitClass);
+    const fcx = (1.2 + fd.W / 2).toFixed(1);
+    const fcy = (-fd.pole + fd.H / 2).toFixed(1);
+    return `<g class="unit-action-adornment" aria-hidden="true" transform="translate(${fcx} ${fcy})">
       <circle class="unit-action-ring" data-action-key="${intent.actionKey}" cx="0" cy="0" r="${r}" fill="none" stroke="${color}" stroke-width="1.1" opacity=".8"${dashArray ? ` stroke-dasharray="${dashArray}"` : ''}/>
       <circle class="unit-action-pip" cx="${r - 1}" cy="${-r + 1}" r="2.2" fill="${color}" stroke="rgba(20, 18, 16, .92)" stroke-width=".8"/>
     </g>`;
@@ -539,7 +704,11 @@ function vitalAdornment(unit, vitals, intent) {
         </path>`;
     }).join('');
 
-    return `<g class="unit-vitals-adornment" aria-hidden="true">
+    // Sancak token'ı: direnç halkası/çentikleri taban pimini değil bayrak başını çevreler.
+    const fd = getFlagDims(unit.unitClass);
+    const fcx = (1.2 + fd.W / 2).toFixed(1);
+    const fcy = (-fd.pole + fd.H / 2).toFixed(1);
+    return `<g class="unit-vitals-adornment" aria-hidden="true" transform="translate(${fcx} ${fcy})">
       <circle class="unit-vitals-aura" cx="0" cy="0" r="${r}" fill="${auraColor}" opacity="${critical ? '.2' : '.15'}">
         <animate attributeName="r" values="${(r - 2).toFixed(1)};${(r + (critical ? 5 : 3)).toFixed(1)};${(r - 2).toFixed(1)}" dur="${pulseDur}" repeatCount="indefinite"/>
         <animate attributeName="opacity" values="${critical ? '.18;.28;.18' : '.1;.2;.1'}" dur="${pulseDur}" repeatCount="indefinite"/>
@@ -588,14 +757,16 @@ function renderRifleman(dx, dy, color, light, index, actionKey, faction = 'ottom
     const stance = actionKey === 'retreating' ? -1 : 1;
     const lean = ['advancing', 'landing', 'engaged'].includes(actionKey) ? stance * 2 : 0;
     const rifleY = actionKey === 'engaged' || actionKey === 'bombarding' ? dy + 1 : dy + 4;
-    return `<g class="unit-sprite-figure" transform="translate(${dx} ${dy})" style="--figure-delay:${(index * .13).toFixed(2)}s">
+    // Poz (dizilim) dış grupta, animasyon iç grupta: CSS transform animasyonu
+    // SVG transform attribute'unu ezer — translate ayrı katmanda kalmalı.
+    return `<g class="unit-sprite-pose" transform="translate(${dx} ${dy})"><g class="unit-sprite-figure" style="--figure-delay:${(index * .13).toFixed(2)}s">
         <circle cx="${lean}" cy="-10" r="4.2" fill="${light}" stroke="rgba(18,14,10,.72)" stroke-width=".9"/>
         ${renderHeadgear(faction, lean, light)}
         <path d="M${lean - 2} -6 L${lean + 2} -6 L${lean + 4} 8 L${lean - 4} 8 Z" fill="${color}" stroke="${light}" stroke-width=".8"/>
         <path d="M${lean - 5} 8 L${lean - 8} 16 M${lean + 5} 8 L${lean + 8} 16" stroke="${light}" stroke-width="1.4" stroke-linecap="round"/>
         <path d="M${lean - 6} -1 L${lean + 14 * stance} ${rifleY}" stroke="#2b241c" stroke-width="1.6" stroke-linecap="round"/>
         <path d="M${lean - 2} 0 L${lean + 8 * stance} 4" stroke="${light}" stroke-width="1.15" stroke-linecap="round"/>
-    </g>`;
+    </g></g>`;
 }
 
 function renderGunCrew(color, light, actionKey, faction = 'ottoman') {
@@ -744,8 +915,9 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         // off-map (battı/çekildi/tahliye sonrası) zaten app.js gate'inde nextPositions
         // dışında kaldığı için buraya hiç gelmez.
         const intent = deriveUnitIntent(u, phase, phaseData || null, animData);
-        const vitals = getTokenVitals(u, isoDate, animData);
+        const { vitals, unitState, intensity } = getTokenVitals(u, isoDate, animData);
         const vitalClass = getVitalClass(vitals);
+        const underFire = !isNavalUnit(u) && unitState === 'fighting' && intensity >= 6;
         const f = BATTLE_DATA.factions[u.faction];
         const visualProfile = getUnitVisualProfile(u);
         const spriteMarkup = renderInlineSquadSprite(u, f, visualProfile, intent);
@@ -777,7 +949,9 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
         const titleText = `${u.name} — ${intent.actionLabel} — ${intent.currentLocationName}${intent.targetLocationName && intent.targetLocationName !== intent.currentLocationName ? ` → ${intent.targetLocationName}` : ''}${staminaLabel}`;
         const pulseDur = vitals.stamina <= 0.35 ? 2.7 : vitals.lossRatio >= 0.35 ? 2.25 : 1.7;
         const labelY = isNavalUnit(u) ? getNavalLabelY(u) : 50;
-        return `<g class="unit-token${vitalClass}${visualClass}" role="button" tabindex="0" aria-label="${ariaLabel}"
+        const visualSig = computeVisualSig(u, phaseData, intent, vitals, !!spriteMarkup);
+        return `<g class="unit-token${vitalClass}${visualClass}${underFire ? ' is-under-fire' : ''}" role="button" tabindex="0" aria-label="${ariaLabel}"
+      data-visual-sig="${escapeAttr(visualSig)}"
       data-unit-id="${u.id}"
       data-unit-name="${u.name}"
       data-unit-commander="${u.commander}"
@@ -822,55 +996,8 @@ export function renderTokens(pid, prevPositions = {}, nextPositions = {}, phaseI
     }).join('');
 }
 
-// ── Token Animasyonları ──
-
-function getTokenTranslate(el) {
-    const m = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(el.style.transform || '');
-    if (m) return { x: +m[1], y: +m[2] };
-    return { x: +el.dataset.targetX || 0, y: +el.dataset.targetY || 0 };
-}
-
-/** Token kayma animasyonu (trail efekti ile) */
-export function applyTokenSlideWithTrail(tokenNodes) {
-    tokenNodes.forEach((el) => {
-        const tx = +el.dataset.targetX;
-        const ty = +el.dataset.targetY;
-        if (!Number.isFinite(tx) || !Number.isFinite(ty)) return;
-
-        // Mobilde trail efektini atla — sadece pozisyon güncelle
-        if (isMobileDevice) {
-            el.style.transform = `translate(${tx}px, ${ty}px)`;
-            return;
-        }
-
-        const from = getTokenTranslate(el);
-        const dx = tx - from.x;
-        const dy = ty - from.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist > 2) {
-            const nx = -dx / dist;
-            const ny = -dy / dist;
-            const s1 = Math.min(8, Math.max(3, dist * 0.18));
-            const s2 = Math.min(16, Math.max(6, dist * 0.34));
-            el.style.setProperty('--trail-x1', `${(nx * s1).toFixed(1)}px`);
-            el.style.setProperty('--trail-y1', `${(ny * s1).toFixed(1)}px`);
-            el.style.setProperty('--trail-x2', `${(nx * s2).toFixed(1)}px`);
-            el.style.setProperty('--trail-y2', `${(ny * s2).toFixed(1)}px`);
-            el.classList.add('is-moving');
-        }
-        el.style.transform = `translate(${tx}px, ${ty}px)`;
-    });
-
-    if (isMobileDevice) return; // Mobilde trail timer gereksiz
-
-    if (tokenTrailTimer) clearTimeout(tokenTrailTimer);
-    tokenTrailTimer = setTimeout(() => {
-        tokenNodes.forEach((el) => el.classList.remove('is-moving'));
-        tokenTrailTimer = null;
-    }, 360);
-}
-
 // ── Unit Highlight (animasyon verisinden) ──
+// (Token kayma animasyonu artık token-animator.js'in keyed tween motorunda)
 
 function normalizeAnimName(value) {
     return String(value || '')

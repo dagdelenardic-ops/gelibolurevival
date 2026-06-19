@@ -3,9 +3,9 @@
 // Lists active rendered units while playback is paused.
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
-import { showUnitPanel } from './unit-panel.js?v=20260523-markers-r2';
-import { listReserveUnitsForIso } from '../data/unit-sectors.js?v=20260523-markers-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { showUnitPanel } from './unit-panel.js?v=20260618-3d-spectacle-r2';
+import { listReserveUnitsForIso } from '../data/unit-sectors.js?v=20260618-3d-spectacle-r2';
 
 let rosterRoot = null;
 let rosterBound = false;

@@ -8,8 +8,8 @@ node_modules/
 tmp/
 andre/
 
-# Local verification artifacts
-gelibolu-*.png
+# Local verification artifacts (yalnız kök — assets/3d/gelibolu-heightmap.png'i KAPSAMASIN)
+/gelibolu-*.png
 local-run*.png
 map-check-*.png
 verification-overlay*.png
@@ -30,6 +30,11 @@ book/*.epub
 
 # 3D source (Blender) — keep heightmap PNG + model GLBs (runtime), drop heavy source renders + blend
 *.blend
+assets/3d/*.blend1
 assets/3d/gelibolu-hero.png
+assets/3d/gelibolu-hero.jpg
 assets/3d/gelibolu-topdown.png
+assets/3d/gelibolu-topdown.jpg
 assets/3d/gelibolu-scene.blend
+# Runtime için ŞART: heightmap deploy edilmeli (3B sahne bunsuz init olamıyor → 2B'ye düşüyor)
+!assets/3d/gelibolu-heightmap.png

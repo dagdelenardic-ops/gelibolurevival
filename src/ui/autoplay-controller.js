@@ -3,8 +3,8 @@
 // Adaptive hız: major fazlar 6s, minor fazlar 2.5s, narration uzunluğuna göre ek süre
 // ══════════════════════════════════════════════════════════════
 
-import { isMajorPhase } from '../engine/phase-engine.js?v=20260523-markers-r2';
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
+import { isMajorPhase } from '../engine/phase-engine.js?v=20260618-3d-spectacle-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 const MINOR_INTERVAL = isMobile ? 4000 : 3500;

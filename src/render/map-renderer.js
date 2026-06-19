@@ -3,13 +3,13 @@
 // Historically grounded military cartography with modern UI clarity
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260523-markers-r2';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260523-markers-r2';
-import { HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260523-markers-r2';
-import { renderTokens } from './token-renderer.js?v=20260523-markers-r2';
-import { renderBattleEffects } from './effects-renderer.js?v=20260523-markers-r2';
-import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260523-markers-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r2';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260618-3d-spectacle-r2';
+import { HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260618-3d-spectacle-r2';
+import { renderTokens } from './token-renderer.js?v=20260618-3d-spectacle-r2';
+import { renderBattleEffects } from './effects-renderer.js?v=20260618-3d-spectacle-r2';
+import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260618-3d-spectacle-r2';
 
 function getActiveSceneGroups(phase, animData) {
     const iso = String(phase && phase.isoStart || '');
@@ -345,6 +345,11 @@ export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers
       <feGaussianBlur stdDeviation="4" result="b"/>
       <feComposite in="SourceGraphic" in2="b" operator="over"/>
     </filter>
+    <linearGradient id="flagShadeG" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="55%" stop-color="#000" stop-opacity=".05"/>
+      <stop offset="100%" stop-color="#1a0e08" stop-opacity=".32"/>
+    </linearGradient>
     <linearGradient id="editorVignetteG" x1="50%" y1="0%" x2="50%" y2="100%">
       <stop offset="0%" stop-color="#000" stop-opacity=".24"/>
       <stop offset="18%" stop-color="#000" stop-opacity="0"/>

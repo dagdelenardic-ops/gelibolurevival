@@ -3,20 +3,20 @@
 // Birim konumlandırma, trail hesaplama, cluster yönetimi
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, BASE_PHASE_ID, PHASE_TOKEN_SPREAD, getMapLocationById } from '../data/battle-data.js?v=20260523-markers-r2';
-import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260523-markers-r2';
-import { ENTITY_TYPES } from '../data/entity-types.js?v=20260523-markers-r2';
-import { FRONTLINES } from '../data/frontlines.js?v=20260523-markers-r2';
-import { MAP_FORTS, MAP_NAVAL_ANCHORS } from '../data/geo-calibration.js?v=20260523-markers-r2';
-import { getTerrainAtPoint, clampToAllowedTerrain, snapToSeaWater } from '../data/terrain-zones.js?v=20260523-markers-r2';
-import { getHistoricalPlacementForUnit } from '../data/historical-map-data.js?v=20260523-markers-r2';
-import { classifyUnitSector } from '../data/unit-sectors.js?v=20260523-markers-r2';
-import { normalizeValue } from './date-utils.js?v=20260523-markers-r2';
+import { BATTLE_DATA, BASE_PHASE_ID, PHASE_TOKEN_SPREAD, getMapLocationById } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r2';
+import { ENTITY_TYPES } from '../data/entity-types.js?v=20260618-3d-spectacle-r2';
+import { FRONTLINES } from '../data/frontlines.js?v=20260618-3d-spectacle-r2';
+import { MAP_FORTS, MAP_NAVAL_ANCHORS } from '../data/geo-calibration.js?v=20260618-3d-spectacle-r2';
+import { getTerrainAtPoint, clampToAllowedTerrain, snapToSeaWater } from '../data/terrain-zones.js?v=20260618-3d-spectacle-r2';
+import { getHistoricalPlacementForUnit } from '../data/historical-map-data.js?v=20260618-3d-spectacle-r2';
+import { classifyUnitSector } from '../data/unit-sectors.js?v=20260618-3d-spectacle-r2';
+import { normalizeValue } from './date-utils.js?v=20260618-3d-spectacle-r2';
 import {
     getUnitEntryPhaseIndex, isMajorPhase,
     isNavalEraPhaseIndex, getNavalEraProgress,
     getMinimumStartIsoForUnit, getFirstPhaseIndexForIso
-} from './phase-engine.js?v=20260523-markers-r2';
+} from './phase-engine.js?v=20260618-3d-spectacle-r2';
 
 const BASE_PHASE_DESTRUCTION_ISO = '1915-03-18';
 const COLLISION_SAFE_DISTANCE = 92;

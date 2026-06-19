@@ -63,10 +63,10 @@ export function renderAdvanceArrow(from, to, factionColor) {
  * Geri çekilme oku — soluklaşan arrow + geri yön
  */
 export function renderRetreatArrow(from, to, factionColor) {
-    return `<g class="anim-retreat" opacity=".2">
+    return `<g class="anim-retreat" opacity=".34">
         <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
-            stroke="${factionColor}" stroke-width="1.2" stroke-dasharray="3 5"
-            stroke-linecap="round" opacity=".5">
+            stroke="${factionColor}" stroke-width="1.5" stroke-dasharray="3 5"
+            stroke-linecap="round" opacity=".6">
             <animate attributeName="stroke-dashoffset" values="0;16" dur="2s" repeatCount="indefinite"/>
         </line>
     </g>`;
@@ -196,6 +196,42 @@ export function renderTrenchExchange(from, to, intensity, seed = 0) {
 }
 
 /**
+ * Çatışma odağı — klasik muharebe haritası işareti: çapraz kılıçlar +
+ * dışa yayılan patlama halkaları + yükselen muharebe dumanı.
+ * İki birlik arasındaki aktif çarpışmanın merkezini okunur kılar.
+ */
+export function renderClashMarker(p, intensity = 5, seed = 0) {
+    const heavy = intensity >= 7;
+    const s = heavy ? 23 : 18; // kılıç yarı boyu
+    const burstCount = heavy ? 3 : 2;
+    const burstMax = heavy ? 48 : 36;
+
+    const bursts = Array.from({ length: burstCount }, (_, i) => {
+        const begin = `${(i * (1.7 / burstCount)).toFixed(2)}s`;
+        return `<circle class="anim-clash-burst" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="5">
+            <animate attributeName="r" values="4;${burstMax}" dur="1.7s" begin="${begin}" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".8;0" dur="1.7s" begin="${begin}" repeatCount="indefinite"/>
+        </circle>`;
+    }).join('');
+
+    const smoke = Array.from({ length: heavy ? 3 : 2 }, (_, i) => {
+        const r = seededRand(seed + i * 7.3);
+        const dx = (r - .5) * 30;
+        return `<circle class="anim-clash-smoke" cx="${fmt(p.x + dx)}" cy="${fmt(p.y - 4)}" r="${(5 + r * 4.5).toFixed(1)}" style="--smk-delay:${(i * .75).toFixed(2)}s"/>`;
+    }).join('');
+
+    // Çapraz kılıçlar: iki kılıç + kabza çizgileri
+    const swords = `<g class="anim-clash-swords" transform="translate(${fmt(p.x)} ${fmt(p.y)})">
+        <line x1="${-s}" y1="${s}" x2="${s}" y2="${-s}"/>
+        <line x1="${-s}" y1="${-s}" x2="${s}" y2="${s}"/>
+        <line x1="${(-s * .58).toFixed(1)}" y1="${(s * .94).toFixed(1)}" x2="${(-s * .94).toFixed(1)}" y2="${(s * .58).toFixed(1)}"/>
+        <line x1="${(s * .58).toFixed(1)}" y1="${(s * .94).toFixed(1)}" x2="${(s * .94).toFixed(1)}" y2="${(s * .58).toFixed(1)}"/>
+    </g>`;
+
+    return `<g class="anim-clash-marker" aria-hidden="true">${smoke}${bursts}${swords}</g>`;
+}
+
+/**
  * Gercek birim noktalarindan temas koridoru.
  * Haritada "kim kiminle savasiyor" bilgisini sabit cephe merkezinden degil
  * o fazdaki karsi taraf tokenlerinden okutur.
@@ -245,14 +281,17 @@ export function renderEngagementContact(ottomanPoint, alliedPoint, opts = {}) {
         return `<circle class="anim-contact-spark" cx="${fmt(mid.x + Math.cos(a) * d)}" cy="${fmt(mid.y + Math.sin(a) * d)}" r="${(1.8 + r * 1.4).toFixed(1)}" style="--spark-delay:${(index * .18).toFixed(2)}s"/>`;
     }).join('');
 
-    const chevronSide = attacker === 'ottoman'
-        ? { color: ottomanColor, from: ottomanPoint, to: mid }
-        : attacker === 'allied'
-            ? { color: alliedColor, from: alliedPoint, to: mid }
-            : null;
-    const chevrons = chevronSide
-        ? renderContactChevrons(chevronSide.from, chevronSide.to, chevronSide.color, seed)
-        : '';
+    // Taarruz yönü chevron'ları: saldıran taraf(lar) → temas merkezi. Eskiden
+    // yalnızca Osmanlı saldırısında çiziliyordu; 'allied' ve 'both' günlerinde
+    // yön belirsiz kalıyordu. Artık saldıran her taraf okunu alır; 'both'
+    // günlerinde iki yön de görünür (kim ilerliyor net olsun).
+    let chevrons = '';
+    if (attacker === 'ottoman' || attacker === 'both') {
+        chevrons += renderContactChevrons(ottomanPoint, mid, ottomanColor, seed);
+    }
+    if (attacker === 'allied' || attacker === 'both') {
+        chevrons += renderContactChevrons(alliedPoint, mid, alliedColor, seed + 50);
+    }
 
     return `<g class="anim-contact-engagement" data-contact-label="${label}">
         <title>${label}</title>
@@ -269,6 +308,7 @@ export function renderEngagementContact(ottomanPoint, alliedPoint, opts = {}) {
         ${lanes}
         ${chevrons}
         ${sparks}
+        ${renderClashMarker(opts.clashPoint || mid, intensity, seed)}
     </g>`;
 }
 

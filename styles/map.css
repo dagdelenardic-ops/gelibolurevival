@@ -26,16 +26,21 @@
 }
 
 /* ── Birlik Tokenleri — mat, kontrollü ── */
+/* transform'a transition YOK: pozisyon token-animator'ün rAF tween'inde */
 .unit-token {
     cursor: pointer;
-    transition: transform .34s linear, opacity .3s ease-out, filter .18s;
+    transition: opacity .3s ease-out, filter .18s;
     transform-box: fill-box;
     transform-origin: center
 }
 
-.unit-token.is-moving {
-    filter: drop-shadow(var(--trail-x1, 0px) var(--trail-y1, 0px) 3px rgba(100, 80, 60, .35))
-           drop-shadow(var(--trail-x2, 0px) var(--trail-y2, 0px) 6px rgba(100, 80, 60, .2))
+/* Yürüyüş hâli: hafif hareket gölgesi + yöne eğilme (--lean animatörden) */
+.unit-token.is-marching {
+    filter: drop-shadow(0 2px 4px rgba(60, 45, 30, .35))
+}
+
+.unit-token.is-marching .unit-symbol {
+    transform: rotate(var(--lean, 0deg)) scale(1.05)
 }
 
 .unit-token.is-muted {
@@ -78,13 +83,59 @@
     pointer-events: all
 }
 
+/* ── Sancak token'ları (dönem bayrakları) ── */
+.unit-flag-standard {
+    pointer-events: none
+}
+
+.unit-flag-cloth {
+    filter: drop-shadow(1.5px 2px 2.5px rgba(8, 5, 3, .45))
+}
+
+.unit-token:hover .unit-flag-cloth {
+    filter: drop-shadow(1.5px 2px 4px rgba(8, 5, 3, .6)) brightness(1.07)
+}
+
+.unit-flag-standard.is-flag-fallen {
+    filter: saturate(.4) brightness(.75)
+}
+
+.flag-base-pin {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .4))
+}
+
+.unit-echelon-marker {
+    pointer-events: none;
+    letter-spacing: .5px
+}
+
+/* Çatışan birim: sancak dibinde yanıp sönen namlu alevleri */
+.flag-muzzle {
+    fill: #ffdf9a;
+    opacity: 0;
+    animation: flagMuzzle 1.38s steps(2, end) infinite;
+    animation-delay: var(--mz-delay, 0s);
+    filter: drop-shadow(0 0 3.5px rgba(255, 198, 108, .85))
+}
+
+@keyframes flagMuzzle {
+    0%, 60% { opacity: 0 }
+    64%, 74% { opacity: .95 }
+    78%, 100% { opacity: 0 }
+}
+
 .unit-symbol,
 .unit-sprite {
     transition: opacity .22s ease, transform .22s ease
 }
 
+.unit-symbol {
+    transform-box: fill-box;
+    transform-origin: center
+}
+
 .unit-token.is-naval {
-    transition: transform .72s cubic-bezier(.2,.72,.18,1), opacity .32s ease-out, filter .18s
+    transition: opacity .32s ease-out, filter .18s
 }
 
 .unit-token.is-naval .unit-symbol {
@@ -104,8 +155,18 @@
     animation: navalBob 4.8s ease-in-out infinite
 }
 
-.unit-token.is-moving .naval-ship-core {
+/* Seyir hâli: dalga ritmi hızlanır, dümen suyu belirginleşir */
+.unit-token.is-steaming .naval-ship-core {
     animation-duration: 2.9s
+}
+
+.unit-token.is-steaming .naval-wake {
+    stroke: rgba(206, 226, 230, .52);
+    animation-duration: 1.1s
+}
+
+.unit-token.is-steaming .naval-wake-main {
+    stroke-width: 2.9
 }
 
 .naval-ship-shadow {
@@ -279,9 +340,9 @@
 }
 
 .unit-sprite[data-sprite-state="move"] .unit-sprite-figure,
-.unit-token.is-moving .unit-sprite-figure {
+.unit-token.is-marching .unit-sprite-figure {
     animation-name: unitFigureMarch;
-    animation-duration: .86s
+    animation-duration: var(--march-dur, .6s)
 }
 
 .unit-sprite[data-sprite-state="fire"] .unit-sprite-figure {
@@ -310,9 +371,11 @@
     filter: drop-shadow(0 0 5px rgba(226, 188, 104, .2))
 }
 
+/* Yakın zoom: sprite'lar tabanda görünür, sancak yukarıda kimlik vermeye
+   devam eder — eski daire-token gibi çakışmadığı için soluklaştırma hafif */
 .map-container[data-camera-zoom="close"] .unit-token.has-hybrid-visual .unit-symbol {
-    opacity: .24;
-    transform: scale(.82)
+    opacity: .85;
+    transform: scale(.94)
 }
 
 .map-container[data-camera-zoom="wide"] .unit-token.has-hybrid-visual .unit-sprite {
@@ -374,6 +437,178 @@
 @keyframes unitActionPulse {
     0%, 100% { opacity: .42 }
     50% { opacity: .95 }
+}
+
+/* ── Game Feel: giriş / çıkış / varış / ateş altında ── */
+.unit-token.is-entering {
+    animation: tokenEnter .85s ease-out
+}
+
+.unit-token.is-entering .unit-symbol {
+    animation: tokenEnterPop .85s cubic-bezier(.3, 1.4, .5, 1)
+}
+
+.unit-token.is-exiting {
+    opacity: 0 !important;
+    pointer-events: none;
+    transition: opacity .5s ease
+}
+
+/* Varış settle'ı: küçük squash & stretch — yürüyüş biterken oturma hissi */
+.unit-token.is-arriving .unit-symbol {
+    animation: tokenSettle .5s cubic-bezier(.3, 1.8, .5, 1)
+}
+
+/* Aktif temas: ritmik hücum nabzı (kara birimleri) */
+.unit-token.is-action-engaged:not(.is-naval) .unit-symbol {
+    animation: combatLunge 1.55s ease-in-out infinite
+}
+
+@keyframes combatLunge {
+    0%, 100% { transform: translateY(0) scale(1) }
+    12% { transform: translateY(2.4px) scale(1.025) }
+    26% { transform: translateY(-1px) scale(1) }
+}
+
+/* Ateş altında: ufak siper sarsıntısı (kara birimleri) */
+.unit-token.is-under-fire:not(.is-naval) .unit-symbol {
+    animation: combatShudder .42s linear infinite
+}
+
+.unit-token.is-under-fire:not(.is-naval) .unit-action-ring {
+    opacity: .95
+}
+
+@keyframes tokenEnter {
+    from { opacity: 0 }
+}
+
+@keyframes tokenEnterPop {
+    0% { transform: scale(.55) }
+    65% { transform: scale(1.08) }
+    100% { transform: scale(1) }
+}
+
+@keyframes tokenSettle {
+    0% { transform: scale(1.12, .9) }
+    55% { transform: scale(.96, 1.05) }
+    100% { transform: scale(1, 1) }
+}
+
+@keyframes combatShudder {
+    0%, 100% { transform: translate(0, 0) }
+    25% { transform: translate(.8px, -.5px) }
+    50% { transform: translate(-.7px, .6px) }
+    75% { transform: translate(.5px, .4px) }
+}
+
+/* ── Hareket izi parçacıkları (token-animator spawn eder) ── */
+.move-dust {
+    fill: rgba(199, 180, 140, .5);
+    pointer-events: none;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: dustPuff .9s ease-out forwards
+}
+
+.move-foam {
+    fill: rgba(206, 226, 230, .4);
+    pointer-events: none;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: foamFade 1.25s ease-out forwards
+}
+
+.move-settle {
+    fill: none;
+    stroke: rgba(199, 180, 140, .55);
+    stroke-width: 2;
+    pointer-events: none;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: settleRing .6s ease-out forwards
+}
+
+@keyframes dustPuff {
+    0% { opacity: 0; scale: .45 }
+    14% { opacity: .55 }
+    100% { opacity: 0; scale: 2; translate: var(--drift-x, 0px) var(--drift-y, -6px) }
+}
+
+@keyframes foamFade {
+    0% { opacity: 0; scale: .6 }
+    16% { opacity: .42 }
+    100% { opacity: 0; scale: 1.9 }
+}
+
+@keyframes settleRing {
+    0% { opacity: .6; scale: .35 }
+    100% { opacity: 0; scale: 1.5 }
+}
+
+/* ── Harita sarsıntısı: yoğunluk ≥8 bombardıman günleri ── */
+.map-container.is-quaking svg {
+    animation: mapQuake .5s linear
+}
+
+@keyframes mapQuake {
+    0%, 100% { translate: 0 0 }
+    18% { translate: var(--quake-amp, 2px) calc(var(--quake-amp, 2px) * -.6) }
+    38% { translate: calc(var(--quake-amp, 2px) * -.8) calc(var(--quake-amp, 2px) * .5) }
+    58% { translate: calc(var(--quake-amp, 2px) * .6) calc(var(--quake-amp, 2px) * .4) }
+    78% { translate: calc(var(--quake-amp, 2px) * -.4) calc(var(--quake-amp, 2px) * -.3) }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .unit-token,
+    .unit-symbol,
+    .unit-sprite {
+        transition: none
+    }
+
+    .unit-token.is-entering,
+    .unit-token.is-entering .unit-symbol,
+    .unit-token.is-arriving .unit-symbol,
+    .unit-token.is-under-fire:not(.is-naval) .unit-symbol,
+    .unit-token.is-action-engaged:not(.is-naval) .unit-symbol,
+    .flag-muzzle,
+    .anim-clash-swords,
+    .anim-clash-smoke {
+        animation: none
+    }
+
+    .flag-muzzle {
+        opacity: 0
+    }
+
+    /* ── Çatışma FX hareketsizken de OKUNUR kalsın ──
+       Bu işaretler normalde CSS animasyonuyla (opacity 0→görünür) belirir;
+       hareket azaltıldığında animasyon durunca opacity:0'da kalıp "kim kiminle
+       nerede savaşıyor" bilgisini tamamen yok ediyordu. Statik fallback: */
+    .anim-contact-fire,
+    .anim-contact-spark,
+    .anim-contact-approach,
+    .anim-contact-band,
+    .anim-contact-edge,
+    .anim-contact-chevrons path {
+        animation: none
+    }
+    .anim-contact-fire { opacity: .42 }            /* amber=Osmanlı / yeşil=İtilaf stroke'u korunur */
+    .anim-contact-approach { opacity: .5 }
+    .anim-contact-spark { opacity: .4 }
+    .anim-clash-swords { opacity: .9; filter: none }   /* çapraz kılıç = çatışma odağı, daima görünür */
+    .anim-clash-burst { opacity: .4 }
+    .anim-clash-smoke { opacity: .14 }
+
+    .move-dust,
+    .move-foam,
+    .move-settle {
+        display: none
+    }
+
+    .map-container.is-quaking svg {
+        animation: none
+    }
 }
 
 .battle-effects {
@@ -869,6 +1104,126 @@ body[data-map-editor="open"] .fort-group text {
     border-left: 1px solid rgba(120, 100, 70, .25)
 }
 
+/* ══════════════════════════════════════════════════════════════
+   YÖNETMEN ŞERİDİ — "Bugün savaş NEREDE, ne oluyor?"
+   Harita üstü daima-okunur HTML overlay (SVG zoom'undan bağımsız).
+   ══════════════════════════════════════════════════════════════ */
+.director-banner {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-6px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: linear-gradient(145deg, rgba(16, 14, 12, .9), rgba(24, 22, 18, .94));
+    border: 1px solid rgba(120, 100, 70, .28);
+    border-radius: 999px;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .03);
+    backdrop-filter: blur(10px);
+    font-family: var(--mono);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .45s ease, transform .45s ease;
+    z-index: 4;
+}
+
+.director-banner.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.director-eye {
+    color: #d24b3a;
+    font-size: .6rem;
+    line-height: 1;
+    animation: directorEye 1.6s ease-in-out infinite;
+}
+
+@keyframes directorEye {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .25; }
+}
+
+.director-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 2px 4px;
+}
+
+.director-sector {
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #e3c98f;
+    text-transform: uppercase;
+}
+
+.director-chip[data-tone="ottoman"] .director-sector { color: #e07a6a; }
+.director-chip[data-tone="allied"] .director-sector { color: #6aa3d6; }
+.director-chip[data-tone="fire"] .director-sector { color: #f0b24a; }
+.director-chip[data-tone="march"] .director-sector { color: #c8bd9c; }
+.director-chip[data-tone="calm"] .director-sector,
+.director-chip[data-tone="clash"] .director-sector { color: #d8c49a; }
+
+.director-act {
+    font-size: .64rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #9b9078;
+    padding: 1px 7px;
+    border: 1px solid rgba(150, 130, 95, .3);
+    border-radius: 999px;
+}
+
+.director-plus {
+    color: #6a6052;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 0 2px;
+}
+
+/* ── SVG odak nabzı: gözü doğru sektöre çeker ── */
+#layer-director { pointer-events: none; }
+
+.director-focus-ring {
+    fill: none;
+    stroke: rgba(210, 75, 58, .5);
+    stroke-width: 3;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: directorPulse 2.6s ease-out infinite;
+}
+
+.director-focus-core {
+    fill: rgba(210, 75, 58, .06);
+    stroke: none;
+}
+
+.director-focus[data-tone="allied"] .director-focus-ring { stroke: rgba(106, 163, 214, .5); }
+.director-focus[data-tone="allied"] .director-focus-core { fill: rgba(106, 163, 214, .06); }
+.director-focus[data-tone="fire"] .director-focus-ring { stroke: rgba(240, 178, 74, .55); }
+.director-focus[data-tone="fire"] .director-focus-core { fill: rgba(240, 178, 74, .07); }
+.director-focus[data-tone="march"] .director-focus-ring,
+.director-focus[data-tone="calm"] .director-focus-ring { stroke: rgba(200, 189, 156, .4); }
+.director-focus[data-tone="clash"] .director-focus-ring { stroke: rgba(216, 196, 154, .5); }
+
+@keyframes directorPulse {
+    0% { opacity: .55; transform: scale(.55); }
+    70% { opacity: 0; transform: scale(1.05); }
+    100% { opacity: 0; transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .director-eye,
+    .director-focus-ring { animation: none; }
+    .director-focus-ring { opacity: .3; }
+}
+
 /* ── Anlatım Kutusu ── */
 .narration-box {
     position: absolute;
@@ -1321,9 +1676,9 @@ body[data-map-editor="open"] .fort-group text {
 }
 
 .anim-contact-band {
-    stroke: rgba(128, 86, 58, .18);
+    stroke: rgba(146, 90, 56, .3);
     stroke-linecap: round;
-    filter: drop-shadow(0 0 6px rgba(138, 68, 52, .14));
+    filter: drop-shadow(0 0 8px rgba(158, 74, 52, .28));
     vector-effect: non-scaling-stroke;
     animation: contactBandPulse 1.9s ease-in-out infinite
 }
@@ -1339,31 +1694,78 @@ body[data-map-editor="open"] .fort-group text {
 }
 
 .anim-contact-fire {
-    stroke: rgba(255, 224, 155, .72);
-    stroke-width: 1.15;
+    stroke: rgba(255, 224, 155, .9);
+    stroke-width: 2;
     stroke-linecap: round;
     opacity: 0;
     vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 2.5px rgba(255, 210, 130, .55));
     animation: contactFire var(--fire-dur, .45s) steps(2, end) infinite;
     animation-delay: var(--fire-delay, 0s)
 }
 
 .anim-contact-fire.is-ottoman-fire {
-    stroke: rgba(242, 188, 126, .78)
+    stroke: rgba(248, 186, 118, .92)
 }
 
 .anim-contact-fire.is-allied-fire {
-    stroke: rgba(202, 221, 170, .7)
+    stroke: rgba(214, 233, 178, .88)
 }
 
 .anim-contact-spark {
-    fill: rgba(239, 199, 124, .62);
+    fill: rgba(247, 206, 128, .85);
     opacity: 0;
     transform-box: fill-box;
     transform-origin: center;
     vector-effect: non-scaling-stroke;
     animation: contactSpark 1.25s ease-out infinite;
     animation-delay: var(--spark-delay, 0s)
+}
+
+/* ── Çatışma odağı: çapraz kılıçlar + patlama halkaları + duman ── */
+.anim-clash-marker {
+    pointer-events: none
+}
+
+.anim-clash-swords line {
+    stroke: #e8c87e;
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke
+}
+
+.anim-clash-swords {
+    filter: drop-shadow(0 1px 2px rgba(10, 7, 4, .65)) drop-shadow(0 0 6px rgba(232, 200, 126, .45));
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: clashPulse 1.1s ease-in-out infinite
+}
+
+@keyframes clashPulse {
+    0%, 100% { opacity: .6 }
+    50% { opacity: 1 }
+}
+
+.anim-clash-burst {
+    fill: none;
+    stroke: rgba(235, 158, 84, .75);
+    stroke-width: 2.4;
+    vector-effect: non-scaling-stroke
+}
+
+.anim-clash-smoke {
+    fill: rgba(108, 94, 78, .32);
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: clashSmoke 2.7s ease-out infinite;
+    animation-delay: var(--smk-delay, 0s)
+}
+
+@keyframes clashSmoke {
+    0% { opacity: 0; translate: 0 0; scale: .5 }
+    18% { opacity: .42 }
+    100% { opacity: 0; translate: 3px -28px; scale: 1.7 }
 }
 
 .anim-contact-chevrons path {
@@ -1394,7 +1796,7 @@ body[data-map-editor="open"] .fort-group text {
 
 @keyframes contactFire {
     0%, 58% { opacity: 0 }
-    59%, 72% { opacity: .84 }
+    59%, 72% { opacity: .95 }
     73%, 100% { opacity: 0 }
 }
 
@@ -1548,9 +1950,20 @@ body[data-map-editor="open"] .fort-group text {
         transition:none;
         will-change:auto
     }
-    .unit-token.is-moving{
+    .unit-token.is-marching,
+    .unit-token.is-steaming{
         filter:none
     }
+    .unit-token.is-marching .unit-symbol{
+        transform:none
+    }
+    .unit-token.is-under-fire:not(.is-naval) .unit-symbol,
+    .unit-token.is-arriving .unit-symbol,
+    .unit-token.is-entering,
+    .unit-token.is-entering .unit-symbol{
+        animation:none
+    }
+    .move-dust,.move-foam,.move-settle{display:none}
     .unit-token.is-muted{
         filter:none;
         opacity:.64 !important
@@ -1576,6 +1989,14 @@ body[data-map-editor="open"] .fort-group text {
     .anim-contact-chevrons path{animation:none}
     .anim-contact-fire,
     .anim-contact-spark{opacity:.22}
+    .anim-clash-swords,
+    .anim-clash-smoke,
+    .flag-muzzle{animation:none}
+    .anim-clash-smoke,
+    .flag-muzzle{opacity:0}
+    .anim-clash-swords{opacity:.85;filter:none}
+    .unit-flag-cloth{filter:none}
+    .unit-token.is-action-engaged:not(.is-naval) .unit-symbol{animation:none}
     .battery-shot{animation:none}
     .naval-ship-core,
     .naval-trawler-boat,
@@ -2860,10 +3281,9 @@ body[data-map-editor="closed"] .editor-placement-layer{
     cursor: pointer;
 }
 
-/* ── Hide unit circle tokens visually (Tabula Rasa campaign flow) ── */
-.unit-token {
-    display: none !important;
-}
+/* Tabula Rasa deneyi token'ları display:none ile gizliyordu — kaldırıldı:
+   birimler artık token-animator'ün canlı tween/yürüyüş sistemiyle görünür,
+   taktik oklar tamamlayıcı rota katmanı olarak token'ların altında kalır. */
 
 .tactical-route-label {
     transition: font-size .18s ease, opacity .18s ease, fill .18s ease;

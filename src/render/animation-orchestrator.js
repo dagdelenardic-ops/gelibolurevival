@@ -4,10 +4,12 @@
 // → eventType + intensity + unit states → zengin savaş animasyonları
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
-import { FRONTLINES } from '../data/frontlines.js?v=20260523-markers-r2';
-import { getUnitVitals } from '../data/casualty-model.js?v=20260523-markers-r2';
-import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260523-markers-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { FRONTLINES } from '../data/frontlines.js?v=20260618-3d-spectacle-r2';
+import { getActiveFrontNames } from './director.js?v=20260618-3d-spectacle-r2';
+import { clampToAllowedTerrain } from '../data/terrain-zones.js?v=20260618-3d-spectacle-r2';
+import { getUnitVitals } from '../data/casualty-model.js?v=20260618-3d-spectacle-r2';
+import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260618-3d-spectacle-r2';
 import {
     renderAdvanceArrow,
     renderRetreatArrow,
@@ -23,7 +25,8 @@ import {
     renderMineExplosion,
     renderCasualtyIndicator,
     renderEngagementContact,
-} from './animation-language.js?v=20260523-markers-r2';
+    renderClashMarker,
+} from './animation-language.js?v=20260618-3d-spectacle-r2';
 
 /**
  * Cephe adı → harita geometrisi eşleştirmesi.
@@ -126,18 +129,16 @@ function dateSeed(dateStr) {
     return Math.abs(h);
 }
 
-function getPrimaryFronts(fronts, animData) {
-    const valid = (Array.isArray(fronts) ? fronts : []).filter((front) => FRONT_GEOMETRY[front]);
-    if (!valid.length) return [];
-
-    const eventType = animData?.eventType || '';
-    if ((eventType === 'BOMBARDMENT' || eventType === 'NAVAL_PATROL') && valid.includes('Deniz')) {
-        return ['Deniz'];
-    }
-
-    const preferred = ['Anafartalar', 'Arıburnu', 'Seddülbahir', 'Deniz'];
-    const match = preferred.find((front) => valid.includes(front));
-    return [match || valid[0]];
+function getPrimaryFronts(fronts, animData, positions) {
+    // Yönetmenle SENKRON: o gün aktif olan TÜM cepheler (öncelik sırasında,
+    // en fazla 3). Çok-cepheli günlerde her cephede ayrı çatışma animasyonu
+    // oynar — eski davranış tek cepheye indirgiyordu (106 çok-cepheli günde
+    // ikinci cephe sessiz kalıyordu). Pozisyon verisiyle yalnızca haritada
+    // gerçekten birlik bulunan cepheler animasyon alır (kamera ile aynı küme).
+    const active = getActiveFrontNames(animData, positions).filter((front) => FRONT_GEOMETRY[front]);
+    if (active.length) return active;
+    // Güvenli fallback: animData.fronts director tablosuna uymazsa.
+    return (Array.isArray(fronts) ? fronts : []).filter((front) => FRONT_GEOMETRY[front]).slice(0, 3);
 }
 
 function normalizeUnitName(value) {
@@ -292,7 +293,7 @@ export function orchestrateAnimations(animData, positions) {
 
     const eventType = animData.eventType || 'IDLE';
     const intensity = animData.intensity ?? 0;
-    const fronts = getPrimaryFronts(animData.fronts || [], animData);
+    const fronts = getPrimaryFronts(animData.fronts || [], animData, positions);
     const seed = dateSeed(animData.date);
 
     let routes = '';
@@ -397,13 +398,20 @@ function renderCombat(animData, fronts, intensity, seed, positions) {
             const contactPairs = buildPositionContacts(animData, positions, frontName, seed + fi * 73);
             contactPairs.forEach((pair) => {
                 const pairAlliedColor = BATTLE_DATA.factions[pair.allied.model.faction]?.colorLight || alliedColor;
+                // Kılıç işareti karada kalsın: kıyı birimlerinde orta nokta suya düşebilir
+                const mid = {
+                    x: (pair.ottoman.point.x + pair.allied.point.x) / 2,
+                    y: (pair.ottoman.point.y + pair.allied.point.y) / 2
+                };
+                const clashPoint = clampToAllowedTerrain(mid.x, mid.y, ['land', 'coast']);
                 routes += renderEngagementContact(pair.ottoman.point, pair.allied.point, {
                     intensity,
                     seed: pair.seed,
                     attacker: pair.attacker,
                     ottomanColor: FACTION_COLORS.ottoman,
                     alliedColor: pairAlliedColor,
-                    label: pair.label
+                    label: pair.label,
+                    clashPoint
                 });
             });
 
@@ -411,6 +419,8 @@ function renderCombat(animData, fronts, intensity, seed, positions) {
                 const from = alliedFighting && !ottomanFighting ? geo.allied : geo.ottoman;
                 const to = from === geo.allied ? geo.ottoman : geo.allied;
                 routes += renderTrenchExchange(from, to, Math.min(intensity, 7), seed + fi * 100);
+                // Temas çifti çıkmayan muharebe günlerinde de çatışma odağı okunsun
+                routes += renderClashMarker(geo.center, intensity, seed + fi * 11);
             }
 
             if (intensity >= 3 && intensity < 5) {

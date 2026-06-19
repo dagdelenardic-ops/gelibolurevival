@@ -6,9 +6,9 @@
 //  paneli açılır.
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260523-markers-r2';
-import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260523-markers-r2';
-import { showUnitPanel } from './unit-panel.js?v=20260523-markers-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260618-3d-spectacle-r2';
+import { showUnitPanel } from './unit-panel.js?v=20260618-3d-spectacle-r2';
 
 const TR_MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 function formatIsoShort(iso) {
@@ -29,7 +29,10 @@ function isNaval(unit) {
 
 let lastPhase = null;
 let lastAnimData = null;
-let collapsedPref = (typeof window !== 'undefined' && window.innerWidth <= 768); // mobilde başlangıçta kapalı
+// Başlangıçta KAPALI (hem mobil hem masaüstü): açık panel narration'ı eziyordu.
+// Kullanıcı isterse ⚑ Hareket Defteri barına tıklayıp açar — opt-in kalsın,
+// autoplay deneyimi temiz başlasın.
+let collapsedPref = true;
 
 function ensureLedgerDom() {
     let el = document.getElementById('movementLedger');
@@ -175,8 +178,8 @@ export function updateMovementLedger(phase, nextPositions = {}, animData = null)
 }
 
 export function initMovementLedger() {
-    // Varsayılanı init anındaki genişliğe göre belirle (modül import anındaki
-    // erken ölçüm yerine): masaüstünde açık, mobilde kapalı.
-    collapsedPref = typeof window !== 'undefined' && window.innerWidth <= 768;
+    // Başlangıçta KAPALI (hem masaüstü hem mobil): açık panel sol narration'ı
+    // eziyordu. Kullanıcı ⚑ barına tıklayıp açar — autoplay temiz başlar.
+    collapsedPref = true;
     ensureLedgerDom();
 }
