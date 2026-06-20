@@ -11,7 +11,7 @@
 // cropX/cropY değerini değiştirmek yeter.
 // ══════════════════════════════════════════════════════════════
 
-import { MAP_CROP_TOP } from './coordinate-map.js?v=20260618-3d-spectacle-r2';
+import { MAP_CROP_TOP } from './coordinate-map.js?v=20260618-3d-spectacle-r4';
 
 // ── 3×3 lineer sistem çözücü (Cramer's rule) ──
 function det3(m) {

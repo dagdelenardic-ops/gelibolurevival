@@ -3,35 +3,35 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260618-3d-spectacle-r2';
-import { ENTITY_TYPES } from './data/entity-types.js?v=20260618-3d-spectacle-r2';
-import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260618-3d-spectacle-r2';
-import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260618-3d-spectacle-r2';
-import { isUnitOffMap, getUnitEndState } from './data/canonical-positions.js?v=20260618-3d-spectacle-r2';
-import { normalizeDateText } from './engine/date-utils.js?v=20260618-3d-spectacle-r2';
-import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260618-3d-spectacle-r2';
-import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260618-3d-spectacle-r2';
-import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation, getUnitEntryOrigin } from './engine/position-engine.js?v=20260618-3d-spectacle-r2';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260618-3d-spectacle-r2';
-import { renderTokens, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260618-3d-spectacle-r2';
-import { reconcileTokens, quakeMap } from './render/token-animator.js?v=20260618-3d-spectacle-r2';
-import { renderBattleEffects } from './render/effects-renderer.js?v=20260618-3d-spectacle-r2';
-import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260618-3d-spectacle-r2';
-import { animateCamera } from './render/camera.js?v=20260618-3d-spectacle-r2';
-import { frameActiveSectors, resolveActiveSectors, renderDirectorOverlay } from './render/director.js?v=20260618-3d-spectacle-r2';
-import { initTouchZoom } from "./engine/touch-zoom.js?v=20260618-3d-spectacle-r2";
+import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260618-3d-spectacle-r4';
+import { ENTITY_TYPES } from './data/entity-types.js?v=20260618-3d-spectacle-r4';
+import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260618-3d-spectacle-r4';
+import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260618-3d-spectacle-r4';
+import { isUnitOffMap, getUnitEndState } from './data/canonical-positions.js?v=20260618-3d-spectacle-r4';
+import { normalizeDateText } from './engine/date-utils.js?v=20260618-3d-spectacle-r4';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260618-3d-spectacle-r4';
+import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260618-3d-spectacle-r4';
+import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation, getUnitEntryOrigin } from './engine/position-engine.js?v=20260618-3d-spectacle-r4';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260618-3d-spectacle-r4';
+import { renderTokens, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260618-3d-spectacle-r4';
+import { reconcileTokens, quakeMap } from './render/token-animator.js?v=20260618-3d-spectacle-r4';
+import { renderBattleEffects } from './render/effects-renderer.js?v=20260618-3d-spectacle-r4';
+import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260618-3d-spectacle-r4';
+import { animateCamera } from './render/camera.js?v=20260618-3d-spectacle-r4';
+import { frameActiveSectors, resolveActiveSectors, renderDirectorOverlay } from './render/director.js?v=20260618-3d-spectacle-r4';
+import { initTouchZoom } from "./engine/touch-zoom.js?v=20260618-3d-spectacle-r4";
 
-import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260618-3d-spectacle-r2';
-import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260618-3d-spectacle-r2';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260618-3d-spectacle-r2';
-import { hideUnitPanel, attachUnitClicks, showUnitPanel } from './ui/unit-panel.js?v=20260618-3d-spectacle-r2';
-import { GEO_LOCATIONS } from './data/geo-calibration.js?v=20260618-3d-spectacle-r2';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying, getAutoPlayIntervalForPhase } from './ui/autoplay-controller.js?v=20260618-3d-spectacle-r2';
-import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260618-3d-spectacle-r2';
-import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260618-3d-spectacle-r2';
-import { initOnboarding } from './ui/onboarding.js?v=20260618-3d-spectacle-r2';
-import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260618-3d-spectacle-r2';
-import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260618-3d-spectacle-r2';
+import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260618-3d-spectacle-r4';
+import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260618-3d-spectacle-r4';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260618-3d-spectacle-r4';
+import { hideUnitPanel, attachUnitClicks, showUnitPanel } from './ui/unit-panel.js?v=20260618-3d-spectacle-r4';
+import { GEO_LOCATIONS } from './data/geo-calibration.js?v=20260618-3d-spectacle-r4';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying, getAutoPlayIntervalForPhase } from './ui/autoplay-controller.js?v=20260618-3d-spectacle-r4';
+import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260618-3d-spectacle-r4';
+import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260618-3d-spectacle-r4';
+import { initOnboarding } from './ui/onboarding.js?v=20260618-3d-spectacle-r4';
+import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260618-3d-spectacle-r4';
+import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260618-3d-spectacle-r4';
 
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
@@ -47,8 +47,17 @@ const CAMPAIGN_START_ISO = '1914-11-03';
 // ── 3B rölyef harita katmanı (three.js) — dinamik yüklenir, hata izole edilir ──
 let scene3d = null;
 let scene3dPref = (() => {
-    try { return localStorage.getItem('gelibolu-view') || (isMobile ? '2d' : '3d'); }
-    catch { return isMobile ? '2d' : '3d'; }
+    // URL zorlaması: ?view=3d / ?view=2d (ya da ?3d / ?2d) localStorage'ı ezer ve kaydeder.
+    // 3B artık HER cihazda (mobil dahil) varsayılan — kullanıcı 2B'yi açıkça seçmediyse 3B gelir.
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const forced = params.get('view') || (params.has('3d') ? '3d' : params.has('2d') ? '2d' : '');
+        if (forced === '3d' || forced === '2d') {
+            try { localStorage.setItem('gelibolu-view', forced); } catch {}
+            return forced;
+        }
+        return localStorage.getItem('gelibolu-view') || '3d';
+    } catch { return '3d'; }
 })();
 
 function getCurrentPhaseIndex() { return currentPhaseIndex; }
@@ -100,7 +109,7 @@ async function initThreeLayer() {
     const host = document.getElementById('scene3d');
     if (!host) return;
     try {
-        const mod = await import('./render/scene3d.js?v=20260618-3d-spectacle-r2');
+        const mod = await import('./render/scene3d.js?v=20260618-3d-spectacle-r4');
         await mod.initScene3D(host, {
             units: BATTLE_DATA.units,
             locations: GEO_LOCATIONS,
@@ -508,14 +517,14 @@ async function initMapEditorIfRequested() {
         return;
     }
 
-    const { initMapEditor } = await import('./ui/map-editor.js?v=20260618-3d-spectacle-r2');
+    const { initMapEditor } = await import('./ui/map-editor.js?v=20260618-3d-spectacle-r4');
     initMapEditor();
 }
 
 async function initMapDoctorIfRequested() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('doctor') !== '1') return;
-    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260618-3d-spectacle-r2');
+    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260618-3d-spectacle-r4');
     initMapDoctorPanel();
 }
 

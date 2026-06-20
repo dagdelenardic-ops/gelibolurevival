@@ -3,15 +3,15 @@
 // Günlük faz üretimi, faz yönetimi, timeline veri hazırlığı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r2';
-import { HISTORICAL_ANCHORS } from '../data/historical-anchors.js?v=20260618-3d-spectacle-r2';
-import { GUIDED_CAMPAIGN_CHAPTERS, getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260618-3d-spectacle-r2';
+import { BATTLE_DATA, getMapLocationById, getMapLocationId } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r4';
+import { HISTORICAL_ANCHORS } from '../data/historical-anchors.js?v=20260618-3d-spectacle-r4';
+import { GUIDED_CAMPAIGN_CHAPTERS, getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260618-3d-spectacle-r4';
 import {
     isoToUTCDate, utcDateToISO, addUTCDateDays,
     formatISOToTR, dayDiffISO, normalizeValue, normalizeDateText
-} from './date-utils.js?v=20260618-3d-spectacle-r2';
-import { unitSeed } from './position-engine.js?v=20260618-3d-spectacle-r2';
+} from './date-utils.js?v=20260618-3d-spectacle-r4';
+import { unitSeed } from './position-engine.js?v=20260618-3d-spectacle-r4';
 // Dynamic import — 1.1MB dosyayı ana modül parse'ını bloklamadan yükle
 let BOOK_PHASE_EVENTS = [];
 let BOOK_WEEKLY_GUIDE = [];
@@ -20,7 +20,7 @@ let _bookDataLoaded = false;
 export async function loadBookData() {
     if (_bookDataLoaded) return;
     try {
-        const mod = await import('../../book/gallipoli-events.js?v=20260618-3d-spectacle-r2');
+        const mod = await import('../../book/gallipoli-events.js?v=20260618-3d-spectacle-r4');
         BOOK_PHASE_EVENTS = mod.BOOK_PHASE_EVENTS || [];
         BOOK_WEEKLY_GUIDE = mod.BOOK_WEEKLY_GUIDE || [];
         _bookDataLoaded = true;
@@ -28,7 +28,7 @@ export async function loadBookData() {
         console.warn('Kitap verisi yüklenemedi:', err);
     }
 }
-import { CANONICAL_POSITIONS, getCanonicalPosition, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js?v=20260618-3d-spectacle-r2';
+import { CANONICAL_POSITIONS, getCanonicalPosition, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js?v=20260618-3d-spectacle-r4';
 
 const BASE_PHASE_TEMPLATES = JSON.parse(JSON.stringify(BATTLE_DATA.phases));
 

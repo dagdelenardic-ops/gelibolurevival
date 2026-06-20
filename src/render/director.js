@@ -11,8 +11,8 @@
 // bir yönetmen şeridi gösterilir.
 // ══════════════════════════════════════════════════════════════
 
-import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r2';
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
+import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r4';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
 
 // ── Sektör Tablosu ────────────────────────────────────────────
 // Her cephe için: kamera çerçeve kutusu (box), çatışma merkezi (center —

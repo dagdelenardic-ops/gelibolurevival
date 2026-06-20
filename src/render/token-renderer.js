@@ -3,19 +3,19 @@
 // Birlik token SVG oluşturma, animasyon, highlight
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
-import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r2';
-import { normalizeValue } from '../engine/date-utils.js?v=20260618-3d-spectacle-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r4';
+import { normalizeValue } from '../engine/date-utils.js?v=20260618-3d-spectacle-r4';
 import {
     unitSeed,
     getClusterOffset, getUnitEntryOrigin, getTerrainSafePointForUnit, getNavalDisplayOffset, isDestroyedPhaseData,
     isLockedPhaseData
-} from '../engine/position-engine.js?v=20260618-3d-spectacle-r2';
-import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260618-3d-spectacle-r2';
-import { snapToSeaWater } from '../data/terrain-zones.js?v=20260618-3d-spectacle-r2';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260618-3d-spectacle-r2';
-import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260618-3d-spectacle-r2';
-import { getUnitVisualProfile, getSpriteSetId, hasRuntimeSpriteAtlas } from '../data/unit-visual-profiles.js?v=20260618-3d-spectacle-r2';
+} from '../engine/position-engine.js?v=20260618-3d-spectacle-r4';
+import { getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260618-3d-spectacle-r4';
+import { snapToSeaWater } from '../data/terrain-zones.js?v=20260618-3d-spectacle-r4';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260618-3d-spectacle-r4';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260618-3d-spectacle-r4';
+import { getUnitVisualProfile, getSpriteSetId, hasRuntimeSpriteAtlas } from '../data/unit-visual-profiles.js?v=20260618-3d-spectacle-r4';
 
 // ══════════════════════════════════════════════════════════════
 // SANCAK SİSTEMİ — dönem bayrakları (1915)

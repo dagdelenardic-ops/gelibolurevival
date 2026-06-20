@@ -81,7 +81,9 @@ function hypso(h) {
 function loadImageData(url) {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
+        // crossOrigin BİLEREK ayarlanmıyor: heightmap aynı-origin; 'anonymous' koyunca
+        // Vercel'in immutable cache'iyle CORS uyuşmazlığı çıkıp yükleme fail ediyordu
+        // (yerelde npx serve ACAO:* gönderdiği için fark edilmiyordu) → 3B çöküp 2B'ye düşüyordu.
         img.onload = () => {
             const c = document.createElement('canvas');
             c.width = img.naturalWidth; c.height = img.naturalHeight;
@@ -109,7 +111,9 @@ function buildSkyBackground() {
 }
 
 async function buildTerrain() {
-    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png`);
+    // ?v= cache-bust: /assets/ 1 yıl immutable cache'leniyor; sürüm sorgusu olmadan
+    // bayat/bozuk cache kalıcı oluyordu. Her deploy taze çekilsin diye sürüm eklenir.
+    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png?v=20260618-3d-spectacle-r4`);
     heightData = hm.data; hw = hm.w; hh = hm.h;
 
     const SX = 256, SY = 362;
@@ -144,7 +148,9 @@ async function buildTerrain() {
     geo.setIndex(indices);
     geo.computeVertexNormals();
 
-    const mapTex = new THREE.TextureLoader().load(`${ASSET}/../gallipoli-map.png`);
+    const texLoader = new THREE.TextureLoader();
+    texLoader.crossOrigin = undefined;   // aynı-origin; CORS uyuşmazlığını önle
+    const mapTex = texLoader.load(`${ASSET}/../gallipoli-map.png?v=20260618-3d-spectacle-r4`);
     mapTex.colorSpace = THREE.SRGBColorSpace;
     mapTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const mat = new THREE.MeshStandardMaterial({

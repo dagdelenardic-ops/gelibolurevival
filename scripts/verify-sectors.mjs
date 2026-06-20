@@ -4,13 +4,13 @@
 // Çalıştırma:
 //   node scripts/verify-sectors.mjs
 //
-// Loader hook ile `?v=20260618-3d-spectacle-r2` query string'lerini soyar (kodun esas imports'unu
+// Loader hook ile `?v=20260618-3d-spectacle-r4` query string'lerini soyar (kodun esas imports'unu
 // dokunmadan test edebilmek için).
 
 import { register } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
-// Inline ES module loader hook: ?v=20260618-3d-spectacle-r2 query'lerini kaldır
+// Inline ES module loader hook: ?v=20260618-3d-spectacle-r4 query'lerini kaldır
 const stripQueryLoader = `
 export async function resolve(specifier, context, nextResolve) {
     const cleaned = specifier.replace(/\\?v=[^&]+/g, '');
@@ -19,17 +19,17 @@ export async function resolve(specifier, context, nextResolve) {
 `;
 register(`data:text/javascript,${encodeURIComponent(stripQueryLoader)}`, pathToFileURL('./'));
 
-const { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } = await import('../src/data/historical-map-data.js?v=20260618-3d-spectacle-r2');
+const { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } = await import('../src/data/historical-map-data.js?v=20260618-3d-spectacle-r4');
 const {
     classifyUnitSector,
     isReserveAnchor,
     listReserveUnitsForIso
-} = await import('../src/data/unit-sectors.js?v=20260618-3d-spectacle-r2');
+} = await import('../src/data/unit-sectors.js?v=20260618-3d-spectacle-r4');
 const {
     CANONICAL_POSITIONS,
     getCanonicalPosition,
     OFF_MAP_LOCATIONS
-} = await import('../src/data/canonical-positions.js?v=20260618-3d-spectacle-r2');
+} = await import('../src/data/canonical-positions.js?v=20260618-3d-spectacle-r4');
 
 // Battle data normalde geo-calibration ve ona bağlı tüm zinciri çeker, ki
 // onlar tarayıcı API'lerine bağımlı olabilir. Burada birim ID'leri manuel

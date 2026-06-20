@@ -4,7 +4,7 @@
 // Harita viewport: 2451×3467
 // ══════════════════════════════════════════════════════════════
 
-import { COAST_BUFFER, MAP_WIDTH, MAP_HEIGHT } from './coordinate-map.js?v=20260618-3d-spectacle-r2';
+import { COAST_BUFFER, MAP_WIDTH, MAP_HEIGHT } from './coordinate-map.js?v=20260618-3d-spectacle-r4';
 
 /**
  * Gelibolu Yarımadası land polygon.

@@ -6,9 +6,9 @@
 //  paneli açılır.
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r2';
-import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260618-3d-spectacle-r2';
-import { showUnitPanel } from './unit-panel.js?v=20260618-3d-spectacle-r2';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
+import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260618-3d-spectacle-r4';
+import { showUnitPanel } from './unit-panel.js?v=20260618-3d-spectacle-r4';
 
 const TR_MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 function formatIsoShort(iso) {

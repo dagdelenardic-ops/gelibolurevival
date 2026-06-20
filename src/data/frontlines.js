@@ -3,6 +3,6 @@
 // Cephe hattı polyline verileri (SVG 2451×3467 viewport)
 // ══════════════════════════════════════════════════════════════
 
-import { MAP_FRONTLINES } from './geo-calibration.js?v=20260618-3d-spectacle-r2';
+import { MAP_FRONTLINES } from './geo-calibration.js?v=20260618-3d-spectacle-r4';
 
 export const FRONTLINES = MAP_FRONTLINES;

@@ -3,7 +3,7 @@
 // Cephe hatları, engagement corridors, kontrollü savaş efektleri
 // ══════════════════════════════════════════════════════════════
 
-import { FRONTLINES } from '../data/frontlines.js?v=20260618-3d-spectacle-r2';
+import { FRONTLINES } from '../data/frontlines.js?v=20260618-3d-spectacle-r4';
 
 function stringSeed(value) {
     let h = 0;
