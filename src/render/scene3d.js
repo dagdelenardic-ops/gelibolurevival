@@ -29,7 +29,7 @@ function factionColor(f) { return FACTION_COLOR[f] || 0xcccccc; }
 let renderer, labelRenderer, scene, camera, controls, clock;
 let terrain, water, sun, hemi;
 let heightData = null, hw = 0, hh = 0;
-let raf = 0, visible = false, ready = false;
+let raf = 0, visible = false, ready = false, simT = 0;
 const models = {};            // name -> THREE.Object3D template
 const tokens = new Map();     // unitId -> {group, target, model, unit}
 let tooltipEl = null, hovered = null;
@@ -57,6 +57,136 @@ function heightAtMap(x, y) { return sampleHeight(x / MAP_W, y / MAP_H) * ZSCALE;
 const mapXfromW = (wx) => (wx / WORLD_W + 0.5) * MAP_W;
 const mapYfromW = (wz) => (wz / WORLD_H + 0.5) * MAP_H;
 function heightAtWorld(wx, wz) { return heightAtMap(mapXfromW(wx), mapYfromW(wz)); }
+
+// ── Arazi mesh çözünürlüğü (buildTerrain ile AYNI olmalı) ──
+// Token'lar GÖRÜNEN mesh yüzeyine otursun diye yükseklik, tam çözünürlüklü
+// heightmap'ten değil, mesh'in örneklendiği AYNI ızgaradan bilinear okunur.
+// Aksi halde dik sırtlarda (Sarıbayır/Conkbayırı) token'lar havada/gömülü kalıyordu.
+const SEG_X = 256, SEG_Y = 362;
+function groundY(wx, wz) {
+    if (!heightData) return 0;
+    const u = Math.min(1, Math.max(0, wx / WORLD_W + 0.5));
+    const v = Math.min(1, Math.max(0, wz / WORLD_H + 0.5));
+    const fx = u * SEG_X, fy = v * SEG_Y;
+    const x0 = Math.floor(fx), y0 = Math.floor(fy);
+    const x1 = Math.min(SEG_X, x0 + 1), y1 = Math.min(SEG_Y, y0 + 1);
+    const tx = fx - x0, ty = fy - y0;
+    const H = (i, j) => sampleHeight(i / SEG_X, j / SEG_Y) * ZSCALE;
+    const a = H(x0, y0), b = H(x1, y0), c = H(x0, y1), d = H(x1, y1);
+    const top = a + (b - a) * tx, bot = c + (d - c) * tx;
+    return top + (bot - top) * ty;
+}
+
+// ════════════════════════════════════════════════════════════════
+// Milli bayraklar — her birim ait olduğu milletin gerçek bayrağını taşır.
+// Dokular canvas'ta prosedürel çizilir (Osmanlı ay-yıldız, Union Jack,
+// Fransız trikolor, ANZAC/Avustralya mavi sancak) → GLB'ye bağımlı değil.
+// ════════════════════════════════════════════════════════════════
+const flagTextures = {};
+function drawStar(ctx, cx, cy, points, outer, inner, rot) {
+    ctx.beginPath();
+    for (let i = 0; i < points * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = rot + i * Math.PI / points;
+        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill();
+}
+function drawOttoman(ctx, w, h) {
+    ctx.fillStyle = '#E30A17'; ctx.fillRect(0, 0, w, h);
+    const cx = w * 0.40, cy = h * 0.5, r = h * 0.33;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#E30A17';
+    ctx.beginPath(); ctx.arc(cx + r * 0.30, cy, r * 0.82, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    drawStar(ctx, w * 0.62, cy, 5, h * 0.17, h * 0.07, -Math.PI / 2);
+}
+function drawUnionJack(ctx, w, h) {
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+    ctx.fillStyle = '#012169'; ctx.fillRect(0, 0, w, h);
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = h * 0.20;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, h); ctx.moveTo(w, 0); ctx.lineTo(0, h); ctx.stroke();
+    ctx.strokeStyle = '#C8102E'; ctx.lineWidth = h * 0.075;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, h); ctx.moveTo(w, 0); ctx.lineTo(0, h); ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = h * 0.33;
+    ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+    ctx.strokeStyle = '#C8102E'; ctx.lineWidth = h * 0.19;
+    ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+    ctx.restore();
+}
+function drawAnzac(ctx, w, h) {
+    ctx.fillStyle = '#00247D'; ctx.fillRect(0, 0, w, h);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w * 0.5, h * 0.5); ctx.clip();
+    drawUnionJack(ctx, w * 0.5, h * 0.5); ctx.restore();
+    ctx.fillStyle = '#fff';
+    drawStar(ctx, w * 0.25, h * 0.77, 7, h * 0.11, h * 0.05, -Math.PI / 2);   // Commonwealth Star
+    drawStar(ctx, w * 0.72, h * 0.24, 7, h * 0.06, h * 0.027, -Math.PI / 2);  // Southern Cross
+    drawStar(ctx, w * 0.84, h * 0.46, 7, h * 0.07, h * 0.031, -Math.PI / 2);
+    drawStar(ctx, w * 0.71, h * 0.66, 7, h * 0.06, h * 0.027, -Math.PI / 2);
+    drawStar(ctx, w * 0.92, h * 0.70, 7, h * 0.05, h * 0.022, -Math.PI / 2);
+    drawStar(ctx, w * 0.80, h * 0.86, 5, h * 0.035, h * 0.016, -Math.PI / 2);
+}
+function drawFrench(ctx, w, h) {
+    ctx.fillStyle = '#0055A4'; ctx.fillRect(0, 0, w / 3, h);
+    ctx.fillStyle = '#fff'; ctx.fillRect(w / 3, 0, w / 3, h);
+    ctx.fillStyle = '#EF4135'; ctx.fillRect(2 * w / 3, 0, w / 3, h);
+}
+const FLAG_DRAW = { ottoman: drawOttoman, british: drawUnionJack, anzac: drawAnzac, french: drawFrench };
+function flagTexture(faction) {
+    const key = (faction === 'allied' || faction === 'naval') ? 'british' : faction;
+    if (flagTextures[key]) return flagTextures[key];
+    const W = 192, H = 120;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    (FLAG_DRAW[key] || drawOttoman)(ctx, W, H);
+    // hafif kenar gölgesi → bez hissi
+    const grd = ctx.createLinearGradient(0, 0, W, 0);
+    grd.addColorStop(0, 'rgba(0,0,0,0.18)'); grd.addColorStop(0.12, 'rgba(0,0,0,0)');
+    grd.addColorStop(0.9, 'rgba(255,255,255,0.05)'); grd.addColorStop(1, 'rgba(0,0,0,0.12)');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    flagTextures[key] = tex; return tex;
+}
+// Direk + dalgalanan bez. Bez geometrisinin temel pozisyonları saklanır (animate'te dalga).
+function makeFlag(faction, { poleH = 1.45, flagW = 0.92, flagH = 0.58 } = {}) {
+    const g = new THREE.Group();
+    const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.022, 0.028, poleH, 8),
+        new THREE.MeshStandardMaterial({ color: 0x3a2c1d, roughness: 0.7, metalness: 0.12 })
+    );
+    pole.position.y = poleH / 2; pole.castShadow = true; g.add(pole);
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8),
+        new THREE.MeshStandardMaterial({ color: 0xc9a23a, roughness: 0.35, metalness: 0.7 }));
+    finial.position.y = poleH + 0.03; g.add(finial);
+    const fgeo = new THREE.PlaneGeometry(flagW, flagH, 16, 8);
+    fgeo.translate(flagW / 2, 0, 0);   // sol kenar direğe yapışsın
+    const flag = new THREE.Mesh(fgeo, new THREE.MeshStandardMaterial({
+        map: flagTexture(faction), side: THREE.DoubleSide, roughness: 0.82, metalness: 0.0,
+    }));
+    flag.position.set(0.025, poleH - flagH / 2 - 0.06, 0);
+    flag.castShadow = true;
+    flag.userData.base = Float32Array.from(fgeo.attributes.position.array);
+    flag.userData.wave = Math.random() * Math.PI * 2;
+    flag.userData.flagW = flagW;
+    g.add(flag);
+    g.userData.flagMesh = flag;
+    return g;
+}
+function waveFlag(flag, t) {
+    const pos = flag.geometry.attributes.position;
+    const base = flag.userData.base;
+    const ph = flag.userData.wave, fw = flag.userData.flagW;
+    for (let i = 0; i < pos.count; i++) {
+        const bx = base[i * 3], by = base[i * 3 + 1];
+        const k = bx / fw;   // direkten uzaklık 0..1 (uçta daha çok savrulur)
+        pos.array[i * 3 + 2] = (Math.sin(bx * 7 - t * 6 + ph) * 0.07 + Math.sin(by * 6 + t * 3.5) * 0.025) * k;
+    }
+    pos.needsUpdate = true;
+}
 
 // ── hypsometric color ramp (matches Blender terrain) ──
 function hypso(h) {
@@ -113,10 +243,10 @@ function buildSkyBackground() {
 async function buildTerrain() {
     // ?v= cache-bust: /assets/ 1 yıl immutable cache'leniyor; sürüm sorgusu olmadan
     // bayat/bozuk cache kalıcı oluyordu. Her deploy taze çekilsin diye sürüm eklenir.
-    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png?v=20260618-3d-spectacle-r4`);
+    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png?v=20260620-flags-terrain-r1`);
     heightData = hm.data; hw = hm.w; hh = hm.h;
 
-    const SX = 256, SY = 362;
+    const SX = SEG_X, SY = SEG_Y;   // groundY() ile aynı ızgara → token'lar tam yüzeye oturur
     const positions = new Float32Array((SX + 1) * (SY + 1) * 3);
     const colors = new Float32Array((SX + 1) * (SY + 1) * 3);
     const uvs = new Float32Array((SX + 1) * (SY + 1) * 2);
@@ -150,7 +280,7 @@ async function buildTerrain() {
 
     const texLoader = new THREE.TextureLoader();
     texLoader.crossOrigin = undefined;   // aynı-origin; CORS uyuşmazlığını önle
-    const mapTex = texLoader.load(`${ASSET}/../gallipoli-map.png?v=20260618-3d-spectacle-r4`);
+    const mapTex = texLoader.load(`${ASSET}/../gallipoli-map.png?v=20260620-flags-terrain-r1`);
     mapTex.colorSpace = THREE.SRGBColorSpace;
     mapTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const mat = new THREE.MeshStandardMaterial({
@@ -191,8 +321,10 @@ async function buildTerrain() {
 function loadModels() {
     const loader = new GLTFLoader();
     const list = ['battleship', 'cannon', 'mine', 'flag', 'soldier'];
+    // ?v= cache-bust: /assets 1 yıl immutable cache'leniyor; model güncellense bile
+    // sürüm sorgusu olmadan bayat GLB kalıcı oluyordu (heightmap'teki aynı tuzak).
     return Promise.all(list.map((name) => new Promise((res) => {
-        loader.load(`${ASSET}/models/${name}.glb`,
+        loader.load(`${ASSET}/models/${name}.glb?v=20260620-flags-terrain-r1`,
             (g) => { models[name] = g.scene; res(); },
             undefined,
             () => { console.warn('GLB yüklenemedi:', name); res(); });
@@ -269,11 +401,58 @@ function makeToken(unit) {
         if (mk === 'flag' || mk === 'soldier') tintMesh(model, factionColor(unit.faction));
         else if (mk === 'battleship') tintShip(model, factionColor(unit.faction), unit.faction);
         group.add(model);
+        // Piyade = tek asker değil, küçük bir MANGA: ana sancaktar + 2 yan asker.
+        // "Savaşan birim" hissi verir; soyut işaret değil bir müfreze görünür.
+        if (et === 'infantry_unit' && mk === 'soldier') {
+            model.position.set(0, 0, 0.1);
+            [[-0.33, -0.06, 0.86, 0.32], [0.31, -0.16, 0.8, -0.42]].forEach(([dx, dz, s, ry]) => {
+                const extra = tpl.clone(true);
+                extra.scale.setScalar(scale * s);
+                extra.position.set(dx, 0, dz);
+                extra.rotation.y = ry;
+                extra.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.material = n.material.clone(); } });
+                tintMesh(extra, factionColor(unit.faction));
+                group.add(extra);
+            });
+        }
+        // Topçu bataryası = sadece top değil, başında EKİBİYLE bir mevzi.
+        if (et === 'artillery_battery' && mk === 'cannon' && models.soldier) {
+            [[-0.58, 0.2, 0.85, 1.1], [0.54, -0.22, 0.8, -0.9]].forEach(([dx, dz, s, ry]) => {
+                const crew = models.soldier.clone(true);
+                crew.scale.setScalar(s);
+                crew.position.set(dx, 0, dz);
+                crew.rotation.y = ry;
+                crew.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.material = n.material.clone(); } });
+                tintMesh(crew, factionColor(unit.faction));
+                group.add(crew);
+            });
+        }
     } else {
         model = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 6),
             new THREE.MeshStandardMaterial({ color: factionColor(unit.faction) }));
         group.add(model);
     }
+    // Milli bayrak: hangi milletse onun bayrağını taşır.
+    let flag = null;
+    const et2 = unit.entityType;
+    if (et2 === 'infantry_unit') {
+        flag = makeFlag(unit.faction, { poleH: 1.5, flagW: 0.95, flagH: 0.6 });
+        flag.position.set(0.04, 0, -0.32);   // sancaktar mangaının arka-merkezinde
+    } else if (et2 === 'artillery_battery') {
+        flag = makeFlag(unit.faction, { poleH: 1.15, flagW: 0.72, flagH: 0.46 });
+        flag.position.set(-0.34, 0, -0.1);
+    } else if (et2 === 'ship') {
+        flag = makeFlag(unit.faction, { poleH: 0.78, flagW: 0.5, flagH: 0.32 });
+        flag.position.set(0.02, 0.14, 1.35);   // kıç sancağı (gemi uzun ekseni +Z)
+    } else if (et2 === 'landing_boat') {
+        flag = makeFlag(unit.faction, { poleH: 0.6, flagW: 0.4, flagH: 0.26 });
+        flag.position.set(0, 0.1, 0.5);
+    }
+    if (flag) {
+        group.add(flag);
+        group.userData = group.userData || {};
+    }
+
     // faction ring on ground
     const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.42, 0.6, 28),
@@ -282,7 +461,11 @@ function makeToken(unit) {
     ring.rotation.x = -Math.PI / 2; ring.position.y = 0.04;
     ring.name = 'ring';
     group.add(ring);
-    group.userData = { unitId: unit.id, unit, model };
+    group.userData = { unitId: unit.id, unit, model, flagMesh: flag ? flag.userData.flagMesh : null };
+    // Geri tepme/sallanma/nişan, ana modelin BU temel duruşu etrafında uygulanır.
+    model.userData.base = model.position.clone();
+    model.userData.baseRotZ = model.rotation.z;
+    model.userData.baseRotY = model.rotation.y;   // çatışma dışında bu doğal yönelime dönülür
     // make the model meshes hit-testable -> store unit on them
     group.traverse((n) => { if (n.isMesh) n.userData.unitId = unit.id; });
     scene.add(group);
@@ -298,7 +481,9 @@ let smokeTex = null;
 
 // ── Muharebe koreografisi: tracer mermi yayları, namlu alevi, isabet, gemi izi ──
 const projectiles = [];
-let tracerTex = null, wakeTex = null;
+let tracerTex = null, wakeTex = null, gunSmokeTex = null;
+const wind = { x: 0.18, z: -0.06 };                   // hafif rüzgâr → duman/toz sürüklenir
+const damp = (rate, dt) => 1 - Math.exp(-rate * dt);  // kare-hızından BAĞIMSIZ yumuşatma (akıcı akış)
 const combat = { active: false, naval: false, intensity: 0, pairs: [], fireTimer: 0, salvoIdx: 0 };
 const sideOf = (f) => (f === 'ottoman' ? 'ottoman' : 'allied');
 const TR = (s) => String(s || '').toLowerCase()
@@ -347,6 +532,16 @@ function spawnBurst(pos, delay = 0) {
 }
 
 function updateFX(dt) {
+    // Tepe-yük emniyeti: aşırı sprite birikiminde en eski duman/iz partiküllerini zorla
+    // temizle (tracer/flash dokunulmaz). Normalde devreye girmez; intensity~10 çok-cepheli kalkan.
+    if (fx.length > 160) {
+        for (let i = 0; i < fx.length && fx.length > 140; i++) {
+            const k = fx[i].kind;
+            if (k === 'gunsmoke' || k === 'smoke' || k === 'wake') {
+                scene.remove(fx[i].sprite); fx[i].sprite.material.dispose(); fx.splice(i, 1); i--;
+            }
+        }
+    }
     for (let i = fx.length - 1; i >= 0; i--) {
         const f = fx[i]; f.age += dt;
         if (f.age < f.delay) { f.sprite.material.opacity = 0; continue; }
@@ -358,30 +553,37 @@ function updateFX(dt) {
         } else if (f.kind === 'wake') {
             f.sprite.scale.setScalar(0.35 + u * 1.05);
             f.sprite.material.opacity = (1 - u) * 0.4;
+        } else if (f.kind === 'gunsmoke') {
+            f.sprite.position.x += (f.vx || 0) * dt;
+            f.sprite.position.z += (f.vz || 0) * dt;
+            f.sprite.position.y += dt * 0.34;
+            f.sprite.scale.setScalar(0.16 + u * (f.grow || 1));
+            f.sprite.material.opacity = Math.sin(u * Math.PI) * 0.72;
         } else {
             f.sprite.scale.setScalar(0.2 + u * 1.4);
+            f.sprite.position.x += wind.x * dt;        // patlama dumanı da rüzgârla savrulur
+            f.sprite.position.z += wind.z * dt;
             f.sprite.position.y += dt * 0.5;
             f.sprite.material.opacity = Math.sin(u * Math.PI) * 0.6;
         }
     }
     if (minefield && minefield.visible) {
-        const t = clock.elapsedTime;
-        minefield.children.forEach((m) => { m.position.y = WATER_Y + 0.02 + Math.sin(t * 1.3 + m.userData.bob) * 0.025; });
+        minefield.children.forEach((m) => { m.position.y = WATER_Y + 0.02 + Math.sin(simT * 1.3 + m.userData.bob) * 0.025; });
     }
 }
 
 // ── Namlu alevi (ateş açan birimde kısa parlama) ──
-function spawnMuzzle(pos) {
+function spawnMuzzle(pos, naval) {
     if (!tracerTex) tracerTex = makeRadialTexture([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,200,110,0.9)'], [1, 'rgba(255,140,40,0)']]);
     const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tracerTex, color: 0xffdf9a, blending: THREE.AdditiveBlending, transparent: true, opacity: 1, depthWrite: false }));
-    m.position.set(pos.x, pos.y + 0.22, pos.z); m.scale.setScalar(0.18);
-    scene.add(m); fx.push({ sprite: m, age: 0, delay: 0, life: 0.2, kind: 'flash' });
+    m.position.set(pos.x, pos.y + 0.22, pos.z); m.scale.setScalar(naval ? 0.34 : 0.2);
+    scene.add(m); fx.push({ sprite: m, age: 0, delay: 0, life: naval ? 0.26 : 0.2, kind: 'flash' });
 }
 
 // ── Tracer: ateş eden birimden hedefe balistik yay çizen parlak mermi izi ──
 function spawnTracer(from, to, naval) {
     if (!tracerTex) tracerTex = makeRadialTexture([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,200,110,0.9)'], [1, 'rgba(255,140,40,0)']]);
-    spawnMuzzle(from);
+    spawnMuzzle(from, naval);
     const col = naval ? 0xfff0c8 : 0xffd060;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tracerTex, color: col, blending: THREE.AdditiveBlending, transparent: true, opacity: 1, depthWrite: false }));
     s.scale.setScalar(naval ? 0.3 : 0.22);
@@ -413,6 +615,47 @@ function updateProjectiles(dt) {
     }
 }
 
+// ── Namlu dumanı: her atışta kabaran barut bulutu; rüzgârla sürüklenir, yükselir, dağılır ──
+function spawnGunSmoke(pos, nx, nz, naval) {
+    if (!gunSmokeTex) gunSmokeTex = makeRadialTexture([[0, 'rgba(204,199,190,0.92)'], [0.4, 'rgba(150,145,138,0.58)'], [1, 'rgba(120,116,108,0)']]);
+    // Yük altında otomatik kıs: yoğun çok-cepheli günde sprite churn'ü sınırla (mobil GC koruması).
+    const puffs = fx.length > 110 ? 1 : (naval ? 3 : 2);
+    for (let i = 0; i < puffs; i++) {
+        const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: gunSmokeTex, transparent: true, opacity: 0, depthWrite: false }));
+        m.position.set(pos.x + nx * (0.08 + i * 0.14), pos.y + 0.16 + i * 0.07, pos.z + nz * (0.08 + i * 0.14));
+        m.scale.setScalar((naval ? 0.26 : 0.16) + i * 0.06);
+        scene.add(m);
+        fx.push({
+            sprite: m, age: 0, delay: i * 0.05, life: (naval ? 1.5 : 1.1) + i * 0.32, kind: 'gunsmoke',
+            vx: nx * 0.2 + wind.x, vz: nz * 0.2 + wind.z, grow: naval ? 2.0 : 1.25,
+        });
+    }
+}
+
+// Ateş eden birime geri tepme dürtüsü (model lokalinde; animate'te yumuşak sönümlenir)
+function applyRecoil(tk, dx, dz, amt) {
+    tk._rec = tk._rec || { x: 0, y: 0, z: 0 };
+    tk._rec.x += dx * amt;
+    tk._rec.z += dz * amt;
+    tk._rec.y += amt * 0.22;
+}
+
+// Tek atış: namlu ucundan tracer + barut dumanı + geri tepme + hedefe nişan
+function fireShot(p, j) {
+    const dx = p.to.x - p.from.x, dz = p.to.z - p.from.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const nx = dx / d, nz = dz / d;
+    const off = p.naval ? 0.85 : 0.42;                  // namlu ucu, gövde merkezinden ileride
+    const muzzle = { x: p.from.x + nx * off, y: p.from.y, z: p.from.z + nz * off };
+    const target = { x: p.to.x + j * 0.8, y: p.to.y, z: p.to.z + j * 0.8 };
+    spawnTracer(muzzle, target, p.naval);
+    spawnGunSmoke({ x: muzzle.x, y: muzzle.y + 0.22, z: muzzle.z }, nx, nz, p.naval);
+    if (p.fromTk && !p.fromTk.sunk && !p.fromTk.evac) {
+        applyRecoil(p.fromTk, -nx, -nz, p.naval ? 0.06 : 0.13);
+        p.fromTk._aimYaw = Math.atan2(nx, nz);          // model +Z ekseni düşmana döner
+    }
+}
+
 // O günün aksiyonuna göre karşıt cepheleri eşle, ateş hattı kur
 function buildCombat(animData, sideTokens) {
     const st = animData?.animationState || {};
@@ -438,7 +681,11 @@ function buildCombat(animData, sideTokens) {
                     from: { x: a.x, y: a.y, z: a.z },
                     to: { x: best.x, y: best.y, z: best.z },
                     naval: a.water || best.water,
+                    fromTk: a.tk || null, toTk: best.tk || null,
                 });
+                // Çatışmaya giren birimler "savaşıyor" işaretlenir → animate'te tetikte sallanırlar
+                if (a.tk) a.tk.combat = true;
+                if (best.tk) best.tk.combat = true;
             }
         });
     };
@@ -447,6 +694,7 @@ function buildCombat(animData, sideTokens) {
     const cap = Math.max(3, Math.min(14, intensity + 2));
     if (combat.pairs.length > cap) combat.pairs = combat.pairs.slice(0, cap);
     combat.active = combat.pairs.length > 0;
+    combat.naval = combat.pairs.some((p) => p.naval);   // QA hook'u doğru raporlasın
     combat.fireTimer = 0; combat.salvoIdx = 0;
 }
 
@@ -459,7 +707,7 @@ function updateCombat(dt) {
     for (let k = 0; k < salvo; k++) {
         const p = combat.pairs[(combat.salvoIdx++) % combat.pairs.length];
         const j = ((combat.salvoIdx * 53) % 11) / 11 - 0.5;
-        spawnTracer(p.from, { x: p.to.x + j * 0.8, y: p.to.y, z: p.to.z + j * 0.8 }, p.naval);
+        fireShot(p, j);
     }
 }
 
@@ -534,9 +782,10 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
         seen.add(id);
         let tk = tokens.get(id);
         if (!tk) { tk = { group: makeToken(unit), unit }; tokens.set(id, tk); }
+        tk.combat = false;                  // bu faz çatışmasını buildCombat yeniden işaretler
         const wx = wX(L.mx) + L.ox, wz = wZ(L.my) + L.oz;
         if (onWater) hasShips = true;
-        const ty = onWater ? WATER_Y + 0.05 : heightAtWorld(wx, wz);
+        const ty = onWater ? WATER_Y + 0.05 : groundY(wx, wz);   // görünen mesh yüzeyine tam otur
         const tgt = new THREE.Vector3(wx, ty, wz);
         if (!onWater) landPts.push(tgt.clone());
         tk.target = tgt;
@@ -553,7 +802,7 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
         // Tahliye/çekilme: yarın 'evacuated'/'withdrawn' → bugün gece sisine karışarak sol.
         tk.evac = L.evacuating;
         if (!tk.evac && tk._evacOp !== undefined && tk._evacOp < 1) { tk._evacOp = 1; setTokenOpacity(tk, 1); }
-        if (!tk.sunk && !tk.evac) sideTokens[sideOf(unit.faction)].push({ x: tgt.x, y: tgt.y, z: tgt.z, water: onWater });
+        if (!tk.sunk && !tk.evac) sideTokens[sideOf(unit.faction)].push({ x: tgt.x, y: tgt.y, z: tgt.z, water: onWater, tk });
         cx.push(tgt.x); cz.push(tgt.z);
     });
     // hide/remove stale
@@ -674,14 +923,25 @@ function onClick() {
 
 function animate() {
     raf = requestAnimationFrame(animate);
-    const dt = Math.min(0.05, clock.getDelta());   // arka plan/duraklama sonrası sıçramayı önle
+    stepFrame(Math.min(0.05, clock.getDelta()));   // arka plan/duraklama sonrası sıçramayı önle
+}
+
+// Bir kareyi ilerletir. Canlıda rAF döngüsü sürer; QA için GELIBOLU_3D.tick() de çağırır
+// (preview sekmesi arka planda rAF'i durdurduğunda animasyonu başsız doğrulayabilmek için).
+function stepFrame(dt) {
+    simT += dt;
     controls.update();
     // token position tween + bobbing for ships
-    const t = clock.elapsedTime;
+    const t = simT;
     tokens.forEach((tk) => {
         if (!tk.group.visible) return;
         // Tahliye: gece sisine karışarak sol (yerinde fade-out)
         if (tk.evac) {
+            // Çatışmadan çekiliyorsa son geri-tepme/nişan pozunu temele döndür ki
+            // "sakin çekilme" donuk-eğik bir pozda donup kalmasın.
+            const me = tk.group.userData.model;
+            if (me && me.userData.base) me.position.copy(me.userData.base);
+            if (tk._rec) { tk._rec.x = tk._rec.y = tk._rec.z = 0; }
             tk._evacOp = (tk._evacOp ?? 1) - dt * 0.45;   // ~2.2 sn
             const op = Math.max(0, tk._evacOp);
             setTokenOpacity(tk, op);
@@ -692,17 +952,23 @@ function animate() {
         if (tk.target) {
             if (tk.sunk) {
                 // batarken yatayda (mayın hattına) süzülmeye devam et; y/eğim sink koduna ait
-                const k = Math.min(1, dt * 3.2);
+                const k = damp(3.2, dt);
                 tk.group.position.x += (tk.target.x - tk.group.position.x) * k;
                 tk.group.position.z += (tk.target.z - tk.group.position.z) * k;
             } else {
-                tk.group.position.lerp(tk.target, Math.min(1, dt * 3.2));
+                tk.group.position.lerp(tk.target, damp(3.4, dt));
             }
+        }
+        // Kara birimi: her karede GÖRÜNEN arazi yüzeyine yapışsın (yamaçta süzülürken
+        // bile havada/gömülü kalmasın). Su birimleri kendi bob/batış y'sini yönetir.
+        if (!isWaterUnit(tk.unit) && !tk.sunk) {
+            const gy = groundY(tk.group.position.x, tk.group.position.z);
+            tk.group.position.y += (gy - tk.group.position.y) * damp(11, dt);
         }
         if (isWaterUnit(tk.unit)) {
             if (tk.sunk) {
-                tk.group.position.y += (WATER_Y - 0.14 - tk.group.position.y) * Math.min(1, dt * 1.5);
-                tk.group.rotation.z += (0.55 - tk.group.rotation.z) * Math.min(1, dt * 1.2);
+                tk.group.position.y += (WATER_Y - 0.14 - tk.group.position.y) * damp(1.5, dt);
+                tk.group.rotation.z += (0.55 - tk.group.rotation.z) * damp(1.2, dt);
                 tk.group.rotation.x = 0.16;
                 ensureSmoke(tk);
             } else {
@@ -723,11 +989,39 @@ function animate() {
             tk._smoke.scale.setScalar(s);
             tk._smoke.material.opacity = 0.45 + 0.2 * Math.sin(t * 1.7);
         }
+        // ── Savaşırken hareket: ana model geri teper, düşmana döner, çatışmada tetikte sallanır ──
+        const m = tk.group.userData.model;
+        if (m && m.userData.base && !tk.sunk) {
+            const b = m.userData.base;
+            const land = !isWaterUnit(tk.unit);
+            // çatışmadaki kara birimi nefes alır gibi sallanır (donuk kalmaz)
+            let sx = 0, sz = 0, lean = 0;
+            if (tk.combat && land) {
+                const ph = tk.group.position.x * 1.7 + tk.group.position.z * 0.9;
+                sx = Math.sin(t * 3.1 + ph) * 0.02;
+                sz = Math.sin(t * 2.3 + ph * 1.3) * 0.016;
+                lean = Math.sin(t * 2.7 + ph) * 0.035;
+            }
+            const r = tk._rec;
+            m.position.set(b.x + sx + (r ? r.x : 0), b.y + (r ? r.y : 0), b.z + sz + (r ? r.z : 0));
+            if (r) { const d = Math.exp(-dt * 7.5); r.x *= d; r.y *= d; r.z *= d; }   // geri tepme yumuşak söner
+            // Nişan YALNIZ aktif çatışmada hedefe döner; çatışma bitince modelin doğal
+            // yönelimine (baseRotY) yumuşakça geri döner — eski savaş yönünde kilitli kalmaz.
+            const aimTarget = (tk.combat && tk._aimYaw !== undefined) ? tk._aimYaw : (m.userData.baseRotY || 0);
+            let diff = aimTarget - m.rotation.y;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            m.rotation.y += diff * damp(land ? 5 : 2.5, dt);
+            if (land) m.rotation.z = (m.userData.baseRotZ || 0) + lean;
+        }
         const ring = tk.group.getObjectByName('ring');
         if (ring) {
             ring.visible = !tk.sunk;
             ring.material.opacity = 0.5 + 0.3 * (0.5 + 0.5 * Math.sin(t * 2 + tk.group.position.x));
         }
+        // Milli bayrak dalgalanır (batan/tahliye olan birimde durur)
+        const fm = tk.group.userData.flagMesh;
+        if (fm && !tk.sunk) waveFlag(fm, t);
     });
     updateFX(dt);
     updateProjectiles(dt);
@@ -865,6 +1159,9 @@ export async function initScene3D(container, opts = {}) {
             camera.position.copy(d); controls.update();
         },
         camera, controls, scene,
+        combat: () => ({ active: combat.active, pairs: combat.pairs.length, intensity: combat.intensity, naval: combat.naval, fx: fx.length, proj: projectiles.length }),
+        tick: (n = 60, dt = 1 / 30) => { for (let i = 0; i < n; i++) stepFrame(dt); return { fx: fx.length, proj: projectiles.length, simT: +simT.toFixed(2) }; },
+        anim: () => (currentAnim ? { eventType: currentAnim.eventType, intensity: currentAnim.intensity, state: currentAnim.animationState, fronts: currentAnim.fronts } : null),
         _debug: () => ({ active: autoFrame.active, t: +autoFrame.t.toFixed(2),
             target: [+autoFrame.target.x.toFixed(1), +autoFrame.target.z.toFixed(1)],
             dist: +autoFrame.dist.toFixed(1),
