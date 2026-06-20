@@ -36,9 +36,13 @@ import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
 const currentPositions = {};
-// innerWidth=0 tuzağı: bazı yükleme anlarında innerWidth 0 gelir; bunu "mobil" sayarsak
-// masaüstü yanlışlıkla 2B'ye düşer. Sadece 0<width<=768 gerçekten mobil sayılır.
-const isMobile = typeof window !== 'undefined' && window.innerWidth > 0 && window.innerWidth <= 768;
+// matchMedia ile canlı mobil tespiti — innerWidth modül yüklenirken 0 gelebilir (preview tuzağı)
+function isMobile() {
+    if (typeof window === 'undefined') return false;
+    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
+    if (cw === 0) return false;
+    return cw <= 768;
+}
 let richTimelineHydrationStarted = false;
 let terrainRefreshVersion = 0;
 let keyboardNavBound = false;
@@ -205,7 +209,7 @@ async function hydrateRichTimelineInBackground() {
         initPinchZoom();
         await initMapEditorIfRequested();
 
-        if (isMobile && previousMobileMode !== 'desktop') {
+        if (isMobile() && previousMobileMode !== 'desktop') {
             setMobileViewMode(previousMobileMode, { silent: true });
         }
 
@@ -425,7 +429,7 @@ function applyPhaseCamera(phase, campaignPhase, nextPositions, animData) {
 }
 
 function focusStoryMapForPhase(phase, focusOverride = null) {
-    if (!isMobile || !window.GELIBOLU_VIEWPORT) return;
+    if (!isMobile() || !window.GELIBOLU_VIEWPORT) return;
     const focus = focusOverride || phase?.mapFocus;
     if (!focus) return;
     window.GELIBOLU_VIEWPORT.focusOnPoint(
@@ -465,7 +469,7 @@ function applyGuidedFocus(phase) {
                 el.classList.remove('is-active', 'is-muted');
             }
         }
-        if (isMobile && hasGuidedUnits && !active) {
+        if (isMobile() && hasGuidedUnits && !active) {
             el.setAttribute('aria-hidden', 'true');
             el.setAttribute('tabindex', '-1');
         } else {
@@ -477,7 +481,7 @@ function applyGuidedFocus(phase) {
 
 function getStoryHandlers() {
     const getAdjacentStoryIndex = (direction) => {
-        if (!isMobile) return currentPhaseIndex + direction;
+        if (!isMobile()) return currentPhaseIndex + direction;
         const currentIso = String(BATTLE_DATA.phases[currentPhaseIndex]?.isoStart || '');
         let nextIndex = currentPhaseIndex + direction;
         while (
@@ -502,6 +506,7 @@ function getStoryHandlers() {
         onTogglePlay: () => handleToggleAutoPlay(),
         onJumpToChapter: (startIso) => {
             stopAutoPlay();
+            hideUnitRoster();
             setActivePhase(getPhaseIndexByIso(startIso));
         },
         onModeChange: (mode) => {
@@ -551,7 +556,7 @@ function setActivePhase(i) {
     currentPhaseIndex = nextIndex;
     const p = BATTLE_DATA.phases[nextIndex];
     const currentIso = String(p.isoStart || normalizeDateText(p.date, nextIndex));
-    const quiet = isMobile && isQuietPeriod(currentIso);
+    const quiet = isMobile() && isQuietPeriod(currentIso);
     updatePhaseLiveRegion(p);
 
     // ── MOBİL SESSIZ DÖNEM: Tarih chip + narration güncelle (fotoğraf değiştiğinde) ──
@@ -671,7 +676,7 @@ function setActivePhase(i) {
             : 1900;
         reconcileTokens(tg, nextMarkup, { budgetMs, instant: isScrubJump });
     }
-    if (isMobile) {
+    if (isMobile()) {
         if (animData) triggerPhaseSfx(animData, campaignPhase.id);
         updateMapSceneState(p, animData, cameraTarget);
         applyGuidedFocus(p);
@@ -715,7 +720,7 @@ function setActivePhase(i) {
 
     // ── Info card ──
     if (narrationTimer) clearTimeout(narrationTimer);
-    narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), isMobile ? 180 : 360);
+    narrationTimer = setTimeout(() => updateNarrationPanel(p, nextIndex, campaignPhase.id, animData), isMobile() ? 180 : 360);
 
     // ── Update global state ──
     prevCampaignPhaseId = campaignPhase.id;

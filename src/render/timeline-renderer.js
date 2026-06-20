@@ -7,7 +7,13 @@ import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
 import { normalizeDateText } from '../engine/date-utils.js?v=20260620-combat-fx-r1';
 import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260620-combat-fx-r1';
 
-const isMobileTimeline = typeof window !== 'undefined' && window.innerWidth <= 768;
+function isMobileTimeline() {
+    if (typeof window === 'undefined') return false;
+    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
+    // When size is indeterminate (0) assume desktop — real mobile always has cw > 0
+    if (cw === 0) return false;
+    return cw <= 768;
+}
 
 /** Timeline DOM'unu oluştur */
 export function renderTimeline(setActivePhase, toggleAutoPlay) {
@@ -15,7 +21,7 @@ export function renderTimeline(setActivePhase, toggleAutoPlay) {
     lastActiveWeekIndex = -1;
     lastActiveChapterId = '';
 
-    if (isMobileTimeline) {
+    if (isMobileTimeline()) {
         const timeline = document.querySelector('.timeline');
         if (timeline) timeline.innerHTML = '';
         return;
@@ -75,7 +81,7 @@ export function updateTimelineActiveState(currentPhaseIndex) {
         el.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
 
-    if (isMobileTimeline) {
+    if (isMobileTimeline()) {
         if (!chapter || chapter.id === lastActiveChapterId) return;
         lastActiveChapterId = chapter.id;
         cachedPhaseMarkers = [...document.querySelectorAll('.story-chapter-marker')];

@@ -6,12 +6,17 @@
 import { isMajorPhase } from '../engine/phase-engine.js?v=20260620-combat-fx-r1';
 import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
 
-const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-const MINOR_INTERVAL = isMobile ? 4000 : 3500;
-const MAJOR_INTERVAL = isMobile ? 9000 : 8000;
-const MAX_INTERVAL = isMobile ? 10000 : 12000; // Narration readTime üst sınırı
-const READING_WPM = isMobile ? 130 : 165;
-const MIN_READING_WORDS = isMobile ? 18 : 28;
+function isMobile() {
+    if (typeof window === 'undefined') return false;
+    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
+    if (cw === 0) return false;
+    return cw <= 768;
+}
+const MINOR_INTERVAL = 3500; const MINOR_INTERVAL_M = 4000;
+const MAJOR_INTERVAL = 8000; const MAJOR_INTERVAL_M = 9000;
+const MAX_INTERVAL = 12000;  const MAX_INTERVAL_M = 10000;
+const READING_WPM = 165;     const READING_WPM_M = 130;
+const MIN_READING_WORDS = 28; const MIN_READING_WORDS_M = 18;
 
 let autoplayTimer = null;
 let isAutoPlaying = false;
@@ -37,41 +42,44 @@ function countReadableWords(text) {
 }
 
 function getReadingExtraMs(phase) {
+    const m = isMobile();
     const sourceText = phase.mobileSummary || phase.narration || phase.title || '';
     const wordCount = countReadableWords(sourceText);
     if (!wordCount) return 0;
 
-    const effectiveWords = Math.max(0, wordCount - MIN_READING_WORDS);
+    const effectiveWords = Math.max(0, wordCount - (m ? MIN_READING_WORDS_M : MIN_READING_WORDS));
     if (!effectiveWords) return 0;
 
-    const rawMs = Math.round((effectiveWords / READING_WPM) * 60_000);
-    return Math.min(isMobile ? 2600 : 3200, rawMs);
+    const rawMs = Math.round((effectiveWords / (m ? READING_WPM_M : READING_WPM)) * 60_000);
+    return Math.min(m ? 2600 : 3200, rawMs);
 }
 
 function getIntensityExtraMs(phase) {
+    const m = isMobile();
     const iso = String(phase?.isoStart || '');
     const animData = typeof window !== 'undefined' ? window.ANIMATION_EVENTS_BY_DATE?.[iso] : null;
     const intensity = Number(animData?.intensity || 0);
 
-    if (intensity >= 8) return isMobile ? 1400 : 1800;
-    if (intensity >= 6) return isMobile ? 900 : 1200;
-    if (intensity >= 4) return isMobile ? 400 : 550;
+    if (intensity >= 8) return m ? 1400 : 1800;
+    if (intensity >= 6) return m ? 900 : 1200;
+    if (intensity >= 4) return m ? 400 : 550;
     return 0;
 }
 
 function getAdaptiveInterval(phaseIndex) {
+    const m = isMobile();
     const phase = BATTLE_DATA.phases[phaseIndex];
-    if (!phase) return MINOR_INTERVAL;
+    if (!phase) return m ? MINOR_INTERVAL_M : MINOR_INTERVAL;
 
     if (Number.isFinite(phase.autoplayHoldMs)) {
-        return Math.max(2500, isMobile ? phase.autoplayHoldMs : Math.round(phase.autoplayHoldMs * 0.95));
+        return Math.max(2500, m ? phase.autoplayHoldMs : Math.round(phase.autoplayHoldMs * 0.95));
     }
 
     const iso = phase.isoStart || '';
 
     // Sessiz dönemlerde hızlı ama okunabilir geç (fotoğraflar ve bağlam görünsün)
     if (isQuietPeriod(iso)) {
-        return isMobile ? 3000 : 2500;
+        return m ? 3000 : 2500;
     }
 
     const major = isMajorPhase(phase);
@@ -79,14 +87,14 @@ function getAdaptiveInterval(phaseIndex) {
     // Sessiz dönemden çıkışta kademeli yavaşlama (ani 500ms→5s atlama yok)
     // Şubat 19 – Mart 15: orta hız (geçiş dönemi)
     if (!major && iso >= '1915-02-19' && iso <= '1915-03-15') {
-        return isMobile ? 3000 : 2500;
+        return m ? 3000 : 2500;
     }
 
-    const base = major ? MAJOR_INTERVAL : MINOR_INTERVAL;
+    const base = major ? (m ? MAJOR_INTERVAL_M : MAJOR_INTERVAL) : (m ? MINOR_INTERVAL_M : MINOR_INTERVAL);
     const readingExtra = getReadingExtraMs(phase);
     const intensityExtra = getIntensityExtraMs(phase);
 
-    return Math.min(MAX_INTERVAL, base + readingExtra + intensityExtra);
+    return Math.min(m ? MAX_INTERVAL_M : MAX_INTERVAL, base + readingExtra + intensityExtra);
 }
 
 export function getAutoPlayIntervalForPhase(phaseIndex) {

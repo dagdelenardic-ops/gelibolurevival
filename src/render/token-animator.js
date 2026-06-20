@@ -13,7 +13,12 @@
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
+function isMobileDevice() {
+    if (typeof window === 'undefined') return false;
+    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
+    if (cw === 0) return false;
+    return cw <= 768;
+}
 const prefersReducedMotion = typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -264,7 +269,7 @@ function finishMove(el, motion, target, heading, dist, celebrate) {
         el.classList.add('is-arriving');
         clearTimeout(el.__geliboluArriveTimer);
         el.__geliboluArriveTimer = window.setTimeout(() => el.classList.remove('is-arriving'), 540);
-        if (!isNavalToken(el) && dist >= 46 && !isMobileDevice) spawnSettleRing(target.x, target.y);
+        if (!isNavalToken(el) && dist >= 46 && !isMobileDevice()) spawnSettleRing(target.x, target.y);
     }
 }
 
@@ -305,7 +310,7 @@ function step(now) {
 
         // Hareket izi parçacıkları: karada toz, denizde köpük
         const puffGap = tw.naval ? 150 : 115;
-        if (!isMobileDevice && tw.dist >= 26 && k > 0.04 && k < 0.96 && now - tw.lastPuff > puffGap) {
+        if (!isMobileDevice() && tw.dist >= 26 && k > 0.04 && k < 0.96 && now - tw.lastPuff > puffGap) {
             tw.lastPuff = now;
             if (tw.naval) spawnFoam(x, y, tw);
             else if (!el.classList.contains('is-entering')) spawnDust(x, y, tw);

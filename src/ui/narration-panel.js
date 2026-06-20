@@ -10,11 +10,19 @@ import { getEventVideo } from '../data/event-videos.js?v=20260620-combat-fx-r1';
 import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260620-combat-fx-r1';
 import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260620-combat-fx-r1';
 
-const isMobileNarration = typeof window !== 'undefined' && window.innerWidth <= 768;
+const _mobileBreakpoint = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(max-width:768px)')
+    : null;
+function isMobileNarration() {
+    if (typeof window === 'undefined') return false;
+    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
+    if (cw === 0) return false;
+    return cw <= 768;
+}
 const MOBILE_VIEW_MODES = ['story', 'story+map', 'map-focus'];
 
 let mobileHandlers = {};
-let mobileViewMode = isMobileNarration ? 'story' : 'desktop';
+let mobileViewMode = isMobileNarration() ? 'story' : 'desktop';
 let storySwipeStartY = 0;
 
 function escapeHtml(value) {
@@ -208,7 +216,7 @@ export function getMobileViewMode() {
 }
 
 export function setMobileViewMode(nextMode, options = {}) {
-    if (!isMobileNarration) return;
+    if (!isMobileNarration()) return;
     if (!MOBILE_VIEW_MODES.includes(nextMode)) return;
     mobileViewMode = nextMode;
     syncViewModeDatasets();
@@ -336,7 +344,7 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
 
     if (title) {
         const icon = getNarrationIcon(phase.title || '');
-        title.innerHTML = isMobileNarration
+        title.innerHTML = isMobileNarration()
             ? `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle}`
             : `<img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} <span class="narration-date">— ${phase.date}</span>`;
     }
@@ -376,7 +384,7 @@ export function renderAtmosphere(animationState) {
     const box = document.getElementById('narrationBox');
     if (!box) return;
     const hot = ['fighting', 'bombardment'].includes(map.dataset.ottomanState) || ['fighting', 'bombardment'].includes(map.dataset.alliedState);
-    if (isMobileNarration) {
+    if (isMobileNarration()) {
         box.style.borderTopColor = hot ? 'rgba(220,53,69,.95)' : '#8b3a3a';
     } else {
         box.style.borderLeftColor = hot ? 'rgba(220,53,69,.95)' : 'var(--red)';
@@ -528,9 +536,28 @@ function renderDesktopNarrationShell(phase, displayTitle, clean, icon) {
     `;
 }
 
+let _lastAttachedContainer = null;
+let _lastAttachedPhase = null;
+let _breakpointListenerBound = false;
+
+function reinitNarrationShell() {
+    if (!_lastAttachedContainer || !_lastAttachedPhase) return;
+    const old = document.getElementById('narrationBox');
+    if (old) old.remove();
+    mobileViewMode = isMobileNarration() ? 'story' : 'desktop';
+    attachNarrationElements(_lastAttachedContainer, _lastAttachedPhase, mobileHandlers);
+}
+
 /** Anlatım kutusu DOM elemanlarını oluştur */
 export function attachNarrationElements(container, phase, opts = {}) {
     mobileHandlers = opts;
+    _lastAttachedContainer = container;
+    _lastAttachedPhase = phase;
+
+    if (_mobileBreakpoint && !_breakpointListenerBound) {
+        _breakpointListenerBound = true;
+        _mobileBreakpoint.addEventListener('change', reinitNarrationShell);
+    }
 
     const nb = document.createElement('div');
     nb.className = 'narration-box';
@@ -542,13 +569,13 @@ export function attachNarrationElements(container, phase, opts = {}) {
     const { clean } = parseNarration(phase.narration);
     const displayTitle = getDisplayTitle(phase.title || '');
 
-    nb.innerHTML = isMobileNarration
+    nb.innerHTML = isMobileNarration()
         ? renderMobileNarrationShell(phase, displayTitle, clean, icon)
         : renderDesktopNarrationShell(phase, displayTitle, clean, icon);
 
     container.appendChild(nb);
 
-    if (isMobileNarration) {
+    if (isMobileNarration()) {
         setMobileViewMode('story', { silent: true });
         bindMobileStoryInteractions();
     } else {

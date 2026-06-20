@@ -72,7 +72,12 @@ function createOverlay() {
     return overlay;
 }
 
-const isMobileOnboarding = typeof window !== 'undefined' && window.innerWidth <= 768;
+function isMobileOnboarding() {
+    if (typeof window === 'undefined') return false;
+    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
+    if (cw === 0) return false;
+    return cw <= 768;
+}
 
 function positionCard(overlay, step, index) {
     const card = overlay.querySelector('.onboarding-card');
@@ -100,7 +105,7 @@ function positionCard(overlay, step, index) {
     if (existingHighlight) existingHighlight.remove();
 
     // Mobilde: her zaman center, highlight yok (GPU tasarrufu + pozisyon sorunu yok)
-    if (isMobileOnboarding) {
+    if (isMobileOnboarding()) {
         card.style.top = '50%';
         card.style.left = '50%';
         card.style.transform = 'translate(-50%, -50%)';

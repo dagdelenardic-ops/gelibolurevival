@@ -323,7 +323,12 @@ export function renderTacticalRoutes(isoDate) {
     }).join('');
 }
 
-const isMobileMap = typeof window !== 'undefined' && window.innerWidth <= 768;
+function isMobileMap() {
+    if (typeof window === 'undefined') return false;
+    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
+    if (cw === 0) return false;
+    return cw <= 768;
+}
 
 /** Ana SVG harita oluştur ve DOM'a ekle */
 export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers = {}) {
@@ -474,7 +479,7 @@ export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers
     </radialGradient>
 
     <!-- ═══ FILTERS — mobilde hafif, masaüstünde tam ═══ -->
-    ${isMobileMap ? `
+    ${isMobileMap() ? `
     <!-- Mobilde: ağır filter'ları no-op yap (GPU tasarrufu) -->
     <filter id="terrainRelief"><feFlood flood-opacity="0" result="noop"/><feMerge><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <filter id="paperTex"><feFlood flood-opacity="0" result="noop"/><feMerge><feMergeNode in="SourceGraphic"/></feMerge></filter>
