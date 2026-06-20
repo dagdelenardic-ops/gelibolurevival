@@ -388,7 +388,7 @@ function spawnSettleRing(x, y) {
 // ── Harita Sarsıntısı (büyük bombardıman günleri) ─────────────
 
 export function quakeMap(strength = 'light') {
-    if (prefersReducedMotion || isMobileDevice) return;
+    if (prefersReducedMotion || isMobileDevice()) return;
     const container = document.querySelector('.map-container');
     if (!container) return;
     container.style.setProperty('--quake-amp', strength === 'heavy' ? '2.6px' : '1.3px');
