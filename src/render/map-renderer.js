@@ -3,13 +3,13 @@
 // Historically grounded military cartography with modern UI clarity
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r4';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260618-3d-spectacle-r4';
-import { HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260618-3d-spectacle-r4';
-import { renderTokens } from './token-renderer.js?v=20260618-3d-spectacle-r4';
-import { renderBattleEffects } from './effects-renderer.js?v=20260618-3d-spectacle-r4';
-import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260618-3d-spectacle-r4';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260620-combat-fx-r1';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260620-combat-fx-r1';
+import { HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260620-combat-fx-r1';
+import { renderTokens } from './token-renderer.js?v=20260620-combat-fx-r1';
+import { renderBattleEffects } from './effects-renderer.js?v=20260620-combat-fx-r1';
+import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260620-combat-fx-r1';
 
 function getActiveSceneGroups(phase, animData) {
     const iso = String(phase && phase.isoStart || '');

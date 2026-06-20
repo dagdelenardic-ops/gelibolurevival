@@ -3,26 +3,26 @@
 // Terrain, çakışma ve label sorunlarını ölçen geliştirici aracı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
-import { ENTITY_TYPES } from '../data/entity-types.js?v=20260618-3d-spectacle-r4';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r4';
-import { MAP_SCENE_LABELS, calibrationReport } from '../data/geo-calibration.js?v=20260618-3d-spectacle-r4';
-import { getTerrainAtPoint, clampToAllowedTerrain, waitForTerrainSampler } from '../data/terrain-zones.js?v=20260618-3d-spectacle-r4';
-import { isUnitOffMap, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js?v=20260618-3d-spectacle-r4';
+import { BATTLE_DATA, getMapLocationById } from '../data/battle-data.js?v=20260620-combat-fx-r1';
+import { ENTITY_TYPES } from '../data/entity-types.js?v=20260620-combat-fx-r1';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260620-combat-fx-r1';
+import { MAP_SCENE_LABELS, calibrationReport } from '../data/geo-calibration.js?v=20260620-combat-fx-r1';
+import { getTerrainAtPoint, clampToAllowedTerrain, waitForTerrainSampler } from '../data/terrain-zones.js?v=20260620-combat-fx-r1';
+import { isUnitOffMap, OFF_MAP_LOCATIONS } from '../data/canonical-positions.js?v=20260620-combat-fx-r1';
 import {
     getHistoricalDataDiagnostics,
     getHistoricalPlacementForUnit,
     getHistoricalSourcesForIds
-} from '../data/historical-map-data.js?v=20260618-3d-spectacle-r4';
-import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260618-3d-spectacle-r4';
+} from '../data/historical-map-data.js?v=20260620-combat-fx-r1';
+import { getUnitEntryPhaseIndex } from './phase-engine.js?v=20260620-combat-fx-r1';
 import {
     enforceCorridorSeparation,
     getClusterOffset,
     getNarrativeNavalPosition,
     getTerrainSafePointForUnit,
     isDestroyedPhaseData
-} from './position-engine.js?v=20260618-3d-spectacle-r4';
-import { resolveCampaignPhase } from './campaign-state-machine.js?v=20260618-3d-spectacle-r4';
+} from './position-engine.js?v=20260620-combat-fx-r1';
+import { resolveCampaignPhase } from './campaign-state-machine.js?v=20260620-combat-fx-r1';
 
 const COLLISION_RADIUS = 64;
 const NAVAL_COLLISION_RADIUS = 86;

@@ -3,7 +3,7 @@
 // Faz ve animasyon verisinden birlik niyeti/odağı türetir
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, LOCATION_BY_ID, BASE_PHASE_ID } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
+import { BATTLE_DATA, LOCATION_BY_ID, BASE_PHASE_ID } from '../data/battle-data.js?v=20260620-combat-fx-r1';
 
 export const ACTION_META = {
     defending: { label: 'Savunma hattında', badge: 'SAV', color: '#cdb67a' },

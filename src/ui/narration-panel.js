@@ -3,12 +3,12 @@
 // Desktop'ta destek paneli, mobilde story-first bottom sheet
 // ══════════════════════════════════════════════════════════════
 
-import { getNarrationIcon } from '../data/icon-registry.js?v=20260618-3d-spectacle-r4';
-import { getRandomRomanticEntry } from '../data/romantic-layer.js?v=20260618-3d-spectacle-r4';
-import { getEventImage } from '../data/event-images.js?v=20260618-3d-spectacle-r4';
-import { getEventVideo } from '../data/event-videos.js?v=20260618-3d-spectacle-r4';
-import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260618-3d-spectacle-r4';
-import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260618-3d-spectacle-r4';
+import { getNarrationIcon } from '../data/icon-registry.js?v=20260620-combat-fx-r1';
+import { getRandomRomanticEntry } from '../data/romantic-layer.js?v=20260620-combat-fx-r1';
+import { getEventImage } from '../data/event-images.js?v=20260620-combat-fx-r1';
+import { getEventVideo } from '../data/event-videos.js?v=20260620-combat-fx-r1';
+import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260620-combat-fx-r1';
+import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260620-combat-fx-r1';
 
 const isMobileNarration = typeof window !== 'undefined' && window.innerWidth <= 768;
 const MOBILE_VIEW_MODES = ['story', 'story+map', 'map-focus'];

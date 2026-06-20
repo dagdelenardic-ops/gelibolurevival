@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import { hydrateTimelineData, getPhaseIndexByIso, getUnitEntryPhaseIndex } from '../src/engine/phase-engine.js?v=20260618-3d-spectacle-r4';
-import { resolveCampaignPhase } from '../src/engine/campaign-state-machine.js?v=20260618-3d-spectacle-r4';
-import { expandUnitTrails, getNarrativeNavalPosition } from '../src/engine/position-engine.js?v=20260618-3d-spectacle-r4';
-import { BATTLE_DATA } from '../src/data/battle-data.js?v=20260618-3d-spectacle-r4';
-import { ENTITY_TYPES } from '../src/data/entity-types.js?v=20260618-3d-spectacle-r4';
-import { isUnitOffMap } from '../src/data/canonical-positions.js?v=20260618-3d-spectacle-r4';
+import { hydrateTimelineData, getPhaseIndexByIso, getUnitEntryPhaseIndex } from '../src/engine/phase-engine.js?v=20260620-combat-fx-r1';
+import { resolveCampaignPhase } from '../src/engine/campaign-state-machine.js?v=20260620-combat-fx-r1';
+import { expandUnitTrails, getNarrativeNavalPosition } from '../src/engine/position-engine.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA } from '../src/data/battle-data.js?v=20260620-combat-fx-r1';
+import { ENTITY_TYPES } from '../src/data/entity-types.js?v=20260620-combat-fx-r1';
+import { isUnitOffMap } from '../src/data/canonical-positions.js?v=20260620-combat-fx-r1';
 
 const MATRIX = [
     {

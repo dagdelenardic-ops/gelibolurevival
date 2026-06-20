@@ -3,8 +3,8 @@
 // Faksiyonlar, askeri birimler, savaş fazları, konum bilgileri
 // ══════════════════════════════════════════════════════════════
 
-import { GEO_LOCATIONS } from './geo-calibration.js?v=20260618-3d-spectacle-r4';
-import { getDefaultVisualProfileId } from './unit-visual-profiles.js?v=20260618-3d-spectacle-r4';
+import { GEO_LOCATIONS } from './geo-calibration.js?v=20260620-combat-fx-r1';
+import { getDefaultVisualProfileId } from './unit-visual-profiles.js?v=20260620-combat-fx-r1';
 
 export const BATTLE_DATA = {
     factions: {

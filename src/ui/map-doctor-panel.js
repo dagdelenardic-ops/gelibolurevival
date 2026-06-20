@@ -3,7 +3,7 @@
 // ?doctor=1 ile çalışan geliştirici yerleşim kalite paneli
 // ══════════════════════════════════════════════════════════════
 
-import { runMapDoctor } from '../engine/map-doctor.js?v=20260618-3d-spectacle-r4';
+import { runMapDoctor } from '../engine/map-doctor.js?v=20260620-combat-fx-r1';
 
 const MAX_RENDERED_ISSUES = 80;
 const MARKER_LIMIT = 120;

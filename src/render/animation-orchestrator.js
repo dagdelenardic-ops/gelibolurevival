@@ -4,12 +4,12 @@
 // → eventType + intensity + unit states → zengin savaş animasyonları
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
-import { FRONTLINES } from '../data/frontlines.js?v=20260618-3d-spectacle-r4';
-import { getActiveFrontNames } from './director.js?v=20260618-3d-spectacle-r4';
-import { clampToAllowedTerrain } from '../data/terrain-zones.js?v=20260618-3d-spectacle-r4';
-import { getUnitVitals } from '../data/casualty-model.js?v=20260618-3d-spectacle-r4';
-import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260618-3d-spectacle-r4';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
+import { FRONTLINES } from '../data/frontlines.js?v=20260620-combat-fx-r1';
+import { getActiveFrontNames } from './director.js?v=20260620-combat-fx-r1';
+import { clampToAllowedTerrain } from '../data/terrain-zones.js?v=20260620-combat-fx-r1';
+import { getUnitVitals } from '../data/casualty-model.js?v=20260620-combat-fx-r1';
+import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260620-combat-fx-r1';
 import {
     renderAdvanceArrow,
     renderRetreatArrow,
@@ -26,7 +26,7 @@ import {
     renderCasualtyIndicator,
     renderEngagementContact,
     renderClashMarker,
-} from './animation-language.js?v=20260618-3d-spectacle-r4';
+} from './animation-language.js?v=20260620-combat-fx-r1';
 
 /**
  * Cephe adı → harita geometrisi eşleştirmesi.

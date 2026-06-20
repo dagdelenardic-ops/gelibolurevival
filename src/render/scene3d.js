@@ -243,7 +243,7 @@ function buildSkyBackground() {
 async function buildTerrain() {
     // ?v= cache-bust: /assets/ 1 yıl immutable cache'leniyor; sürüm sorgusu olmadan
     // bayat/bozuk cache kalıcı oluyordu. Her deploy taze çekilsin diye sürüm eklenir.
-    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png?v=20260620-flags-terrain-r1`);
+    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png?v=20260620-combat-fx-r1`);
     heightData = hm.data; hw = hm.w; hh = hm.h;
 
     const SX = SEG_X, SY = SEG_Y;   // groundY() ile aynı ızgara → token'lar tam yüzeye oturur
@@ -280,7 +280,7 @@ async function buildTerrain() {
 
     const texLoader = new THREE.TextureLoader();
     texLoader.crossOrigin = undefined;   // aynı-origin; CORS uyuşmazlığını önle
-    const mapTex = texLoader.load(`${ASSET}/../gallipoli-map.png?v=20260620-flags-terrain-r1`);
+    const mapTex = texLoader.load(`${ASSET}/../gallipoli-map.png?v=20260620-combat-fx-r1`);
     mapTex.colorSpace = THREE.SRGBColorSpace;
     mapTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const mat = new THREE.MeshStandardMaterial({
@@ -324,7 +324,7 @@ function loadModels() {
     // ?v= cache-bust: /assets 1 yıl immutable cache'leniyor; model güncellense bile
     // sürüm sorgusu olmadan bayat GLB kalıcı oluyordu (heightmap'teki aynı tuzak).
     return Promise.all(list.map((name) => new Promise((res) => {
-        loader.load(`${ASSET}/models/${name}.glb?v=20260620-flags-terrain-r1`,
+        loader.load(`${ASSET}/models/${name}.glb?v=20260620-combat-fx-r1`,
             (g) => { models[name] = g.scene; res(); },
             undefined,
             () => { console.warn('GLB yüklenemedi:', name); res(); });

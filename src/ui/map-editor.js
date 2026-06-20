@@ -3,10 +3,10 @@
 // Base raster hariç tüm görünür harita katmanlarını yerleştirme aracı
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260618-3d-spectacle-r4';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r4';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260618-3d-spectacle-r4';
-import { hideUnitPanel } from './unit-panel.js?v=20260618-3d-spectacle-r4';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP } from '../data/coordinate-map.js?v=20260620-combat-fx-r1';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260620-combat-fx-r1';
+import { hideUnitPanel } from './unit-panel.js?v=20260620-combat-fx-r1';
 
 const STORAGE_KEY = 'gelibolu-overlay-editor-v4-logic-r2';
 const EXPORT_FILENAME = 'gelibolu-overlay-placements.json';

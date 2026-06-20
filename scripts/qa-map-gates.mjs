@@ -1,17 +1,17 @@
-import { hydrateTimelineData } from '../src/engine/phase-engine.js?v=20260618-3d-spectacle-r4';
-import { expandUnitTrails, getTerrainSafePointForUnit } from '../src/engine/position-engine.js?v=20260618-3d-spectacle-r4';
-import { BATTLE_DATA, getMapLocationById } from '../src/data/battle-data.js?v=20260618-3d-spectacle-r4';
-import { calibrationReport } from '../src/data/geo-calibration.js?v=20260618-3d-spectacle-r4';
-import { HISTORICAL_ANCHORS as STORY_ANCHORS } from '../src/data/historical-anchors.js?v=20260618-3d-spectacle-r4';
-import { CANONICAL_POSITIONS, OFF_MAP_LOCATIONS } from '../src/data/canonical-positions.js?v=20260618-3d-spectacle-r4';
+import { hydrateTimelineData } from '../src/engine/phase-engine.js?v=20260620-combat-fx-r1';
+import { expandUnitTrails, getTerrainSafePointForUnit } from '../src/engine/position-engine.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA, getMapLocationById } from '../src/data/battle-data.js?v=20260620-combat-fx-r1';
+import { calibrationReport } from '../src/data/geo-calibration.js?v=20260620-combat-fx-r1';
+import { HISTORICAL_ANCHORS as STORY_ANCHORS } from '../src/data/historical-anchors.js?v=20260620-combat-fx-r1';
+import { CANONICAL_POSITIONS, OFF_MAP_LOCATIONS } from '../src/data/canonical-positions.js?v=20260620-combat-fx-r1';
 import {
     HISTORICAL_ANCHORS,
     HISTORICAL_ROUTES,
     HISTORICAL_FRONTLINE_SNAPSHOTS,
     getHistoricalDataDiagnostics,
     getHistoricalPlacementForUnit
-} from '../src/data/historical-map-data.js?v=20260618-3d-spectacle-r4';
-import { GUIDED_CAMPAIGN_CHAPTERS } from '../src/data/guided-campaign.js?v=20260618-3d-spectacle-r4';
+} from '../src/data/historical-map-data.js?v=20260620-combat-fx-r1';
+import { GUIDED_CAMPAIGN_CHAPTERS } from '../src/data/guided-campaign.js?v=20260620-combat-fx-r1';
 
 const MAX_CALIBRATION_RMS = 35;
 const MAX_ROUTE_DEVIATION_ISSUES = 0;

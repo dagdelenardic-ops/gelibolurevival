@@ -45,7 +45,7 @@
 // Archives Gelibolu harita ekleri; Dardanelles defences 1915.
 // ══════════════════════════════════════════════════════════════
 
-import { GEO_LOCATION_BY_ID } from './geo-calibration.js?v=20260618-3d-spectacle-r4';
+import { GEO_LOCATION_BY_ID } from './geo-calibration.js?v=20260620-combat-fx-r1';
 
 const SRC = {
     hart: 'peter-hart-gallipoli-2011',

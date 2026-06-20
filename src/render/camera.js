@@ -3,7 +3,7 @@
 // ViewBox animasyonu ile bölgesel odaklanma
 // ══════════════════════════════════════════════════════════════
 
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260618-3d-spectacle-r4';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260620-combat-fx-r1';
 
 let cameraAnimFrame = null;
 

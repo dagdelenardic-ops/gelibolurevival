@@ -13,9 +13,9 @@
 // getNarrativeNavalPosition + ALLIED_NAVAL_LANES sistemiyle yönetilir.
 // ══════════════════════════════════════════════════════════════
 
-import { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } from './historical-map-data.js?v=20260618-3d-spectacle-r4';
-import { getCanonicalPosition } from './canonical-positions.js?v=20260618-3d-spectacle-r4';
-import { resolveCampaignMovement } from './campaign-movement.js?v=20260618-3d-spectacle-r4';
+import { HISTORICAL_ANCHORS, HISTORICAL_ROUTES } from './historical-map-data.js?v=20260620-combat-fx-r1';
+import { getCanonicalPosition } from './canonical-positions.js?v=20260620-combat-fx-r1';
+import { resolveCampaignMovement } from './campaign-movement.js?v=20260620-combat-fx-r1';
 
 /**
  * Reserve/karargâh sayılan arka alan noktaları.
