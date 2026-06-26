@@ -3,8 +3,8 @@
 // Faksiyonlar, askeri birimler, savaş fazları, konum bilgileri
 // ══════════════════════════════════════════════════════════════
 
-import { GEO_LOCATIONS } from './geo-calibration.js?v=20260620-combat-fx-r1';
-import { getDefaultVisualProfileId } from './unit-visual-profiles.js?v=20260620-combat-fx-r1';
+import { GEO_LOCATIONS } from './geo-calibration.js?v=20260622-hp-polish-r1';
+import { getDefaultVisualProfileId } from './unit-visual-profiles.js?v=20260622-hp-polish-r1';
 
 export const BATTLE_DATA = {
     factions: {
@@ -205,32 +205,32 @@ export const BATTLE_DATA = {
     phases: [
         {
             id: "naval-assault", isoStart: "1915-03-18", date: "18 Mart 1915", title: "Deniz Harekâtı",
-            narration: "18 savaş gemisinden oluşan İtilaf donanması Çanakkale Boğazı'nı geçmeye çalıştı. Saat 11:10'da başlayan taarruz, Cevat Paşa'nın kıyı bataryaları ve Nusret'in 7/8 Mart gecesi Erenköy Koyu'na döşediği 26 mayınlık gizli hat sayesinde felaketle sonuçlandı. Bouvet, Irresistible ve Ocean batırıldı; Inflexible, Suffren ve Gaulois ağır hasar aldı. İtilaf'ın 45 mayın tarama girişimi bu hattı açamamıştı. Boğaz geçilemezdi.",
+            narration: "Saat 10:30 — 18 savaş gemisi Boğaz'a ilerledi. Nusret'in 7/8 Mart gecesi Erenköy Körfezi'ne gizlice döşediği 26 mayın, İtilaf'ın 45 tarama girişiminden sağ çıkmıştı. Saat 13:54'te Bouvet'in pruvasından dumanı yükselen su sütunu göğe fırladı. İki dakika. 574 kişi. Irresistible ve Ocean aynı hatta battı. Gün bitti; Boğaz geçilemezdi.",
             locationByFaction: { ottoman: ["kilitbahir", "canakkale", "seddulbahir", "kumkale"], british: ["bogaz", "erenkoyu"], french: "kumkale" }
         },
         {
             id: "april-landings", isoStart: "1915-04-25", date: "25 Nisan 1915", title: "Kara Çıkarması",
-            narration: "İtilaf kuvvetleri Arıburnu, Seddülbahir ve Kumkale çevresinde eşzamanlı çıkarma yaptı. 29. Tümen X Beach/İkiz Koyu, V Beach ve W Beach hatlarına yayıldı; V Beach'te SS River Clyde açık hedefe dönüştü. Mustafa Kemal'in 19. Tümeni Arıburnu'na, 7. ve 9. Tümenler Helles sahillerine karşı koydu.",
+            narration: "Şafak sökmeden İtilaf sandalları Arıburnu kayalıklarına yanaştı. Seddülbahir'de SS River Clyde gönüllü kurşun siperliğine dönüştü — V Beach kıyısı kıpkırmızı oldu. Arıburnu'nda Mustafa Kemal Conkbayırı'nda göründü: 'Ben size taarruzu emretmiyorum, ölmeyi emrediyorum.' 57. Alay ilerledi. Cephe dondu.",
             locationByFaction: { anzac: "ariburnu", british: ["x-beach", "seddulbahir"], french: "kumkale", ottoman: ["ariburnu", "alcitepe", "seddulbahir"] }
         },
         {
             id: "ariburnu-battles", isoStart: "1915-04-27", date: "Nisan–Mayıs 1915", title: "Arıburnu Muharebeleri",
-            narration: "Mustafa Kemal'in 57. Alayı ANZAC kuvvetlerine karşı taarruza geçti. Siperlerde kanlı bir denge kuruldu.",
+            narration: "Arıburnu kayalıklarında iki ordu birbirine kenetlendi. Mustafa Kemal'in 57. Alayı ANZAC kuvvetlerinin her ilerleyişini geri püskürttü. Yüz metre gerisinde mevzi kazılıyor, yüz metre önünde adam ölüyordu. Siper savaşı başlamıştı — ve bitmeyecekti.",
             locationByFaction: { anzac: "ariburnu", ottoman: "conkbayiri", british: "kirte", french: "morto-koyu" }
         },
         {
             id: "seddulbahir-battles", isoStart: "1915-05-06", date: "Nisan–Haziran 1915", title: "Seddülbahir Muharebeleri",
-            narration: "Yarımadanın güneyinde İngiliz ve Fransız kuvvetleri Alçıtepe'ye ulaşmak için Kirte hattına yüklendi. V Beach ve W Beach'teki kanlı köprübaşları kalıcı bir yarma sağlayamadı; Osmanlı 5., 7. ve 9. Tümenleri güney cepheyi siper savaşına çevirdi.",
+            narration: "Kirte ve Alçıtepe için her taarruz kan istedi. V Beach ve W Beach'teki köprübaşları genişleyemedi. Osmanlı 5., 7. ve 9. Tümenleri her metre toprak için bedel biçti. Güney cephe bir hesap makinesine dönüşmüştü: toprak yerine adam, adam yerine kayıp sayısı.",
             locationByFaction: { british: "kirte", french: "seddulbahir", ottoman: "alcitepe", anzac: "ariburnu" }
         },
         {
             id: "august-offensive", isoStart: "1915-08-06", date: "6–21 Ağustos 1915", title: "Ağustos Taarruzu",
-            narration: "Suvla Koyu çıkarması, Lone Pine/Nek aldatmaları ve Sarı Bayır-Conkbayırı taarruzu İtilaf'ın son büyük hamlesiydi. Yeni Zelanda birlikleri kısa süreliğine Conkbayırı zirvesine ulaştı; 10 Ağustos'ta Mustafa Kemal'in karşı taarruzu yüksek zemini geri aldı.",
+            narration: "Üç cephede aynı anda: Suvla Koyu'nda çıkarma, Lone Pine'da aldatma, Conkbayırı'nda tırmanış. Yeni Zelanda birlikleri zirveye ulaştı. Ama Suvla'da komutanlar bekledi — saatler geçti, fırsat geçti. 10 Ağustos'ta Mustafa Kemal'in karşı taarruzu Conkbayırı'nı geri aldı. Son büyük hamle çöktü.",
             locationByFaction: { british: "suvla", anzac: "conkbayiri", ottoman: ["anafartalar", "conkbayiri"], french: "seddulbahir" }
         },
         {
             id: "evacuation", isoStart: "1915-12-10", date: "Aralık 1915 – Ocak 1916", title: "Tahliye",
-            narration: "İtilaf kuvvetleri yarımadadan çekildi. Şaşırtıcı biçimde çekilme sırasında çok az kayıp verildi.",
+            narration: "Gece — son sandallar Arıburnu'ndan ayrıldı. Osmanlılar fark etmedi. Sekiz ayda 500.000'i aşkın kayba sahne olan bu toprak, sessiz kaldı. Tahliye, Gallipoli'nin en kusursuz operasyonuydu: girerken değil çıkarken.",
             locationByFaction: { anzac: "ariburnu", british: "seddulbahir", french: "seddulbahir", ottoman: "suvla" }
         }
     ],
