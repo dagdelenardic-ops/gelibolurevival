@@ -287,7 +287,7 @@ function updateEventImage(isoDate) {
 let lastVideoFile = '';
 function updateEventVideo(hasImage, campaignPhaseId, animData, preferStill = false, isoDate = '') {
     const el = document.getElementById('eventVideo');
-    if (!el) return;
+    if (!el) return false;
 
     const eventType = animData?.eventType || 'IDLE';
     const intensity = animData?.intensity ?? 0;
@@ -298,7 +298,7 @@ function updateEventVideo(hasImage, campaignPhaseId, animData, preferStill = fal
             el.innerHTML = '';
             lastVideoFile = '';
         }
-        return;
+        return false;
     }
 
     const clip = getEventVideo(campaignPhaseId, eventType, intensity, isoDate || animData?.date || '');
@@ -309,10 +309,10 @@ function updateEventVideo(hasImage, campaignPhaseId, animData, preferStill = fal
             el.innerHTML = '';
             lastVideoFile = '';
         }
-        return;
+        return false;
     }
 
-    if (clip.file === lastVideoFile) return;
+    if (clip.file === lastVideoFile) return true;
     lastVideoFile = clip.file;
 
     if (hasImage) {
@@ -326,6 +326,7 @@ function updateEventVideo(hasImage, campaignPhaseId, animData, preferStill = fal
 
     el.style.display = 'block';
     el.innerHTML = `<video class="event-video-player" src="${clip.file}" muted playsinline controls preload="metadata"></video><div class="event-image-caption">${clip.desc}</div><div class="event-image-source">Gerçek görüntü — renklendirilmiş arşiv</div>`;
+    return true;
 }
 
 /** Anlatım panelini güncelle */
@@ -353,13 +354,42 @@ export function updateNarrationPanel(phase, currentPhaseIndex, campaignPhaseId, 
     updatePriorityBadge(phase.mobilePriority);
 
     const imageResult = updateEventImage(phase.isoStart || '');
-    updateEventVideo(imageResult.hasImage, campaignPhaseId, animData, imageResult.preferStill, phase.isoStart || '');
 
     const detailText = getDetailText(clean, weeklyContext);
     const summaryText = cleanText(phase.mobileSummary || imageResult.context || clean || weeklyContext);
 
     if (summary) summary.textContent = summaryText;
-    if (text) text.textContent = detailText;
+
+    // Belgesel ton override (desktop "Ne Oldu" sekmesi)
+    const overrideText = NARRATION_OVERRIDES[phase.isoStart] || '';
+    if (text) text.textContent = overrideText || detailText;
+
+    // Context sekme görünürlüğü
+    const contextEl = document.getElementById('narrationContext');
+    const whyTab = document.querySelector('.narration-tab[data-tab="why"]');
+    const contextText = PHASE_CONTEXT[phase.isoStart] || '';
+    if (contextEl) contextEl.textContent = contextText;
+    if (whyTab) whyTab.hidden = !contextText;
+
+    // Media butonu (sadece desktop)
+    const mediaBtn = document.getElementById('narrationMediaBtn');
+    if (mediaBtn && !isMobileNarration()) {
+        const hasVideo = updateEventVideo(imageResult.hasImage, campaignPhaseId, animData, imageResult.preferStill, phase.isoStart || '');
+        const hasMedia = imageResult.hasImage || hasVideo;
+        mediaBtn.hidden = !hasMedia;
+        if (hasMedia) {
+            mediaBtn.textContent = hasVideo ? '🎬 Arşiv Görüntüsü →' : '📷 Arşiv Fotoğrafı →';
+            mediaBtn.onclick = () => {
+                const imgEl = document.getElementById('eventImage');
+                const vidEl = document.getElementById('eventVideo');
+                const src = hasVideo ? vidEl?.innerHTML : imgEl?.innerHTML;
+                if (src) openMediaModal(src);
+            };
+        }
+    } else if (!isMobileNarration()) {
+        updateEventVideo(imageResult.hasImage, campaignPhaseId, animData, imageResult.preferStill, phase.isoStart || '');
+    }
+
     syncGuidedCampaignReadout(phase, animData);
 
     updateRomanticQuote(phase.isoStart || '');
@@ -459,6 +489,22 @@ function switchNarrationTab(tab) {
     });
     const content = document.getElementById('narrationContent');
     if (content) content.scrollTop = 0;
+}
+
+function openMediaModal(htmlContent) {
+    const modal = document.getElementById('mediaModal');
+    const content = document.getElementById('mediaModalContent');
+    if (!modal || !content) return;
+    content.innerHTML = htmlContent;
+    modal.showModal();
+}
+
+function initMediaModal() {
+    const modal = document.getElementById('mediaModal');
+    const closeBtn = document.getElementById('mediaModalClose');
+    if (!modal) return;
+    if (closeBtn) closeBtn.addEventListener('click', () => modal.close());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
 }
 
 function bindDesktopCampaignInteractions() {
@@ -609,6 +655,7 @@ export function attachNarrationElements(container, phase, opts = {}) {
         setMobileViewMode('story', { silent: true });
         bindMobileStoryInteractions();
     } else {
+        initMediaModal();
         const toggleBtn = document.getElementById('narrationToggle');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => {
