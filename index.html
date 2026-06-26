@@ -80,11 +80,11 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <!-- Styles -->
-<link rel="stylesheet" href="styles/base.css?v=20260620-combat-fx-r1">
-    <link rel="stylesheet" href="styles/map.css?v=20260620-combat-fx-r1">
-<link rel="stylesheet" href="styles/timeline.css?v=20260620-combat-fx-r1">
-<link rel="stylesheet" href="styles/panel.css?v=20260620-combat-fx-r1">
-<link rel="stylesheet" href="styles/scene3d.css?v=20260620-combat-fx-r1">
+<link rel="stylesheet" href="styles/base.css?v=20260622-hp-polish-r1">
+    <link rel="stylesheet" href="styles/map.css?v=20260622-hp-polish-r1">
+<link rel="stylesheet" href="styles/timeline.css?v=20260622-hp-polish-r1">
+<link rel="stylesheet" href="styles/panel.css?v=20260622-hp-polish-r1">
+<link rel="stylesheet" href="styles/scene3d.css?v=20260622-hp-polish-r1">
 
 <!-- three.js (ES modules via CDN) — gerçek zamanlı 3B rölyef harita -->
 <script type="importmap">
@@ -116,7 +116,7 @@
     return window.ANIMATION_EVENTS_READY;
   };
 </script>
-    <script type="module" src="src/app.js?v=20260620-combat-fx-r1"></script>
+    <script type="module" src="src/app.js?v=20260622-hp-polish-r1"></script>
 <!-- Vercel Analytics -->
 <script>
 if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
@@ -167,5 +167,11 @@ if(location.hostname !== '127.0.0.1' && location.hostname !== 'localhost'){
     <dt><img src="assets/icons/compass.png" width="14" height="14" alt=""> Açıklama</dt><dd id="panelUnitDescription">-</dd>
   </dl>
 </aside>
+<dialog id="mediaModal" class="media-modal">
+  <div class="media-modal-inner">
+    <button class="media-modal-close" id="mediaModalClose" aria-label="Kapat">✕</button>
+    <div id="mediaModalContent"></div>
+  </div>
+</dialog>
 </body>
 </html>
