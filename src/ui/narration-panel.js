@@ -3,22 +3,20 @@
 // Desktop'ta destek paneli, mobilde story-first bottom sheet
 // ══════════════════════════════════════════════════════════════
 
-import { getNarrationIcon } from '../data/icon-registry.js?v=20260620-combat-fx-r1';
-import { getRandomRomanticEntry } from '../data/romantic-layer.js?v=20260620-combat-fx-r1';
-import { getEventImage } from '../data/event-images.js?v=20260620-combat-fx-r1';
-import { getEventVideo } from '../data/event-videos.js?v=20260620-combat-fx-r1';
-import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260620-combat-fx-r1';
-import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260620-combat-fx-r1';
+import { getNarrationIcon } from '../data/icon-registry.js?v=20260626-narration-r1';
+import { getRandomRomanticEntry } from '../data/romantic-layer.js?v=20260626-narration-r1';
+import { getEventImage } from '../data/event-images.js?v=20260626-narration-r1';
+import { getEventVideo } from '../data/event-videos.js?v=20260626-narration-r1';
+import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260626-narration-r1';
+import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260626-narration-r1';
+import { isMobile, isTablet, onBreakpointChange } from '../engine/responsive.js?v=20260626-narration-r1';
+import { PHASE_CONTEXT, NARRATION_OVERRIDES } from '../data/phase-context.js';
 
 const _mobileBreakpoint = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(max-width:768px)')
     : null;
-function isMobileNarration() {
-    if (typeof window === 'undefined') return false;
-    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
-    if (cw === 0) return false;
-    return cw <= 768;
-}
+function isMobileNarration() { return isMobile(); }
+function isTabletNarration() { return isTablet(); }
 const MOBILE_VIEW_MODES = ['story', 'story+map', 'map-focus'];
 
 let mobileHandlers = {};
@@ -450,11 +448,27 @@ function bindMobileStoryInteractions() {
     });
 }
 
+function switchNarrationTab(tab) {
+    document.querySelectorAll('.narration-tab').forEach((btn) => {
+        const isActive = btn.dataset.tab === tab;
+        btn.classList.toggle('is-active', isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    document.querySelectorAll('.narration-tab-panel').forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tab;
+    });
+    const content = document.getElementById('narrationContent');
+    if (content) content.scrollTop = 0;
+}
+
 function bindDesktopCampaignInteractions() {
     document.querySelectorAll('.guided-chapter-marker').forEach((button) => {
         button.addEventListener('click', () => {
             if (mobileHandlers.onJumpToChapter) mobileHandlers.onJumpToChapter(button.dataset.startIso);
         });
+    });
+    document.querySelectorAll('.narration-tab').forEach((btn) => {
+        btn.addEventListener('click', () => switchNarrationTab(btn.dataset.tab));
     });
 }
 
@@ -508,6 +522,8 @@ function renderMobileNarrationShell(phase, displayTitle, clean, icon) {
 
 function renderDesktopNarrationShell(phase, displayTitle, clean, icon) {
     const chapter = getGuidedCampaignChapter(phase.isoStart);
+    const contextText = PHASE_CONTEXT[phase.isoStart] || '';
+    const hasContext = Boolean(contextText);
     return `
         <button class="narration-toggle" id="narrationToggle" type="button" aria-label="Paneli aç/kapat">
             <span class="narration-toggle-icon">▼</span>
@@ -526,11 +542,25 @@ function renderDesktopNarrationShell(phase, displayTitle, clean, icon) {
                     <div><span>Sonuç</span><strong id="campaignOutcome">${escapeHtml(phase.guidedChapterOutcome || chapter.outcome)}</strong></div>
                 </div>
             </div>
-            <div class="narration-title" id="narrationTitle"><img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon"> ${displayTitle} <span class="narration-date">— ${phase.date}</span></div>
-            <div class="narration-text" id="narrationText">${clean || ''}</div>
-            <div class="event-image" id="eventImage" style="display:none"></div>
-            <div class="event-image" id="eventVideo" style="display:none"></div>
-            <div class="romantic-quote" id="romanticQuote" style="display:none"></div>
+            <div class="narration-title" id="narrationTitle">
+                <img src="assets/icons/${icon}.png" width="16" height="16" alt="" class="narration-icon">
+                ${displayTitle} <span class="narration-date">— ${phase.date}</span>
+            </div>
+            <div class="narration-tab-bar" role="tablist" aria-label="Olay sekmeleri">
+                <button class="narration-tab is-active" data-tab="what" role="tab" aria-selected="true">Ne Oldu</button>
+                <button class="narration-tab" data-tab="why" role="tab" aria-selected="false"${hasContext ? '' : ' hidden'}>Neden Önemli</button>
+                <button class="narration-tab" data-tab="human" role="tab" aria-selected="false">İnsan Hikayeleri</button>
+            </div>
+            <div class="narration-tab-panel" data-panel="what" role="tabpanel">
+                <div class="narration-text" id="narrationText">${clean || ''}</div>
+            </div>
+            <div class="narration-tab-panel" data-panel="why" role="tabpanel" hidden>
+                <div class="narration-context" id="narrationContext">${escapeHtml(contextText)}</div>
+            </div>
+            <div class="narration-tab-panel" data-panel="human" role="tabpanel" hidden>
+                <div class="romantic-quote" id="romanticQuote" style="display:none"></div>
+            </div>
+            <button class="narration-media-btn" id="narrationMediaBtn" hidden>📷 Arşiv Fotoğrafı →</button>
             <div class="narration-transition" id="sceneTransitionText" style="display:none"></div>
         </div>
     `;
