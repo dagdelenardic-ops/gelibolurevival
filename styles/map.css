@@ -1272,6 +1272,125 @@ body[data-map-editor="open"] .fort-group text {
     line-height: 1.65
 }
 
+/* ── Narration Sekmeler ── */
+.narration-tab-bar {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid rgba(120, 100, 70, .22);
+    margin-bottom: 12px
+}
+
+.narration-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .04em;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s
+}
+
+.narration-tab.is-active {
+    color: var(--red-light);
+    border-bottom-color: var(--red)
+}
+
+.narration-tab:hover:not(.is-active) {
+    color: var(--text)
+}
+
+.narration-tab-panel[hidden] {
+    display: none
+}
+
+.narration-context {
+    font-size: .86rem;
+    color: var(--text-muted);
+    line-height: 1.65
+}
+
+.narration-media-btn {
+    display: block;
+    margin-top: 10px;
+    background: rgba(30, 20, 10, .6);
+    border: 1px solid rgba(120, 100, 70, .3);
+    color: #c9a84c;
+    font-size: .72rem;
+    font-family: var(--mono);
+    padding: 5px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: .03em;
+    transition: background .15s
+}
+
+.narration-media-btn:hover {
+    background: rgba(139, 58, 58, .25)
+}
+
+/* ── Media Modal ── */
+.media-modal {
+    background: rgba(10, 8, 6, .97);
+    border: 1px solid rgba(120, 100, 70, .35);
+    border-radius: 8px;
+    padding: 0;
+    max-width: min(90vw, 860px);
+    max-height: 90vh;
+    width: 100%
+}
+
+.media-modal::backdrop {
+    background: rgba(0, 0, 0, .82)
+}
+
+.media-modal-inner {
+    position: relative;
+    padding: 48px 24px 24px
+}
+
+.media-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(80, 70, 50, .2);
+    border: 1px solid rgba(120, 100, 70, .3);
+    color: var(--text-muted);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: .9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.media-modal img,
+.media-modal video {
+    max-width: 100%;
+    max-height: 65vh;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto
+}
+
+.media-modal-caption {
+    margin-top: 10px;
+    font-size: .8rem;
+    color: var(--text-muted);
+    text-align: center
+}
+
+.media-modal-source {
+    font-size: .72rem;
+    color: rgba(180, 160, 120, .5);
+    text-align: center;
+    margin-top: 4px
+}
+
 .guided-campaign-panel {
     display: grid;
     gap: 12px;
@@ -1397,13 +1516,37 @@ body[data-map-editor="open"] .fort-group text {
     }
 }
 
-@media(min-width:769px) and (max-width:980px){
+@media(min-width:769px) and (max-width:1024px){
     .map-container{
-        grid-template-columns:minmax(320px,380px) minmax(0,1fr)
+        grid-template-columns:minmax(280px,340px) minmax(0,1fr);
+        gap:8px;
+        padding:8px 10px
+    }
+    .narration-box{
+        padding:14px 16px
+    }
+    .narration-title{
+        font-size:.78rem
+    }
+    .narration-text{
+        font-size:.88rem;
+        line-height:1.65
     }
     .map-date-chip{
-        left:calc(380px + ((100% - 380px) / 2))
+        left:calc(340px + ((100% - 340px) / 2))
     }
+    /* Tablet: ağır animasyonları azalt */
+    .unit-token{
+        transition-duration:.18s
+    }
+    .move-dust,.move-foam{opacity:.5}
+    .combat-dust{opacity:.18}
+    .frontline-segment{animation-duration:6s}
+    .naval-smoke,.naval-damage-smoke{animation-duration:4s}
+    .anim-clash-smoke{opacity:.4}
+    .flag-muzzle{opacity:.3}
+    /* Tablet: backdrop-filter'ı hafiflet */
+    .map-date-chip{backdrop-filter:blur(4px)}
 }
 
 .narration-transition {
