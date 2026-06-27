@@ -3,9 +3,11 @@
 // İlk ziyaretçi için 4 adımlık rehber overlay
 // ══════════════════════════════════════════════════════════════
 
+import { isMobile } from '../engine/responsive.js?v=20260622-hp-polish-r1';
+
 const STORAGE_KEY = 'gelibolu_onboarding_done';
 
-const isMobileSteps = typeof window !== 'undefined' && window.innerWidth <= 768;
+const isMobileSteps = isMobile();
 
 const STEPS = isMobileSteps ? [
     {
@@ -72,12 +74,7 @@ function createOverlay() {
     return overlay;
 }
 
-function isMobileOnboarding() {
-    if (typeof window === 'undefined') return false;
-    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
-    if (cw === 0) return false;
-    return cw <= 768;
-}
+function isMobileOnboarding() { return isMobile(); }
 
 function positionCard(overlay, step, index) {
     const card = overlay.querySelector('.onboarding-card');

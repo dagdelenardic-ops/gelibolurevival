@@ -323,6 +323,26 @@
     }
 }
 
+/* ── Tablet (769-1024) — yan panel daraltılmış ── */
+@media(min-width:769px) and (max-width:1024px){
+    .unit-panel{
+        width:340px;
+        max-width:340px;
+        padding:16px 18px
+    }
+    .portrait-img{
+        max-width:140px;
+        max-height:180px
+    }
+    .unit-panel dl{
+        font-size:.82rem
+    }
+    .panel-close{
+        width:36px;
+        height:36px
+    }
+}
+
 /* ── Duraklatma Listesi ── */
 .unit-roster {
     position: fixed;

@@ -88,6 +88,33 @@ body{
   .stats-panel{backdrop-filter:none;background:rgba(0,0,0,.85)}
 }
 
+/* ── Tablet (769-1024) ── */
+@media(min-width:769px) and (max-width:1024px){
+  .topbar{
+    padding:6px 12px;
+    gap:6px
+  }
+  .topbar-title{
+    font-size:.88rem
+  }
+  .phase-indicator{
+    max-width:260px;
+    font-size:.68rem
+  }
+  .legend-item{
+    font-size:.68rem
+  }
+  .stats-btn{
+    font-size:.68rem;
+    padding:3px 6px
+  }
+  .audio-btn{
+    min-width:44px;
+    height:28px;
+    font-size:.65rem
+  }
+}
+
 /* ── Üst Bar — modern glassmorphism ── */
 .topbar{
   display:flex;align-items:center;justify-content:space-between;

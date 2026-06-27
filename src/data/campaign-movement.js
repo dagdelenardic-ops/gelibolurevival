@@ -45,7 +45,7 @@
 // Archives Gelibolu harita ekleri; Dardanelles defences 1915.
 // ══════════════════════════════════════════════════════════════
 
-import { GEO_LOCATION_BY_ID } from './geo-calibration.js?v=20260620-combat-fx-r1';
+import { GEO_LOCATION_BY_ID } from './geo-calibration.js?v=20260622-hp-polish-r1';
 
 const SRC = {
     hart: 'peter-hart-gallipoli-2011',
@@ -345,20 +345,19 @@ export function resolveCampaignMovement(unitOrId, isoDate) {
     const start = frames[k];
     const next = frames[k + 1] || null;
     const startPt = keyframePoint(start);
+    const nextPt = next ? keyframePoint(next) : null;
     if (!startPt) return null;
 
     let point = startPt;
+    let progress = 0;
     // 'march' → sonraki keyframe noktasına doğru gün-gün yumuşak interpolasyon.
-    if (start.kind === 'march' && next) {
-        const nextPt = keyframePoint(next);
-        if (nextPt) {
-            const span = isoDay(next.iso) - isoDay(start.iso);
-            const t = span > 0 ? easeInOut((day - isoDay(start.iso)) / span) : 1;
-            point = {
-                x: Math.round(startPt.x + (nextPt.x - startPt.x) * t),
-                y: Math.round(startPt.y + (nextPt.y - startPt.y) * t)
-            };
-        }
+    if (start.kind === 'march' && nextPt) {
+        const span = isoDay(next.iso) - isoDay(start.iso);
+        progress = span > 0 ? easeInOut((day - isoDay(start.iso)) / span) : 1;
+        point = {
+            x: Math.round(startPt.x + (nextPt.x - startPt.x) * progress),
+            y: Math.round(startPt.y + (nextPt.y - startPt.y) * progress)
+        };
     } else {
         point = { x: Math.round(startPt.x), y: Math.round(startPt.y) };
     }
@@ -375,6 +374,9 @@ export function resolveCampaignMovement(unitOrId, isoDate) {
         sourceIds: Array.isArray(start.src) ? start.src : [],
         note: start.event || '',
         point,
+        fromPoint: { x: Math.round(startPt.x), y: Math.round(startPt.y) },
+        toPoint: nextPt ? { x: Math.round(nextPt.x), y: Math.round(nextPt.y) } : { x: Math.round(startPt.x), y: Math.round(startPt.y) },
+        progress,
         routeId: `move:${unitId}:${start.iso}`,
         legKind: start.kind,
         legEvent: start.event || '',

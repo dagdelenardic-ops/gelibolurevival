@@ -3,8 +3,8 @@
 // Ünite anchor'ları, rota polyline'ları ve kaynak izlenebilirliği
 // ══════════════════════════════════════════════════════════════
 
-import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from './coordinate-map.js?v=20260620-combat-fx-r1';
-import { resolveCampaignMovement } from './campaign-movement.js?v=20260620-combat-fx-r1';
+import { VP_MIN_X, VP_MAX_X, VP_MIN_Y, VP_MAX_Y } from './coordinate-map.js?v=20260622-hp-polish-r1';
+import { resolveCampaignMovement } from './campaign-movement.js?v=20260622-hp-polish-r1';
 
 export const HISTORICAL_SOURCES = {
     'peter-hart-gallipoli-2011': {

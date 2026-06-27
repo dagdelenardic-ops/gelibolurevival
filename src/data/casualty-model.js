@@ -4,7 +4,7 @@
 // Toplam kayıp: Osmanlı ~250.000, İtilaf ~250.000 (Peter Hart, 2011)
 // ══════════════════════════════════════════════════════════════
 
-import { CANONICAL_POSITIONS, OFF_MAP_LOCATIONS } from './canonical-positions.js?v=20260620-combat-fx-r1';
+import { CANONICAL_POSITIONS, OFF_MAP_LOCATIONS } from './canonical-positions.js?v=20260622-hp-polish-r1';
 
 /**
  * Tarihsel kayıp profilleri — birim başına kampanya boyunca kümülatif kayıp oranı.

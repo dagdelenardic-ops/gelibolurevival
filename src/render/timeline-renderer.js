@@ -3,17 +3,12 @@
 // Timeline UI oluşturma, aktif marker yönetimi
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
-import { normalizeDateText } from '../engine/date-utils.js?v=20260620-combat-fx-r1';
-import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260622-hp-polish-r1';
+import { normalizeDateText } from '../engine/date-utils.js?v=20260622-hp-polish-r1';
+import { getWeeklyGuide, getActiveWeekIndex, getPhaseIndexByIso, getMobileStoryChapter, getMobileStoryChapters } from '../engine/phase-engine.js?v=20260622-hp-polish-r1';
+import { isMobile } from '../engine/responsive.js?v=20260622-hp-polish-r1';
 
-function isMobileTimeline() {
-    if (typeof window === 'undefined') return false;
-    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
-    // When size is indeterminate (0) assume desktop — real mobile always has cw > 0
-    if (cw === 0) return false;
-    return cw <= 768;
-}
+function isMobileTimeline() { return isMobile(); }
 
 /** Timeline DOM'unu oluştur */
 export function renderTimeline(setActivePhase, toggleAutoPlay) {

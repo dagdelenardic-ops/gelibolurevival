@@ -44,6 +44,47 @@
     max-width: 240px;
 }
 
+.scene3d-motion-caption {
+    position: absolute;
+    left: clamp(16px, 34vw, 500px);
+    right: 18px;
+    bottom: calc(var(--timeline-h, 120px) + 18px);
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 780px;
+    padding: 8px 12px;
+    border: 1px solid rgba(242, 222, 171, .22);
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(14, 16, 20, .82), rgba(31, 28, 22, .72));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .32);
+    color: #e9dcc2;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    pointer-events: none;
+}
+.scene3d-motion-caption strong {
+    flex: 0 0 auto;
+    color: #f0c768;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+.scene3d-motion-caption span {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.scene3d-motion-caption.is-empty {
+    opacity: .72;
+}
+
 /* 3B / 2B görünüm anahtarı */
 .view3d-toggle {
     position: fixed;
@@ -98,9 +139,34 @@
     100% { opacity: 0; }
 }
 
+@media (min-width: 769px) and (max-width: 1024px) {
+    .view3d-toggle { padding: 5px 10px; font-size: 11px; }
+    .scene3d-place { font-size: 10px; }
+    .scene3d-motion-caption {
+        left: 18px;
+        max-width: none;
+    }
+}
 @media (max-width: 768px) {
     .view3d-toggle { top: auto; bottom: calc(var(--timeline-h, 120px) + 14px); right: 10px; padding: 6px 11px; font-size: 11px; }
     .scene3d-place { font-size: 9px; padding: 1px 3px; }
+    .scene3d-motion-caption {
+        left: 10px;
+        right: 10px;
+        bottom: calc(var(--timeline-h, 120px) + 54px);
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 10px;
+    }
+    .scene3d-motion-caption span {
+        display: -webkit-box;
+        overflow: hidden;
+        text-overflow: clip;
+        white-space: normal;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

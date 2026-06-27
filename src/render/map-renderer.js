@@ -3,13 +3,14 @@
 // Historically grounded military cartography with modern UI clarity
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260620-combat-fx-r1';
-import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260620-combat-fx-r1';
-import { HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260620-combat-fx-r1';
-import { renderTokens } from './token-renderer.js?v=20260620-combat-fx-r1';
-import { renderBattleEffects } from './effects-renderer.js?v=20260620-combat-fx-r1';
-import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260622-hp-polish-r1';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from '../data/coordinate-map.js?v=20260622-hp-polish-r1';
+import { MAP_FORTS, MAP_SCENE_LABELS, MAP_SCENE_GUIDES, MAP_ORNAMENTS } from '../data/geo-calibration.js?v=20260622-hp-polish-r1';
+import { HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260622-hp-polish-r1';
+import { renderTokens } from './token-renderer.js?v=20260622-hp-polish-r1';
+import { renderBattleEffects } from './effects-renderer.js?v=20260622-hp-polish-r1';
+import { updateMapDateIndicator, updateNarrationPanel, attachNarrationElements } from '../ui/narration-panel.js?v=20260622-hp-polish-r1';
+import { isMobile as _isMobileCheck } from '../engine/responsive.js?v=20260622-hp-polish-r1';
 
 function getActiveSceneGroups(phase, animData) {
     const iso = String(phase && phase.isoStart || '');
@@ -323,12 +324,7 @@ export function renderTacticalRoutes(isoDate) {
     }).join('');
 }
 
-function isMobileMap() {
-    if (typeof window === 'undefined') return false;
-    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
-    if (cw === 0) return false;
-    return cw <= 768;
-}
+function isMobileMap() { return _isMobileCheck(); }
 
 /** Ana SVG harita oluştur ve DOM'a ekle */
 export function renderMap(currentPhaseIndex, currentPositions, narrationHandlers = {}) {

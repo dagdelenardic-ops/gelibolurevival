@@ -3,14 +3,14 @@
 // Birim tıklayınca açılan sağ panel — komutan portresi dahil
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
-import { getUnitIcon } from '../data/icon-registry.js?v=20260620-combat-fx-r1';
-import { getCommanderPortrait } from '../data/commander-portraits.js?v=20260620-combat-fx-r1';
-import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260620-combat-fx-r1';
-import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260620-combat-fx-r1';
-import { getUnitDossier } from '../data/unit-dossiers.js?v=20260620-combat-fx-r1';
-import { getHistoricalSourcesForIds, HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260620-combat-fx-r1';
-import { getUnitItinerary } from '../data/campaign-movement.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260622-hp-polish-r1';
+import { getUnitIcon } from '../data/icon-registry.js?v=20260622-hp-polish-r1';
+import { getCommanderPortrait } from '../data/commander-portraits.js?v=20260622-hp-polish-r1';
+import { deriveUnitIntent } from '../engine/unit-intelligence.js?v=20260622-hp-polish-r1';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260622-hp-polish-r1';
+import { getUnitDossier } from '../data/unit-dossiers.js?v=20260622-hp-polish-r1';
+import { getHistoricalSourcesForIds, HISTORICAL_ROUTES } from '../data/historical-map-data.js?v=20260622-hp-polish-r1';
+import { getUnitItinerary } from '../data/campaign-movement.js?v=20260622-hp-polish-r1';
 
 /** Faksiyon banner rengi — desatüre askeri tonlar */
 function getFactionBanner(faction) {

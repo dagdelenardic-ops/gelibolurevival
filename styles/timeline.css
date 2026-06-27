@@ -206,6 +206,22 @@
     }
 }
 
+/* ── Tablet Timeline ── */
+@media(min-width:769px) and (max-width:1024px){
+    .timeline{
+        padding:6px 10px
+    }
+    .timeline-label{
+        font-size:.68rem
+    }
+    .timeline-chapters{
+        font-size:.66rem
+    }
+    .phase-marker{
+        min-width:8px
+    }
+}
+
 /* ── Mobile Timeline ── */
 @media(max-width:768px){
     .timeline{

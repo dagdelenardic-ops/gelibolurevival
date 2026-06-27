@@ -9,6 +9,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { getTerrainAtPoint, clampToAllowedTerrain, snapToSeaWater } from '../data/terrain-zones.js?v=20260622-hp-polish-r1';
+import { ENTITY_TYPES } from '../data/entity-types.js?v=20260622-hp-polish-r1';
+import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260622-hp-polish-r1';
+import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260622-hp-polish-r1';
 
 // Veriler app.js'ten enjekte edilir (modül-versiyon ikizlenmesini önlemek için).
 let UNITS = [], LOCATIONS = [];
@@ -17,25 +21,38 @@ let onUnitClick = null;
 
 const ASSET = 'assets/3d';
 const MAP_W = 2451, MAP_H = 3467;
-const WORLD_W = 24.51, WORLD_H = 34.67, ZSCALE = 3.6;
-const WATER_Y = 0.12 * 1; // sea sits just above h=0 land
+const WORLD_W = 29.4, WORLD_H = 32.8, ZSCALE = 3.15;
+const WATER_Y = 0.08; // sea sits just above h=0 land
+const LOW_WATER_HEIGHT = 0.035;
+const SHORE_RAMP_START = 18;
+const SHORE_RAMP_END = 255;
+const SHIP_OFFSHORE_CLEARANCE = 112;
 
 const FACTION_COLOR = {
     ottoman: 0xc4645a, british: 0x7a9ab0, anzac: 0x8aaa78, french: 0x9a8aaa,
     allied: 0x7a9ab0
 };
 function factionColor(f) { return FACTION_COLOR[f] || 0xcccccc; }
+const ROUTE_COLOR = {
+    ottoman: 0xff695c, british: 0x7ec8ff, anzac: 0x92e384, french: 0xd5a8ff,
+    allied: 0x7ec8ff, default: 0xf4d784
+};
+function routeColor(unit) { return ROUTE_COLOR[unit?.faction] || ROUTE_COLOR.default; }
 
 let renderer, labelRenderer, scene, camera, controls, clock;
 let terrain, water, sun, hemi;
+let movementRouteGroup = null;
 let heightData = null, hw = 0, hh = 0;
 let raf = 0, visible = false, ready = false, simT = 0;
 const models = {};            // name -> THREE.Object3D template
 const tokens = new Map();     // unitId -> {group, target, model, unit}
 let tooltipEl = null, hovered = null;
 let currentPhase = null, currentAnim = null;
-let autoFrame = { active: false, target: new THREE.Vector3(), dist: 30, t: 1 };
+let autoFrame = { active: false, target: new THREE.Vector3(), dist: 30, height: 11, yaw: 0.4, orbit: 0, tight: false, t: 1 };
 let lastUserInput = 0;
+let cameraShake = 0;
+let autoplayActive = false;
+let motionCaptionEl = null;
 
 // ── coordinate helpers ──
 const wX = (x) => (x / MAP_W - 0.5) * WORLD_W;
@@ -53,10 +70,131 @@ function sampleHeight(u, v) {
     const top = a + (b - a) * tx, bot = c + (d - c) * tx;
     return (top + (bot - top) * ty);
 }
-function heightAtMap(x, y) { return sampleHeight(x / MAP_W, y / MAP_H) * ZSCALE; }
+
+function smoothstep(edge0, edge1, x) {
+    const t = Math.min(1, Math.max(0, (x - edge0) / Math.max(1e-5, edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+}
+
+const shoreDistanceCache = new Map();
+const SHORE_SAMPLE_RINGS = [8, 16, 28, 44, 66, 94, 130, 174, 226, 286];
+const SHORE_SAMPLE_DIRS = Array.from({ length: 20 }, (_, i) => (i / 20) * Math.PI * 2);
+
+function distanceToWaterHeight(u, v, rawHeight) {
+    if (rawHeight <= LOW_WATER_HEIGHT) return 0;
+    const key = `${Math.round(u * 760)}:${Math.round(v * 1080)}`;
+    const cached = shoreDistanceCache.get(key);
+    if (cached !== undefined) return cached;
+
+    for (const r of SHORE_SAMPLE_RINGS) {
+        for (const angle of SHORE_SAMPLE_DIRS) {
+            const su = u + Math.cos(angle) * r / MAP_W;
+            const sv = v + Math.sin(angle) * r / MAP_H;
+            if (su < 0 || su > 1 || sv < 0 || sv > 1) continue;
+            if (sampleHeight(su, sv) <= LOW_WATER_HEIGHT) {
+                shoreDistanceCache.set(key, r);
+                return r;
+            }
+        }
+    }
+
+    const far = SHORE_RAMP_END + 1;
+    shoreDistanceCache.set(key, far);
+    return far;
+}
+
+function terrainHeight01(u, v) {
+    const raw = sampleHeight(u, v);
+    if (raw <= LOW_WATER_HEIGHT) return 0;
+
+    // The source heightmap marks most land as a raised plateau. Fade elevation
+    // in from nearby water so beaches read as beaches, not vertical walls.
+    const dist = distanceToWaterHeight(u, v, raw);
+    const shore = smoothstep(SHORE_RAMP_START, SHORE_RAMP_END, dist);
+    const ramp = 0.14 + shore * 0.86;
+    return Math.min(1, Math.pow(raw, 1.08) * ramp);
+}
+
+function heightAtMap(x, y) { return terrainHeight01(x / MAP_W, y / MAP_H) * ZSCALE; }
 const mapXfromW = (wx) => (wx / WORLD_W + 0.5) * MAP_W;
 const mapYfromW = (wz) => (wz / WORLD_H + 0.5) * MAP_H;
 function heightAtWorld(wx, wz) { return heightAtMap(mapXfromW(wx), mapYfromW(wz)); }
+
+function clampMapPoint(x, y) {
+    return {
+        x: Math.max(0, Math.min(MAP_W - 1, Math.round(x))),
+        y: Math.max(0, Math.min(MAP_H - 1, Math.round(y))),
+    };
+}
+
+function safeMapPointForUnit(unit, mx, my) {
+    const base = clampMapPoint(mx, my);
+    if (!unit) return base;
+
+    // Ships must read as afloat in 3D. The 2D layer allows "coast" for readable
+    // naval anchors, but in relief view a coast pixel can tuck the hull into land.
+    if (unit.entityType === 'ship') return snapShipOffshore(base.x, base.y);
+
+    const typeDef = ENTITY_TYPES[unit.entityType];
+    if (!typeDef) return base;
+    const terrain = getTerrainAtPoint(base.x, base.y);
+    if (typeDef.allowedTerrain.includes(terrain)) return base;
+
+    const fixed = clampToAllowedTerrain(base.x, base.y, typeDef.allowedTerrain);
+    return clampMapPoint(fixed.x, fixed.y);
+}
+
+function nearestLandVector(mx, my, maxRadius = SHIP_OFFSHORE_CLEARANCE) {
+    let best = null;
+    for (let r = 12; r <= maxRadius; r += 12) {
+        const steps = Math.max(16, Math.round(Math.PI * 2 * r / 18));
+        for (let i = 0; i < steps; i++) {
+            const angle = (i / steps) * Math.PI * 2;
+            const lx = mx + Math.cos(angle) * r;
+            const ly = my + Math.sin(angle) * r;
+            const terrain = getTerrainAtPoint(lx, ly);
+            if (terrain !== 'land' && terrain !== 'coast') continue;
+            const vx = mx - lx;
+            const vy = my - ly;
+            const d = Math.hypot(vx, vy) || r;
+            if (!best || d < best.dist) best = { dist: d, x: vx / d, y: vy / d };
+        }
+        if (best) return best;
+    }
+    return best;
+}
+
+function snapShipOffshore(mx, my) {
+    let p = snapToSeaWater(mx, my, 360);
+    const near = nearestLandVector(p.x, p.y);
+    if (!near || near.dist >= SHIP_OFFSHORE_CLEARANCE) return clampMapPoint(p.x, p.y);
+
+    const push = Math.min(190, SHIP_OFFSHORE_CLEARANCE - near.dist + 34);
+    p = snapToSeaWater(p.x + near.x * push, p.y + near.y * push, 430);
+    return clampMapPoint(p.x, p.y);
+}
+
+function safeWorldPointForUnit(unit, wx, wz) {
+    const safe = safeMapPointForUnit(unit, mapXfromW(wx), mapYfromW(wz));
+    return {
+        wx: wX(safe.x),
+        wz: wZ(safe.y),
+        mx: safe.x,
+        my: safe.y,
+        terrain: getTerrainAtPoint(safe.x, safe.y),
+    };
+}
+
+function groundClearanceForUnit(unit) {
+    if (!unit || isWaterUnit(unit)) return 0;
+    if (unit.entityType === 'infantry_unit') return 0.12;
+    if (unit.entityType === 'artillery_battery') return 0.08;
+    return 0.06;
+}
+
+function groundYForUnit(unit, wx, wz) {
+    return groundY(wx, wz) + groundClearanceForUnit(unit);
+}
 
 // ── Arazi mesh çözünürlüğü (buildTerrain ile AYNI olmalı) ──
 // Token'lar GÖRÜNEN mesh yüzeyine otursun diye yükseklik, tam çözünürlüklü
@@ -71,7 +209,7 @@ function groundY(wx, wz) {
     const x0 = Math.floor(fx), y0 = Math.floor(fy);
     const x1 = Math.min(SEG_X, x0 + 1), y1 = Math.min(SEG_Y, y0 + 1);
     const tx = fx - x0, ty = fy - y0;
-    const H = (i, j) => sampleHeight(i / SEG_X, j / SEG_Y) * ZSCALE;
+    const H = (i, j) => terrainHeight01(i / SEG_X, j / SEG_Y) * ZSCALE;
     const a = H(x0, y0), b = H(x1, y0), c = H(x0, y1), d = H(x1, y1);
     const top = a + (b - a) * tx, bot = c + (d - c) * tx;
     return top + (bot - top) * ty;
@@ -243,7 +381,7 @@ function buildSkyBackground() {
 async function buildTerrain() {
     // ?v= cache-bust: /assets/ 1 yıl immutable cache'leniyor; sürüm sorgusu olmadan
     // bayat/bozuk cache kalıcı oluyordu. Her deploy taze çekilsin diye sürüm eklenir.
-    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png?v=20260620-combat-fx-r1`);
+    const hm = await loadImageData(`${ASSET}/gelibolu-heightmap.png?v=20260622-hp-polish-r1`);
     heightData = hm.data; hw = hm.w; hh = hm.h;
 
     const SX = SEG_X, SY = SEG_Y;   // groundY() ile aynı ızgara → token'lar tam yüzeye oturur
@@ -254,7 +392,7 @@ async function buildTerrain() {
     for (let j = 0; j <= SY; j++) {
         for (let i = 0; i <= SX; i++) {
             const u = i / SX, v = j / SY;
-            const h = sampleHeight(u, v);
+            const h = terrainHeight01(u, v);
             positions[p++] = (u - 0.5) * WORLD_W;
             positions[p++] = h * ZSCALE;
             positions[p++] = (v - 0.5) * WORLD_H;
@@ -280,7 +418,7 @@ async function buildTerrain() {
 
     const texLoader = new THREE.TextureLoader();
     texLoader.crossOrigin = undefined;   // aynı-origin; CORS uyuşmazlığını önle
-    const mapTex = texLoader.load(`${ASSET}/../gallipoli-map.png?v=20260620-combat-fx-r1`);
+    const mapTex = texLoader.load(`${ASSET}/../gallipoli-map.png?v=20260622-hp-polish-r1`);
     mapTex.colorSpace = THREE.SRGBColorSpace;
     mapTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const mat = new THREE.MeshStandardMaterial({
@@ -324,7 +462,7 @@ function loadModels() {
     // ?v= cache-bust: /assets 1 yıl immutable cache'leniyor; model güncellense bile
     // sürüm sorgusu olmadan bayat GLB kalıcı oluyordu (heightmap'teki aynı tuzak).
     return Promise.all(list.map((name) => new Promise((res) => {
-        loader.load(`${ASSET}/models/${name}.glb?v=20260620-combat-fx-r1`,
+        loader.load(`${ASSET}/models/${name}.glb?v=20260622-hp-polish-r1`,
             (g) => { models[name] = g.scene; res(); },
             undefined,
             () => { console.warn('GLB yüklenemedi:', name); res(); });
@@ -380,11 +518,119 @@ function tintShip(obj, hex, faction) {
 // Token'ın tüm mesh'lerine opaklık uygula (tahliye solması için).
 function setTokenOpacity(tk, op) {
     tk.group.traverse((n) => {
-        if (n.isMesh && n.material) {
+        if ((n.isMesh || n.isSprite) && n.material) {
             n.material.transparent = op < 1;
             n.material.opacity = op;
         }
     });
+}
+
+function liftLandVisualsAboveFootprint(group, unit) {
+    if (!group || isWaterUnit(unit)) return;
+    group.updateWorldMatrix(true, true);
+    const box = new THREE.Box3().setFromObject(group);
+    if (!Number.isFinite(box.min.y) || box.min.y >= -0.015) return;
+    const lift = -box.min.y + 0.025;
+    group.children.forEach((child) => { child.position.y += lift; });
+}
+
+let solidSpriteTex = null;
+function getSolidSpriteTexture() {
+    if (solidSpriteTex) return solidSpriteTex;
+    const c = document.createElement('canvas');
+    c.width = c.height = 16;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    solidSpriteTex = new THREE.CanvasTexture(c);
+    return solidSpriteTex;
+}
+
+function makeVitalsTextTexture(text, tone = '#f2dfab') {
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.font = '700 22px JetBrains Mono, Menlo, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.9)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = tone;
+    ctx.fillText(text, c.width / 2, c.height / 2);
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    return tex;
+}
+
+function hpColorForVitals(vitals) {
+    if (!vitals) return 0x72ad67;
+    if (vitals.ratio <= 0.38 || vitals.stamina <= 0.24) return 0xc95b4d;
+    if (vitals.ratio <= 0.62 || vitals.stamina <= 0.42) return 0xd9a94f;
+    return 0x72ad67;
+}
+
+function vitalsLiftForUnit(unit) {
+    if (unit.entityType === 'ship') return 1.02;
+    if (unit.entityType === 'landing_boat') return 0.72;
+    if (unit.entityType === 'artillery_battery') return 1.32;
+    if (unit.entityType === 'infantry_unit') return 1.92;
+    return 1.28;
+}
+
+function makeVitalsPlate(unit) {
+    if (!unit.strength) return null;
+    const root = new THREE.Group();
+    root.name = 'vitals';
+    root.position.set(0, vitalsLiftForUnit(unit), 0);
+    root.userData.barWidth = isWaterUnit(unit) ? 0.78 : 0.92;
+
+    const tex = getSolidSpriteTexture();
+    const back = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: tex, color: 0x11161a, transparent: true, opacity: 0.72,
+        depthWrite: false, depthTest: false,
+    }));
+    back.name = 'vitals-back';
+    back.scale.set(root.userData.barWidth + 0.12, 0.18, 1);
+    root.add(back);
+
+    const bar = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: tex, color: 0x72ad67, transparent: true, opacity: 0.94,
+        depthWrite: false, depthTest: false,
+    }));
+    bar.name = 'vitals-bar';
+    bar.scale.set(root.userData.barWidth, 0.075, 1);
+    bar.position.set(0, 0.012, 0.01);
+    root.add(bar);
+
+    const loss = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: tex, color: 0xc95b4d, transparent: true, opacity: 0,
+        depthWrite: false, depthTest: false,
+    }));
+    loss.name = 'vitals-loss-pulse';
+    loss.scale.set(root.userData.barWidth + 0.26, 0.28, 1);
+    loss.position.set(0, 0.01, 0.02);
+    root.add(loss);
+
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: makeVitalsTextTexture(formatStrength(unit.strength), '#e9dcc2'),
+        transparent: true, opacity: 0.88,
+        depthWrite: false, depthTest: false,
+    }));
+    label.name = 'vitals-label';
+    label.scale.set(root.userData.barWidth + 0.28, 0.24, 1);
+    label.position.set(0, -0.2, 0.03);
+    root.add(label);
+
+    root.userData.bar = bar;
+    root.userData.loss = loss;
+    root.userData.label = label;
+    root.userData.labelText = '';
+    root.userData.displayRatio = 1;
+    root.visible = false;
+    return root;
 }
 
 function makeToken(unit) {
@@ -394,7 +640,7 @@ function makeToken(unit) {
     if (tpl) {
         model = tpl.clone(true);
         const et = unit.entityType;
-        const scale = et === 'ship' ? 0.52 : et === 'artillery_battery' ? 0.6 : et === 'landing_boat' ? 0.42 : et === 'infantry_unit' ? 1.1 : 0.78;
+        const scale = et === 'ship' ? 0.42 : et === 'artillery_battery' ? 0.6 : et === 'landing_boat' ? 0.36 : et === 'infantry_unit' ? 1.08 : 0.78;
         model.scale.setScalar(scale);
         model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.material = n.material.clone(); } });
         const mk = modelForUnit(unit);
@@ -453,6 +699,8 @@ function makeToken(unit) {
         group.userData = group.userData || {};
     }
 
+    liftLandVisualsAboveFootprint(group, unit);
+
     // faction ring on ground
     const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.42, 0.6, 28),
@@ -461,7 +709,10 @@ function makeToken(unit) {
     ring.rotation.x = -Math.PI / 2; ring.position.y = 0.04;
     ring.name = 'ring';
     group.add(ring);
+    const vitalsPlate = makeVitalsPlate(unit);
+    if (vitalsPlate) group.add(vitalsPlate);
     group.userData = { unitId: unit.id, unit, model, flagMesh: flag ? flag.userData.flagMesh : null };
+    if (vitalsPlate) group.userData.vitalsPlate = vitalsPlate;
     // Geri tepme/sallanma/nişan, ana modelin BU temel duruşu etrafında uygulanır.
     model.userData.base = model.position.clone();
     model.userData.baseRotZ = model.rotation.z;
@@ -474,6 +725,299 @@ function makeToken(unit) {
 
 function isWaterUnit(unit) { return unit.entityType === 'ship' || unit.entityType === 'landing_boat'; }
 
+function normalizeAnimUnitName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+        .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
+        .replace(/[^a-z0-9\s.-]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function getAnimatedUnitState(unit, animData) {
+    let unitState = 'idle';
+    let intensity = 0;
+    if (!animData) return { unitState, intensity };
+
+    intensity = Number(animData.intensity || 0);
+    const unitName = normalizeAnimUnitName(unit.name);
+    const animUnit = animData.units?.find((entry) => {
+        const animName = normalizeAnimUnitName(entry.name);
+        return animName === unitName || animName.includes(unitName) || unitName.includes(animName);
+    });
+
+    if (animUnit) unitState = animUnit.state || unitState;
+    return { unitState, intensity };
+}
+
+function getVitalsForUnit(unit, phase, animData) {
+    const iso = String(phase?.isoStart || animData?.date || '');
+    const { unitState, intensity } = getAnimatedUnitState(unit, animData);
+    return getUnitVitals(unit.id, iso, intensity, unitState, unit.strength || 0);
+}
+
+function setVitalsLabel(plate, text, tone) {
+    const label = plate?.userData?.label;
+    if (!label || plate.userData.labelText === text) return;
+    if (label.material.map) label.material.map.dispose();
+    label.material.map = makeVitalsTextTexture(text, tone);
+    label.material.needsUpdate = true;
+    plate.userData.labelText = text;
+}
+
+function updateTokenVitals(tk, phase, animData) {
+    const plate = tk.group?.userData?.vitalsPlate;
+    if (!plate || !tk.unit?.strength) return;
+
+    const vitals = getVitalsForUnit(tk.unit, phase, animData);
+    const ratio = Math.max(0.03, Math.min(1, vitals.ratio || 0));
+    const lossDelta = Math.max(0, (vitals.loss || 0) - (tk._lastLoss || 0));
+    const firstVitals = tk._lastLoss === undefined;
+    tk._lastLoss = vitals.loss || 0;
+    tk._vitals = vitals;
+    tk._vitalsTarget = ratio;
+    tk._vitalsVisible = !tk.sunk && !tk.evac;
+
+    const color = hpColorForVitals(vitals);
+    if (plate.userData.bar) plate.userData.bar.material.color.setHex(color);
+    const todayLoss = vitals.todayLoss || 0;
+    const lossText = todayLoss > 0
+        ? `-${formatStrength(todayLoss)}`
+        : (vitals.loss > 0 ? `-${formatStrength(vitals.loss)}` : '');
+    const label = lossText ? `${formatStrength(vitals.current)} ${lossText}` : formatStrength(vitals.current);
+    const tone = todayLoss > 0 || vitals.ratio <= 0.45 ? '#f0c768' : '#e9dcc2';
+    setVitalsLabel(plate, label, tone);
+
+    if (!firstVitals && lossDelta > Math.max(12, (tk.unit.strength || 0) * 0.004)) {
+        tk._lossPulse = Math.max(tk._lossPulse || 0, Math.min(1, 0.35 + lossDelta / Math.max(1, tk.unit.strength) * 8));
+    } else if (todayLoss > 0 && !firstVitals) {
+        tk._lossPulse = Math.max(tk._lossPulse || 0, 0.45);
+    }
+}
+
+function animateVitalsPlate(tk, dt, t) {
+    const plate = tk.group?.userData?.vitalsPlate;
+    if (!plate) return;
+    const targetVisible = !!(tk._vitalsVisible && tk.group.visible);
+    plate.visible = targetVisible || (plate.userData.opacity || 0) > 0.02;
+    const targetOpacity = targetVisible ? 1 : 0;
+    plate.userData.opacity = (plate.userData.opacity ?? 0) + (targetOpacity - (plate.userData.opacity ?? 0)) * damp(7, dt);
+    const op = plate.userData.opacity;
+
+    const bar = plate.userData.bar;
+    const loss = plate.userData.loss;
+    const label = plate.userData.label;
+    const width = plate.userData.barWidth || 0.9;
+    const ratio = Math.max(0.03, Math.min(1, tk._vitalsTarget ?? 1));
+    plate.userData.displayRatio = (plate.userData.displayRatio ?? ratio) + (ratio - (plate.userData.displayRatio ?? ratio)) * damp(4.8, dt);
+    const displayRatio = plate.userData.displayRatio;
+
+    if (bar) {
+        bar.scale.x = width * displayRatio;
+        bar.position.x = -width / 2 + bar.scale.x / 2;
+        bar.material.opacity = 0.94 * op;
+    }
+    if (label) label.material.opacity = Math.min(0.92, 0.42 + op * 0.5);
+    const back = plate.getObjectByName('vitals-back');
+    if (back) back.material.opacity = 0.7 * op;
+
+    tk._lossPulse = Math.max(0, (tk._lossPulse || 0) - dt * 1.25);
+    if (loss) {
+        const pulse = tk._lossPulse || 0;
+        loss.material.opacity = pulse * 0.55 * op;
+        const s = 1 + pulse * (0.38 + 0.12 * Math.sin(t * 18));
+        loss.scale.set((width + 0.26) * s, 0.28 * s, 1);
+    }
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function isMovingLeg(leg) {
+    return !!(leg && (leg.moved || leg.retreat || leg.legKind === 'land'));
+}
+
+function motionVerbForLeg(unit, leg) {
+    if (leg.retreat) return 'çekiliyor';
+    if (leg.legKind === 'land') {
+        if (unit.entityType === 'landing_boat') return 'çıkarma yapıyor';
+        const text = `${leg.fromLabel || ''} ${leg.legEvent || ''}`.toLowerCase();
+        return text.includes('battı') || text.includes('batış') ? 'batış noktasında' : 'olay noktasında';
+    }
+    return 'ilerliyor';
+}
+
+function updateMotionCaption(phase, liveUnits) {
+    if (!motionCaptionEl || !phase) return;
+    const iso = String(phase.isoStart || '');
+    const movers = liveUnits
+        .map(({ id, unit }) => ({ unit, leg: resolveCampaignMovement(id, iso) }))
+        .filter(({ leg }) => isMovingLeg(leg))
+        .sort((a, b) => {
+            const aw = isWaterUnit(a.unit) ? 1 : 0;
+            const bw = isWaterUnit(b.unit) ? 1 : 0;
+            return aw === bw ? 0 : aw - bw;
+        });
+    const losses = liveUnits
+        .map(({ unit }) => ({ unit, vitals: getVitalsForUnit(unit, phase, currentAnim) }))
+        .filter(({ vitals }) => vitals?.base && (vitals.todayLoss || 0) > 0)
+        .sort((a, b) => (b.vitals.todayLoss || 0) - (a.vitals.todayLoss || 0));
+
+    const titleParts = [];
+    if (movers.length) titleParts.push(`${movers.length} hareket / olay`);
+    if (losses.length) titleParts.push(`${losses.length} kayıp güncellemesi`);
+    const title = titleParts.length ? titleParts.join(' · ') : 'Cephe tutuluyor';
+    const visibleMovers = movers.slice(0, 3);
+    const movementDetail = movers.length
+        ? visibleMovers.map(({ unit, leg }) => {
+            const verb = motionVerbForLeg(unit, leg);
+            const route = leg.moved
+                ? `${leg.fromLabel} → ${leg.toLabel}`
+                : leg.fromLabel;
+            return `${unit.name}: ${route} (${verb})`;
+        }).concat(movers.length > visibleMovers.length ? [`+${movers.length - visibleMovers.length} hareket daha`] : []).join(' · ')
+        : 'Bugün belirgin yürüyüş yok; birlikler siper/hat üzerinde bekliyor.';
+    const lossDetail = losses.length
+        ? `Kayıp: ${losses.slice(0, 2).map(({ unit, vitals }) => `${unit.name} -${formatStrength(vitals.todayLoss)}`).join(' · ')}${losses.length > 2 ? ` · +${losses.length - 2} birim` : ''}`
+        : '';
+    const detail = lossDetail ? `${movementDetail} · ${lossDetail}` : movementDetail;
+
+    motionCaptionEl.classList.toggle('is-empty', !movers.length);
+    motionCaptionEl.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span>`;
+}
+
+function disposeNodeTree(node) {
+    node.traverse((item) => {
+        if (item.geometry) item.geometry.dispose();
+        if (item.material) {
+            const materials = Array.isArray(item.material) ? item.material : [item.material];
+            materials.forEach((mat) => mat.dispose && mat.dispose());
+        }
+    });
+}
+
+function clearMovementRoutes() {
+    if (!movementRouteGroup) return;
+    while (movementRouteGroup.children.length) {
+        const child = movementRouteGroup.children.pop();
+        disposeNodeTree(child);
+    }
+}
+
+function getRoutePointForMap(unit, point, lift = 0.16) {
+    const safe = safeMapPointForUnit(unit, point.x, point.y);
+    const wx = wX(safe.x);
+    const wz = wZ(safe.y);
+    const y = isWaterUnit(unit) ? WATER_Y + 0.11 : groundYForUnit(unit, wx, wz) + lift;
+    return new THREE.Vector3(wx, y, wz);
+}
+
+function lerpMapPoint(a, b, t) {
+    return {
+        x: a.x + (b.x - a.x) * t,
+        y: a.y + (b.y - a.y) * t,
+    };
+}
+
+function addMovementRoute(unit, leg, fromPoint, toPoint) {
+    if (!movementRouteGroup || !fromPoint || !toPoint) return;
+    const pxDist = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y);
+    if (pxDist < 38) return;
+
+    const water = isWaterUnit(unit);
+    const sampleCount = Math.max(8, Math.min(52, Math.round(pxDist / 28)));
+    const points = [];
+    for (let i = 0; i <= sampleCount; i++) {
+        const t = i / sampleCount;
+        const mapPoint = lerpMapPoint(fromPoint, toPoint, t);
+        points.push(getRoutePointForMap(unit, mapPoint, water ? 0.22 : 0.42));
+    }
+
+    const color = routeColor(unit);
+    const route = new THREE.Group();
+    route.name = `route:${unit.id}`;
+    const curve = new THREE.CatmullRomCurve3(points);
+    const radius = water ? 0.07 : 0.052;
+    const halo = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, sampleCount * 2, radius * 1.75, 7, false),
+        new THREE.MeshBasicMaterial({
+            color: 0x0b0f12,
+            transparent: true,
+            opacity: 0.5,
+            depthWrite: false,
+            depthTest: false,
+        })
+    );
+    halo.renderOrder = 7;
+    route.add(halo);
+
+    const tube = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, sampleCount * 2, radius, 8, false),
+        new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: leg?.retreat ? 0.78 : 0.94,
+            depthWrite: false,
+            depthTest: false,
+        })
+    );
+    tube.renderOrder = 8;
+    route.add(tube);
+
+    const end = points[points.length - 1];
+    const prev = points[points.length - 2] || points[0];
+    const dir = end.clone().sub(prev);
+    if (dir.lengthSq() > 0.0001) {
+        dir.normalize();
+        const arrow = new THREE.Mesh(
+            new THREE.ConeGeometry(water ? 0.22 : 0.17, water ? 0.54 : 0.44, 14),
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.94, depthWrite: false, depthTest: false })
+        );
+        arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+        arrow.position.copy(end);
+        arrow.renderOrder = 9;
+        route.add(arrow);
+    }
+
+    const progress = Number.isFinite(leg?.progress) ? Math.max(0, Math.min(1, leg.progress)) : 1;
+    if (progress > 0.02 && progress < 0.98) {
+        const bead = new THREE.Mesh(
+            new THREE.SphereGeometry(water ? 0.17 : 0.135, 12, 8),
+            new THREE.MeshBasicMaterial({ color: 0xf4d784, transparent: true, opacity: 0.96, depthWrite: false, depthTest: false })
+        );
+        bead.position.copy(curve.getPoint(progress));
+        bead.position.y += water ? 0.04 : 0.07;
+        bead.renderOrder = 10;
+        route.add(bead);
+    }
+
+    movementRouteGroup.add(route);
+}
+
+function buildMovementRoutes(phase, liveUnits) {
+    clearMovementRoutes();
+    if (!phase || !movementRouteGroup) return;
+
+    const iso = String(phase.isoStart || '');
+    liveUnits.forEach((item) => {
+        const leg = resolveCampaignMovement(item.id, iso);
+        if (leg?.moved && leg.fromPoint && leg.toPoint) {
+            addMovementRoute(item.unit, leg, leg.fromPoint, leg.toPoint);
+            return;
+        }
+        if (leg?.legKind === 'land' && item.routeStart && item.routeEnd) {
+            const from = { x: mapXfromW(item.routeStart.x), y: mapYfromW(item.routeStart.z) };
+            const to = { x: mapXfromW(item.routeEnd.x), y: mapYfromW(item.routeEnd.z) };
+            addMovementRoute(item.unit, { ...leg, progress: 1 }, from, to);
+        }
+    });
+}
+
 // ── Tarihsel/sinematik katman: mayın hattı, batan gemi dumanı, top patlamaları ──
 let minefield = null;
 const fx = [];                 // aktif patlama/duman partikülleri
@@ -484,7 +1028,7 @@ const projectiles = [];
 let tracerTex = null, wakeTex = null, gunSmokeTex = null;
 const wind = { x: 0.18, z: -0.06 };                   // hafif rüzgâr → duman/toz sürüklenir
 const damp = (rate, dt) => 1 - Math.exp(-rate * dt);  // kare-hızından BAĞIMSIZ yumuşatma (akıcı akış)
-const combat = { active: false, naval: false, intensity: 0, pairs: [], fireTimer: 0, salvoIdx: 0 };
+const combat = { active: false, naval: false, intensity: 0, pairs: [], fireTimer: 0, ambientTimer: 0, salvoIdx: 0 };
 const sideOf = (f) => (f === 'ottoman' ? 'ottoman' : 'allied');
 const TR = (s) => String(s || '').toLowerCase()
     .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
@@ -519,16 +1063,16 @@ function buildMinefield() {
     scene.add(minefield);
 }
 
-function spawnBurst(pos, delay = 0) {
+function spawnBurst(pos, delay = 0, power = 1) {
     if (!smokeTex) smokeTex = makeRadialTexture([[0, 'rgba(80,80,82,0.9)'], [0.5, 'rgba(50,50,52,0.55)'], [1, 'rgba(40,40,42,0)']]);
     // flash
     const flashMat = new THREE.SpriteMaterial({ color: 0xffb24d, blending: THREE.AdditiveBlending, transparent: true, opacity: 0, depthWrite: false, map: smokeTex });
     const flash = new THREE.Sprite(flashMat); flash.position.copy(pos); flash.position.y += 0.25; flash.scale.setScalar(0.1);
-    scene.add(flash); fx.push({ sprite: flash, age: 0, delay, life: 0.45, kind: 'flash' });
+    scene.add(flash); fx.push({ sprite: flash, age: 0, delay, life: 0.45, kind: 'flash', power });
     // smoke
     const smMat = new THREE.SpriteMaterial({ map: smokeTex, transparent: true, opacity: 0, depthWrite: false });
     const sm = new THREE.Sprite(smMat); sm.position.copy(pos); sm.position.y += 0.2; sm.scale.setScalar(0.2);
-    scene.add(sm); fx.push({ sprite: sm, age: 0, delay: delay + 0.06, life: 1.8, kind: 'smoke' });
+    scene.add(sm); fx.push({ sprite: sm, age: 0, delay: delay + 0.06, life: 1.8, kind: 'smoke', power });
 }
 
 function updateFX(dt) {
@@ -573,17 +1117,17 @@ function updateFX(dt) {
 }
 
 // ── Namlu alevi (ateş açan birimde kısa parlama) ──
-function spawnMuzzle(pos, naval) {
+function spawnMuzzle(pos, naval, delay = 0) {
     if (!tracerTex) tracerTex = makeRadialTexture([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,200,110,0.9)'], [1, 'rgba(255,140,40,0)']]);
     const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tracerTex, color: 0xffdf9a, blending: THREE.AdditiveBlending, transparent: true, opacity: 1, depthWrite: false }));
     m.position.set(pos.x, pos.y + 0.22, pos.z); m.scale.setScalar(naval ? 0.34 : 0.2);
-    scene.add(m); fx.push({ sprite: m, age: 0, delay: 0, life: naval ? 0.26 : 0.2, kind: 'flash' });
+    scene.add(m); fx.push({ sprite: m, age: 0, delay, life: naval ? 0.26 : 0.2, kind: 'flash' });
 }
 
 // ── Tracer: ateş eden birimden hedefe balistik yay çizen parlak mermi izi ──
-function spawnTracer(from, to, naval) {
+function spawnTracer(from, to, naval, delay = 0) {
     if (!tracerTex) tracerTex = makeRadialTexture([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,200,110,0.9)'], [1, 'rgba(255,140,40,0)']]);
-    spawnMuzzle(from, naval);
+    spawnMuzzle(from, naval, delay);
     const col = naval ? 0xfff0c8 : 0xffd060;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tracerTex, color: col, blending: THREE.AdditiveBlending, transparent: true, opacity: 1, depthWrite: false }));
     s.scale.setScalar(naval ? 0.3 : 0.22);
@@ -594,7 +1138,7 @@ function spawnTracer(from, to, naval) {
         sprite: s,
         from: { x: from.x, y: from.y + 0.22, z: from.z },
         to: { x: to.x, y: to.y + 0.12, z: to.z },
-        age: 0, life: Math.max(0.5, Math.min(1.15, dist * 0.06 + 0.45)),
+        age: -delay, life: Math.max(0.5, Math.min(1.15, dist * 0.06 + 0.45)),
         arc: Math.min(3.4, 0.8 + dist * 0.2), naval,
     });
 }
@@ -602,10 +1146,14 @@ function spawnTracer(from, to, naval) {
 function updateProjectiles(dt) {
     for (let i = projectiles.length - 1; i >= 0; i--) {
         const p = projectiles[i]; p.age += dt;
+        if (p.age < 0) {
+            p.sprite.material.opacity = 0;
+            continue;
+        }
         const u = p.age / p.life;
         if (u >= 1) {
             scene.remove(p.sprite); p.sprite.material.dispose(); projectiles.splice(i, 1);
-            spawnBurst(new THREE.Vector3(p.to.x, p.to.y, p.to.z));   // isabet patlaması
+            spawnBurst(new THREE.Vector3(p.to.x, p.to.y, p.to.z), 0, p.naval ? 1.25 : 0.82);   // isabet patlaması
             continue;
         }
         p.sprite.position.x = p.from.x + (p.to.x - p.from.x) * u;
@@ -616,7 +1164,7 @@ function updateProjectiles(dt) {
 }
 
 // ── Namlu dumanı: her atışta kabaran barut bulutu; rüzgârla sürüklenir, yükselir, dağılır ──
-function spawnGunSmoke(pos, nx, nz, naval) {
+function spawnGunSmoke(pos, nx, nz, naval, delay = 0) {
     if (!gunSmokeTex) gunSmokeTex = makeRadialTexture([[0, 'rgba(204,199,190,0.92)'], [0.4, 'rgba(150,145,138,0.58)'], [1, 'rgba(120,116,108,0)']]);
     // Yük altında otomatik kıs: yoğun çok-cepheli günde sprite churn'ü sınırla (mobil GC koruması).
     const puffs = fx.length > 110 ? 1 : (naval ? 3 : 2);
@@ -626,7 +1174,7 @@ function spawnGunSmoke(pos, nx, nz, naval) {
         m.scale.setScalar((naval ? 0.26 : 0.16) + i * 0.06);
         scene.add(m);
         fx.push({
-            sprite: m, age: 0, delay: i * 0.05, life: (naval ? 1.5 : 1.1) + i * 0.32, kind: 'gunsmoke',
+            sprite: m, age: 0, delay: delay + i * 0.05, life: (naval ? 1.5 : 1.1) + i * 0.32, kind: 'gunsmoke',
             vx: nx * 0.2 + wind.x, vz: nz * 0.2 + wind.z, grow: naval ? 2.0 : 1.25,
         });
     }
@@ -646,13 +1194,28 @@ function fireShot(p, j) {
     const d = Math.hypot(dx, dz) || 1;
     const nx = dx / d, nz = dz / d;
     const off = p.naval ? 0.85 : 0.42;                  // namlu ucu, gövde merkezinden ileride
-    const muzzle = { x: p.from.x + nx * off, y: p.from.y, z: p.from.z + nz * off };
-    const target = { x: p.to.x + j * 0.8, y: p.to.y, z: p.to.z + j * 0.8 };
-    spawnTracer(muzzle, target, p.naval);
-    spawnGunSmoke({ x: muzzle.x, y: muzzle.y + 0.22, z: muzzle.z }, nx, nz, p.naval);
+    const rounds = p.naval ? 2 : 1;
+    for (let r = 0; r < rounds; r++) {
+        const broadside = (r - (rounds - 1) / 2) * (p.naval ? 0.28 : 0.12);
+        const spread = j + (r - (rounds - 1) / 2) * 0.18;
+        const delay = r * (p.naval ? 0.09 : 0.055);
+        const muzzle = {
+            x: p.from.x + nx * off - nz * broadside,
+            y: p.from.y,
+            z: p.from.z + nz * off + nx * broadside,
+        };
+        const target = {
+            x: p.to.x - nz * broadside + spread * 0.8,
+            y: p.to.y,
+            z: p.to.z + nx * broadside + spread * 0.8,
+        };
+        spawnTracer(muzzle, target, p.naval, delay);
+        spawnGunSmoke({ x: muzzle.x, y: muzzle.y + 0.22, z: muzzle.z }, nx, nz, p.naval, delay);
+    }
     if (p.fromTk && !p.fromTk.sunk && !p.fromTk.evac) {
-        applyRecoil(p.fromTk, -nx, -nz, p.naval ? 0.06 : 0.13);
+        applyRecoil(p.fromTk, -nx, -nz, p.naval ? 0.08 : 0.15);
         p.fromTk._aimYaw = Math.atan2(nx, nz);          // model +Z ekseni düşmana döner
+        p.fromTk._combatPulse = Math.max(p.fromTk._combatPulse || 0, p.naval ? 0.5 : 0.8);
     }
 }
 
@@ -666,9 +1229,10 @@ function buildCombat(animData, sideTokens) {
     const isCombatType = /COMBAT|BOMBARDMENT|NAVAL/i.test(type);
     const haveBoth = sideTokens.ottoman.length && sideTokens.allied.length;
     combat.pairs = []; combat.active = false;
-    if (!haveBoth || intensity < 2 || (!ottActive && !allyActive && !isCombatType)) return;
+    if (intensity < 2 || (!ottActive && !allyActive && !isCombatType)) return;
+    if (!haveBoth && intensity < 5) return;
     combat.intensity = intensity;
-    const MAXR = 18;
+    const MAXR = 28;
     const addPairs = (attackers, targets) => {
         attackers.forEach((a) => {
             let best = null, bd = Infinity;
@@ -691,23 +1255,66 @@ function buildCombat(animData, sideTokens) {
     };
     if (ottActive || isCombatType) addPairs(sideTokens.ottoman, sideTokens.allied);
     if (allyActive || isCombatType) addPairs(sideTokens.allied, sideTokens.ottoman);
+
+    // Bazı anlatı günlerinde karşı taraf token'i kamera dışında/off-map kalır.
+    // O zaman birim donuk beklemesin; en yakın cephe yönüne kısa baskı ateşi kur.
+    if (!combat.pairs.length && intensity >= 5) {
+        const actors = [
+            ...(ottActive || isCombatType ? sideTokens.ottoman : []),
+            ...(allyActive || isCombatType ? sideTokens.allied : []),
+        ].slice(0, 5);
+        actors.forEach((a) => {
+            const dir = sideOf(a.tk?.unit?.faction) === 'ottoman'
+                ? { x: -0.88, z: 0.18 }
+                : { x: 0.88, z: -0.12 };
+            const range = a.water ? 7.5 : 3.8;
+            combat.pairs.push({
+                from: { x: a.x, y: a.y, z: a.z },
+                to: { x: a.x + dir.x * range, y: a.y, z: a.z + dir.z * range },
+                naval: a.water,
+                fromTk: a.tk || null,
+                toTk: null,
+                suppressive: true,
+            });
+            if (a.tk) a.tk.combat = true;
+        });
+    }
+
     const cap = Math.max(3, Math.min(14, intensity + 2));
     if (combat.pairs.length > cap) combat.pairs = combat.pairs.slice(0, cap);
     combat.active = combat.pairs.length > 0;
     combat.naval = combat.pairs.some((p) => p.naval);   // QA hook'u doğru raporlasın
-    combat.fireTimer = 0; combat.salvoIdx = 0;
+    combat.fireTimer = 0; combat.ambientTimer = 0.35; combat.salvoIdx = 0;
 }
 
 function updateCombat(dt) {
     if (!combat.active || !combat.pairs.length) return;
     combat.fireTimer -= dt;
-    if (combat.fireTimer > 0) return;
-    combat.fireTimer = Math.max(0.32, 1.15 - combat.intensity * 0.085);
-    const salvo = Math.min(combat.pairs.length, 1 + Math.floor(combat.intensity / 3));
-    for (let k = 0; k < salvo; k++) {
-        const p = combat.pairs[(combat.salvoIdx++) % combat.pairs.length];
-        const j = ((combat.salvoIdx * 53) % 11) / 11 - 0.5;
-        fireShot(p, j);
+    if (combat.fireTimer <= 0) {
+        combat.fireTimer = Math.max(0.65, 1.45 - combat.intensity * 0.07);
+        const salvo = Math.min(combat.pairs.length, combat.intensity >= 8 ? 2 : 1);
+        for (let k = 0; k < salvo; k++) {
+            const p = combat.pairs[(combat.salvoIdx++) % combat.pairs.length];
+            const j = ((combat.salvoIdx * 53) % 11) / 11 - 0.5;
+            fireShot(p, j);
+        }
+    }
+
+    combat.ambientTimer -= dt;
+    if (combat.ambientTimer <= 0 && fx.length < 135) {
+        combat.ambientTimer = Math.max(1.2, 2.4 - combat.intensity * 0.08);
+        const p = combat.pairs[(combat.salvoIdx + 1) % combat.pairs.length];
+        const u = 0.42 + (((combat.salvoIdx * 29) % 17) / 17) * 0.22;
+        const side = ((((combat.salvoIdx * 41) % 13) / 13) - 0.5) * (p.naval ? 1.5 : 0.9);
+        const dx = p.to.x - p.from.x, dz = p.to.z - p.from.z;
+        const d = Math.hypot(dx, dz) || 1;
+        const nx = dx / d, nz = dz / d;
+        const pos = new THREE.Vector3(
+            p.from.x + dx * u - nz * side,
+            p.from.y + (p.naval ? 0.08 : 0.02),
+            p.from.z + dz * u + nx * side
+        );
+        spawnBurst(pos, 0, p.naval ? 0.75 : 0.5);
     }
 }
 
@@ -730,6 +1337,7 @@ function ensureSmoke(tk) {
 export function setPhase3D(phase, positions, animData, opts = {}) {
     if (!ready) return;
     currentPhase = phase; currentAnim = animData || null;
+    autoplayActive = !!opts.autoplay;
     const seen = new Set();
     const cx = [], cz = [];
     let hasShips = false;
@@ -776,6 +1384,41 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
             }
         }
     }
+
+    const settleVisualTargets = () => {
+        live.forEach((L) => {
+            const settled = safeWorldPointForUnit(L.unit, wX(L.mx) + L.ox, wZ(L.my) + L.oz);
+            L.wx = settled.wx;
+            L.wz = settled.wz;
+            L.safeTerrain = settled.terrain;
+        });
+    };
+    settleVisualTargets();
+
+    // Terrain clamp gemileri denize, piyadeyi karaya geri çektikten sonra yeni
+    // mikro-çakışma oluşabilir; küçük bir ikinci pass görünür ayak izlerini açar.
+    for (let it = 0; it < 3; it++) {
+        let moved = false;
+        for (let i = 0; i < live.length; i++) {
+            for (let j = i + 1; j < live.length; j++) {
+                const A = live[i], B = live[j];
+                if (A.onWater !== B.onWater) continue;
+                let dx = B.wx - A.wx, dz = B.wz - A.wz;
+                const d = Math.hypot(dx, dz);
+                const minSep = A.onWater ? 1.62 : 1.02;
+                if (d <= 1e-3 || d >= minSep) continue;
+                dx /= d; dz /= d;
+                const push = (minSep - d) / 2;
+                const aSafe = safeWorldPointForUnit(A.unit, A.wx - dx * push, A.wz - dz * push);
+                const bSafe = safeWorldPointForUnit(B.unit, B.wx + dx * push, B.wz + dz * push);
+                A.wx = aSafe.wx; A.wz = aSafe.wz; A.safeTerrain = aSafe.terrain;
+                B.wx = bSafe.wx; B.wz = bSafe.wz; B.safeTerrain = bSafe.terrain;
+                moved = true;
+            }
+        }
+        if (!moved) break;
+    }
+
     // 3) Token oluştur/güncelle (dağıtılmış konumlarda)
     live.forEach((L) => {
         const { id, unit, onWater } = L;
@@ -783,18 +1426,24 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
         let tk = tokens.get(id);
         if (!tk) { tk = { group: makeToken(unit), unit }; tokens.set(id, tk); }
         tk.combat = false;                  // bu faz çatışmasını buildCombat yeniden işaretler
-        const wx = wX(L.mx) + L.ox, wz = wZ(L.my) + L.oz;
+        const wx = Number.isFinite(L.wx) ? L.wx : wX(L.mx) + L.ox;
+        const wz = Number.isFinite(L.wz) ? L.wz : wZ(L.my) + L.oz;
         if (onWater) hasShips = true;
-        const ty = onWater ? WATER_Y + 0.05 : groundY(wx, wz);   // görünen mesh yüzeyine tam otur
+        const ty = onWater ? WATER_Y + 0.05 : groundYForUnit(unit, wx, wz);   // görünen mesh yüzeyine tam otur
         const tgt = new THREE.Vector3(wx, ty, wz);
         if (!onWater) landPts.push(tgt.clone());
         tk.target = tgt;
+        L.routeEnd = tgt.clone();
         if (!tk.placed) {
             // Amfibi giriş: ilk kez görünen çıkarma birliği denizden başlasın, tween kıyıya taşısın.
-            if (L.enterFrom) tk.group.position.set(wX(L.enterFrom.x), WATER_Y + 0.05, wZ(L.enterFrom.y));
-            else tk.group.position.copy(tgt);
+            if (L.enterFrom) {
+                tk.group.position.set(wX(L.enterFrom.x), WATER_Y + 0.05, wZ(L.enterFrom.y));
+            } else {
+                tk.group.position.copy(tgt);
+            }
             tk.placed = true;
         }
+        L.routeStart = tk.group.position.clone();
         tk.group.visible = true;
         // Batış: kanonik tek otorite (yarın 'sunk' olan gemi bugün batar).
         // Eski metin taraması nusret'in "...batırdı" ifadesini yanlış eşliyordu — kaldırıldı.
@@ -802,12 +1451,13 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
         // Tahliye/çekilme: yarın 'evacuated'/'withdrawn' → bugün gece sisine karışarak sol.
         tk.evac = L.evacuating;
         if (!tk.evac && tk._evacOp !== undefined && tk._evacOp < 1) { tk._evacOp = 1; setTokenOpacity(tk, 1); }
+        updateTokenVitals(tk, phase, animData);
         if (!tk.sunk && !tk.evac) sideTokens[sideOf(unit.faction)].push({ x: tgt.x, y: tgt.y, z: tgt.z, water: onWater, tk });
         cx.push(tgt.x); cz.push(tgt.z);
     });
     // hide/remove stale
     tokens.forEach((tk, id) => {
-        if (!seen.has(id)) { tk.group.visible = false; tk.target = null; }
+        if (!seen.has(id)) { tk.group.visible = false; tk.target = null; tk._vitalsVisible = false; }
     });
 
     // Nusret mayın hattı: deniz harekâtı sürerken görünür
@@ -817,6 +1467,8 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
     // Muharebe koreografisi: o günün cephelerine göre karşı tarafları eşle.
     // Tracer mermi yayları + namlu alevleri animate() döngüsünde sürekli atılır.
     buildCombat(animData, sideTokens);
+    updateMotionCaption(phase, live);
+    buildMovementRoutes(phase, live);
     // Sinematik çerçeveleme: önce o günün FİİLİ çatışmasına (tracer hattı) yakın plan,
     // çatışma yoksa tüm birimlere geniş açı. Böylece autoplay her muharebeyi yakından gösterir.
     let bx0, bx1, bz0, bz1;
@@ -835,9 +1487,20 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
         // oynatım sırasında her fazda çerçevele; manuel modda sadece uzun boşlukta
         const trigger = (opts.autoplay && idle > 1200) || idle > 5200;
         if (trigger) {
+            const firstPair = combat.active && combat.pairs.length ? combat.pairs[0] : null;
+            const pairYaw = firstPair
+                ? Math.atan2(firstPair.to.x - firstPair.from.x, firstPair.to.z - firstPair.from.z)
+                : Math.atan2(mx || 1, mz || 1);
             autoFrame.target.set(mx, 0.9, mz);
             autoFrame.dist = Math.max(tight ? 8 : 10, Math.min(40, radius * (tight ? 2.0 : 2.4)));
+            autoFrame.height = tight
+                ? Math.max(4.6, Math.min(8.4, radius * 0.9 + 4.4))
+                : Math.max(8.5, Math.min(15, radius * 0.55 + 9));
+            autoFrame.yaw = pairYaw + (tight ? 0.92 : 0.64);
+            autoFrame.orbit = tight ? 0.06 : 0.025;
+            autoFrame.tight = tight;
             autoFrame.t = 0; autoFrame.active = true;
+            cameraShake = Math.max(cameraShake, opts.autoplay ? 0.012 : 0.006);
         }
     }
     applyAtmosphere(animData);
@@ -945,6 +1608,7 @@ function stepFrame(dt) {
             tk._evacOp = (tk._evacOp ?? 1) - dt * 0.45;   // ~2.2 sn
             const op = Math.max(0, tk._evacOp);
             setTokenOpacity(tk, op);
+            animateVitalsPlate(tk, dt, t);
             tk.group.position.y += dt * 0.05;
             if (op <= 0.001) tk.group.visible = false;
             return;
@@ -956,13 +1620,13 @@ function stepFrame(dt) {
                 tk.group.position.x += (tk.target.x - tk.group.position.x) * k;
                 tk.group.position.z += (tk.target.z - tk.group.position.z) * k;
             } else {
-                tk.group.position.lerp(tk.target, damp(3.4, dt));
+                tk.group.position.lerp(tk.target, damp(autoplayActive ? 1.25 : 3.4, dt));
             }
         }
         // Kara birimi: her karede GÖRÜNEN arazi yüzeyine yapışsın (yamaçta süzülürken
         // bile havada/gömülü kalmasın). Su birimleri kendi bob/batış y'sini yönetir.
         if (!isWaterUnit(tk.unit) && !tk.sunk) {
-            const gy = groundY(tk.group.position.x, tk.group.position.z);
+            const gy = groundYForUnit(tk.unit, tk.group.position.x, tk.group.position.z);
             tk.group.position.y += (gy - tk.group.position.y) * damp(11, dt);
         }
         if (isWaterUnit(tk.unit)) {
@@ -989,18 +1653,22 @@ function stepFrame(dt) {
             tk._smoke.scale.setScalar(s);
             tk._smoke.material.opacity = 0.45 + 0.2 * Math.sin(t * 1.7);
         }
+        animateVitalsPlate(tk, dt, t);
         // ── Savaşırken hareket: ana model geri teper, düşmana döner, çatışmada tetikte sallanır ──
         const m = tk.group.userData.model;
         if (m && m.userData.base && !tk.sunk) {
             const b = m.userData.base;
             const land = !isWaterUnit(tk.unit);
+            tk._combatPulse = Math.max(0, (tk._combatPulse || 0) - dt * 1.6);
+            const pulse = tk._combatPulse || 0;
             // çatışmadaki kara birimi nefes alır gibi sallanır (donuk kalmaz)
             let sx = 0, sz = 0, lean = 0;
             if (tk.combat && land) {
                 const ph = tk.group.position.x * 1.7 + tk.group.position.z * 0.9;
-                sx = Math.sin(t * 3.1 + ph) * 0.02;
-                sz = Math.sin(t * 2.3 + ph * 1.3) * 0.016;
-                lean = Math.sin(t * 2.7 + ph) * 0.035;
+                const lunge = Math.max(0, Math.sin(t * 2.35 + ph)) * (0.014 + pulse * 0.04);
+                sx = Math.sin(t * 1.9 + ph) * (0.01 + pulse * 0.008);
+                sz = Math.sin(t * 1.6 + ph * 1.3) * 0.008 + lunge;
+                lean = Math.sin(t * 1.8 + ph) * 0.018 + pulse * 0.014;
             }
             const r = tk._rec;
             m.position.set(b.x + sx + (r ? r.x : 0), b.y + (r ? r.y : 0), b.z + sz + (r ? r.z : 0));
@@ -1027,16 +1695,19 @@ function stepFrame(dt) {
     updateProjectiles(dt);
     updateCombat(dt);
     // water shimmer
-    if (water) water.position.y = WATER_Y + Math.sin(t * 0.6) * 0.01;
+    if (water) water.position.y = WATER_Y + Math.sin(t * 0.45) * 0.0035;
     // auto-frame
     if (autoFrame.active && autoFrame.t < 1) {
-        autoFrame.t = Math.min(1, autoFrame.t + dt * 0.5);
-        const k = Math.min(0.05, dt * 1.5);
+        autoFrame.t = Math.min(1, autoFrame.t + dt * (autoFrame.tight ? 0.42 : 0.32));
+        const k = damp(autoFrame.tight ? 1.25 : 0.92, dt);
         controls.target.lerp(autoFrame.target, k);
-        // mevcut bakış açısını koru, sadece mesafeyi (dolly) hedefe yaklaştır
-        const dir = camera.position.clone().sub(controls.target);
-        const cur = dir.length();
-        if (cur > 1e-3) { dir.setLength(cur + (autoFrame.dist - cur) * k); camera.position.copy(controls.target).add(dir); }
+        const yaw = autoFrame.yaw + Math.sin(simT * 0.22 + autoFrame.target.x * 0.7) * autoFrame.orbit;
+        const desired = controls.target.clone().add(new THREE.Vector3(
+            Math.sin(yaw) * autoFrame.dist * 0.58,
+            autoFrame.height,
+            Math.cos(yaw) * autoFrame.dist
+        ));
+        camera.position.lerp(desired, k * 0.86);
     }
     // hover pick (throttled to pointer movement)
     if (pointerMoved) { pointerMoved = false; setHover(pickToken()); }
@@ -1046,8 +1717,22 @@ function stepFrame(dt) {
         const tk = tokens.get(hovered);
         if (tk) tk.group.userData.model.rotation.y += dt * 0.6;
     }
+    let shakeOffset = null;
+    if (cameraShake > 0.001) {
+        const mag = cameraShake;
+        shakeOffset = new THREE.Vector3(
+            Math.sin(simT * 17.1) * mag,
+            Math.sin(simT * 23.7) * mag * 0.28,
+            Math.cos(simT * 19.3) * mag
+        );
+        camera.position.add(shakeOffset);
+        cameraShake *= Math.exp(-dt * 6.2);
+    } else {
+        cameraShake = 0;
+    }
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
+    if (shakeOffset) camera.position.sub(shakeOffset);
 }
 
 export function show3D(v) {
@@ -1106,9 +1791,18 @@ export async function initScene3D(container, opts = {}) {
     labelRenderer.domElement.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:3';
     container.appendChild(labelRenderer.domElement);
 
+    motionCaptionEl = document.createElement('div');
+    motionCaptionEl.className = 'scene3d-motion-caption';
+    motionCaptionEl.setAttribute('aria-live', 'polite');
+    container.appendChild(motionCaptionEl);
+
     // env for subtle reflections
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    movementRouteGroup = new THREE.Group();
+    movementRouteGroup.name = 'movement-routes';
+    scene.add(movementRouteGroup);
 
     // lights
     hemi = new THREE.HemisphereLight(0xddc7a8, 0x202830, 0.7);
@@ -1152,6 +1846,21 @@ export async function initScene3D(container, opts = {}) {
         visibleTokens: () => [...tokens.values()].filter((t) => t.group.visible).map((t) => t.unit.id),
         sunkTokens: () => [...tokens.values()].filter((t) => t.sunk && t.group.visible).map((t) => t.unit.id),
         evacTokens: () => [...tokens.values()].filter((t) => t.evac).map((t) => t.unit.id),
+        placements: () => [...tokens.values()].filter((t) => t.group.visible).map((t) => {
+            const mx = mapXfromW(t.target?.x ?? t.group.position.x);
+            const my = mapYfromW(t.target?.z ?? t.group.position.z);
+            const terrain = getTerrainAtPoint(mx, my);
+            return {
+                id: t.unit.id,
+                entityType: t.unit.entityType,
+                x: Math.round(mx),
+                y: Math.round(my),
+                terrain,
+                allowed: ENTITY_TYPES[t.unit.entityType]?.allowedTerrain || [],
+            };
+        }),
+        terrainViolations: () => window.GELIBOLU_3D.placements()
+            .filter((p) => p.allowed.length && !p.allowed.includes(p.terrain)),
         focus: (x, y, dist = 14) => {
             autoFrame.active = false;   // manuel odak otomatik çerçevelemeyi ezsin
             controls.target.set(wX(x), heightAtMap(x, y) + 0.5, wZ(y));

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { BATTLE_DATA } from '../src/data/battle-data.js?v=20260620-combat-fx-r1';
-import { CANONICAL_POSITIONS } from '../src/data/canonical-positions.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA } from '../src/data/battle-data.js?v=20260622-hp-polish-r1';
+import { CANONICAL_POSITIONS } from '../src/data/canonical-positions.js?v=20260622-hp-polish-r1';
 
 const unitById = new Map(BATTLE_DATA.units.map((unit) => [unit.id, unit]));
 const issues = [];

@@ -3,14 +3,14 @@
 // Desktop'ta destek paneli, mobilde story-first bottom sheet
 // ══════════════════════════════════════════════════════════════
 
-import { getNarrationIcon } from '../data/icon-registry.js?v=20260626-narration-r1';
-import { getRandomRomanticEntry } from '../data/romantic-layer.js?v=20260626-narration-r1';
-import { getEventImage } from '../data/event-images.js?v=20260626-narration-r1';
-import { getEventVideo } from '../data/event-videos.js?v=20260626-narration-r1';
-import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260626-narration-r1';
-import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260626-narration-r1';
-import { isMobile, isTablet, onBreakpointChange } from '../engine/responsive.js?v=20260626-narration-r1';
-import { PHASE_CONTEXT, NARRATION_OVERRIDES } from '../data/phase-context.js';
+import { getNarrationIcon } from '../data/icon-registry.js?v=20260622-hp-polish-r1';
+import { getRandomRomanticEntry } from '../data/romantic-layer.js?v=20260622-hp-polish-r1';
+import { getEventImage } from '../data/event-images.js?v=20260622-hp-polish-r1';
+import { getEventVideo } from '../data/event-videos.js?v=20260622-hp-polish-r1';
+import { getMobileStoryChapters } from '../engine/phase-engine.js?v=20260622-hp-polish-r1';
+import { getGuidedCampaignChapter } from '../data/guided-campaign.js?v=20260622-hp-polish-r1';
+import { isMobile, isTablet } from '../engine/responsive.js?v=20260622-hp-polish-r1';
+import { PHASE_CONTEXT, NARRATION_OVERRIDES } from '../data/phase-context.js?v=20260622-hp-polish-r1';
 
 const _mobileBreakpoint = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(max-width:768px)')

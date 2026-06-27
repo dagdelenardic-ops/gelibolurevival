@@ -6,9 +6,9 @@
 //  paneli açılır.
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
-import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260620-combat-fx-r1';
-import { showUnitPanel } from './unit-panel.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260622-hp-polish-r1';
+import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260622-hp-polish-r1';
+import { showUnitPanel } from './unit-panel.js?v=20260622-hp-polish-r1';
 
 const TR_MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
 function formatIsoShort(iso) {

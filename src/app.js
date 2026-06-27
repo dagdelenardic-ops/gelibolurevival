@@ -3,46 +3,40 @@
 // Modülleri birleştiren orchestrator
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260620-combat-fx-r1';
-import { ENTITY_TYPES } from './data/entity-types.js?v=20260620-combat-fx-r1';
-import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260620-combat-fx-r1';
-import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260620-combat-fx-r1';
-import { isUnitOffMap, getUnitEndState } from './data/canonical-positions.js?v=20260620-combat-fx-r1';
-import { normalizeDateText } from './engine/date-utils.js?v=20260620-combat-fx-r1';
-import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260620-combat-fx-r1';
-import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260620-combat-fx-r1';
-import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation, getUnitEntryOrigin } from './engine/position-engine.js?v=20260620-combat-fx-r1';
-import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260620-combat-fx-r1';
-import { renderTokens, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260620-combat-fx-r1';
-import { reconcileTokens, quakeMap } from './render/token-animator.js?v=20260620-combat-fx-r1';
-import { renderBattleEffects } from './render/effects-renderer.js?v=20260620-combat-fx-r1';
-import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260620-combat-fx-r1';
-import { animateCamera } from './render/camera.js?v=20260620-combat-fx-r1';
-import { frameActiveSectors, resolveActiveSectors, renderDirectorOverlay } from './render/director.js?v=20260620-combat-fx-r1';
-import { initTouchZoom } from "./engine/touch-zoom.js?v=20260620-combat-fx-r1";
+import { BATTLE_DATA, getMapLocationById } from './data/battle-data.js?v=20260622-hp-polish-r1';
+import { ENTITY_TYPES } from './data/entity-types.js?v=20260622-hp-polish-r1';
+import { waitForTerrainSampler } from './data/terrain-zones.js?v=20260622-hp-polish-r1';
+import { MAP_WIDTH, MAP_CROP_TOP, MAP_VIEW_HEIGHT } from './data/coordinate-map.js?v=20260622-hp-polish-r1';
+import { isUnitOffMap, getUnitEndState } from './data/canonical-positions.js?v=20260622-hp-polish-r1';
+import { normalizeDateText } from './engine/date-utils.js?v=20260622-hp-polish-r1';
+import { hydrateTimelineData, getUnitEntryPhaseIndex, getPhaseIndexByIso } from './engine/phase-engine.js?v=20260622-hp-polish-r1';
+import { resolveCampaignPhase, getPhaseTransition } from './engine/campaign-state-machine.js?v=20260622-hp-polish-r1';
+import { expandUnitTrails, getNarrativeNavalPosition, enforceCorridorSeparation, getUnitEntryOrigin } from './engine/position-engine.js?v=20260622-hp-polish-r1';
+import { renderMap, updateMapSceneState } from './render/map-renderer.js?v=20260622-hp-polish-r1';
+import { renderTokens, renderUnits, renderAnimationUnits, factionSVG } from './render/token-renderer.js?v=20260622-hp-polish-r1';
+import { reconcileTokens, quakeMap } from './render/token-animator.js?v=20260622-hp-polish-r1';
+import { renderBattleEffects } from './render/effects-renderer.js?v=20260622-hp-polish-r1';
+import { renderFrontlines, renderLandCombatFX } from './render/frontline-renderer.js?v=20260622-hp-polish-r1';
+import { animateCamera } from './render/camera.js?v=20260622-hp-polish-r1';
+import { frameActiveSectors, resolveActiveSectors, renderDirectorOverlay } from './render/director.js?v=20260622-hp-polish-r1';
+import { initTouchZoom } from "./engine/touch-zoom.js?v=20260622-hp-polish-r1";
 
-import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260620-combat-fx-r1';
-import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260620-combat-fx-r1';
-import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260620-combat-fx-r1';
-import { hideUnitPanel, attachUnitClicks, showUnitPanel } from './ui/unit-panel.js?v=20260620-combat-fx-r1';
-import { GEO_LOCATIONS } from './data/geo-calibration.js?v=20260620-combat-fx-r1';
-import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying, getAutoPlayIntervalForPhase } from './ui/autoplay-controller.js?v=20260620-combat-fx-r1';
-import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260620-combat-fx-r1';
-import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260620-combat-fx-r1';
-import { initOnboarding } from './ui/onboarding.js?v=20260620-combat-fx-r1';
-import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260620-combat-fx-r1';
-import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260620-combat-fx-r1';
+import { orchestrateAnimations, renderUnitMovementTrails } from './render/animation-orchestrator.js?v=20260622-hp-polish-r1';
+import { renderTimeline, updateTimelineActiveState, focusActiveTimelineMarker } from './render/timeline-renderer.js?v=20260622-hp-polish-r1';
+import { updateMapDateIndicator, updateNarrationPanel, renderAtmosphere, renderTransition, getMobileViewMode, setMobileViewMode } from './ui/narration-panel.js?v=20260622-hp-polish-r1';
+import { hideUnitPanel, attachUnitClicks, showUnitPanel } from './ui/unit-panel.js?v=20260622-hp-polish-r1';
+import { GEO_LOCATIONS } from './data/geo-calibration.js?v=20260622-hp-polish-r1';
+import { stopAutoPlay, toggleAutoPlay, refreshAutoPlayButton, syncAutoPlay, getIsAutoPlaying, getAutoPlayIntervalForPhase } from './ui/autoplay-controller.js?v=20260622-hp-polish-r1';
+import { showUnitRoster, hideUnitRoster, refreshUnitRoster } from './ui/unit-roster.js?v=20260622-hp-polish-r1';
+import { initMovementLedger, updateMovementLedger } from './ui/movement-ledger.js?v=20260622-hp-polish-r1';
+import { initOnboarding } from './ui/onboarding.js?v=20260622-hp-polish-r1';
+import { toggleStatsPanel, hideStatsPanel } from './ui/stats-panel.js?v=20260622-hp-polish-r1';
+import { renderAudioControls, initAudioOnInteraction, triggerPhaseSfx } from './ui/audio-manager.js?v=20260622-hp-polish-r1';
+import { isMobile } from './engine/responsive.js?v=20260622-hp-polish-r1';
 
 // ── Uygulama State ──
 let currentPhaseIndex = 0;
 const currentPositions = {};
-// matchMedia ile canlı mobil tespiti — innerWidth modül yüklenirken 0 gelebilir (preview tuzağı)
-function isMobile() {
-    if (typeof window === 'undefined') return false;
-    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
-    if (cw === 0) return false;
-    return cw <= 768;
-}
 let richTimelineHydrationStarted = false;
 let terrainRefreshVersion = 0;
 let keyboardNavBound = false;
@@ -113,7 +107,7 @@ async function initThreeLayer() {
     const host = document.getElementById('scene3d');
     if (!host) return;
     try {
-        const mod = await import('./render/scene3d.js?v=20260620-combat-fx-r1');
+        const mod = await import('./render/scene3d.js?v=20260622-hp-polish-r1');
         await mod.initScene3D(host, {
             units: BATTLE_DATA.units,
             locations: GEO_LOCATIONS,
@@ -522,14 +516,14 @@ async function initMapEditorIfRequested() {
         return;
     }
 
-    const { initMapEditor } = await import('./ui/map-editor.js?v=20260620-combat-fx-r1');
+    const { initMapEditor } = await import('./ui/map-editor.js?v=20260622-hp-polish-r1');
     initMapEditor();
 }
 
 async function initMapDoctorIfRequested() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('doctor') !== '1') return;
-    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260620-combat-fx-r1');
+    const { initMapDoctorPanel } = await import('./ui/map-doctor-panel.js?v=20260622-hp-polish-r1');
     initMapDoctorPanel();
 }
 

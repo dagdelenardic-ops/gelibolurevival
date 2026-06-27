@@ -3,7 +3,7 @@
 // Explicit faz tanımları ve entity eligibility kuralları
 // ══════════════════════════════════════════════════════════════
 
-import { ENTITY_TYPES, isEntityAllowedInPhase } from '../data/entity-types.js?v=20260620-combat-fx-r1';
+import { ENTITY_TYPES, isEntityAllowedInPhase } from '../data/entity-types.js?v=20260622-hp-polish-r1';
 
 /**
  * 5 campaign fazı — ISO date range ile.

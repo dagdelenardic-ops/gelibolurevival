@@ -3,11 +3,11 @@
 // Battery shot animasyonları, deniz dönemi efektleri
 // ══════════════════════════════════════════════════════════════
 
-import { BATTLE_DATA } from '../data/battle-data.js?v=20260620-combat-fx-r1';
-import { MAP_FORTS } from '../data/geo-calibration.js?v=20260620-combat-fx-r1';
-import { isNavalEraPhaseIndex, getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260620-combat-fx-r1';
-import { getNarrativeNavalPosition, getNavalDisplayOffset, isDestroyedPhaseData } from '../engine/position-engine.js?v=20260620-combat-fx-r1';
-import { snapToSeaWater } from '../data/terrain-zones.js?v=20260620-combat-fx-r1';
+import { BATTLE_DATA } from '../data/battle-data.js?v=20260622-hp-polish-r1';
+import { MAP_FORTS } from '../data/geo-calibration.js?v=20260622-hp-polish-r1';
+import { isNavalEraPhaseIndex, getUnitEntryPhaseIndex } from '../engine/phase-engine.js?v=20260622-hp-polish-r1';
+import { getNarrativeNavalPosition, getNavalDisplayOffset, isDestroyedPhaseData } from '../engine/position-engine.js?v=20260622-hp-polish-r1';
+import { snapToSeaWater } from '../data/terrain-zones.js?v=20260622-hp-polish-r1';
 
 const BATTERY_FORT_IDS = ['fort-kilitbahir', 'fort-cimenlik', 'fort-hamidiye', 'fort-rumeli-mecidiye', 'fort-dardanos', 'fort-anadolu-hamidiye'];
 const FORT_BY_ID = MAP_FORTS.reduce((acc, f) => { acc[f.id] = f; return acc; }, {});

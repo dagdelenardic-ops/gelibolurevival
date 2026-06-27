@@ -11,17 +11,11 @@
 // mesafeye göre ölçeklenen ease'li tween ile yürütülür.
 // ══════════════════════════════════════════════════════════════
 
+import { isMobile as isMobileDevice, prefersReducedMotion as _prm } from '../engine/responsive.js?v=20260622-hp-polish-r1';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-function isMobileDevice() {
-    if (typeof window === 'undefined') return false;
-    const cw = document.documentElement?.clientWidth || window.innerWidth || 0;
-    if (cw === 0) return false;
-    return cw <= 768;
-}
-const prefersReducedMotion = typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = _prm();
 
 // Animatörün sahiplendiği durum sınıfları — attribute senkronunda korunur
 const MOTION_CLASSES = ['is-marching', 'is-steaming', 'is-arriving', 'is-entering', 'is-exiting'];

@@ -3,7 +3,7 @@
 // Cephe hatları, engagement corridors, kontrollü savaş efektleri
 // ══════════════════════════════════════════════════════════════
 
-import { FRONTLINES } from '../data/frontlines.js?v=20260620-combat-fx-r1';
+import { FRONTLINES } from '../data/frontlines.js?v=20260622-hp-polish-r1';
 
 function stringSeed(value) {
     let h = 0;
