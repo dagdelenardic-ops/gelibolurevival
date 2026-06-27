@@ -82,8 +82,8 @@ body{
     font-size:.72rem
   }
   .audio-btn{
-    width:36px;
-    height:36px
+    width:44px;
+    height:44px
   }
   .stats-panel{backdrop-filter:none;background:rgba(0,0,0,.85)}
 }
@@ -106,11 +106,12 @@ body{
   }
   .stats-btn{
     font-size:.68rem;
-    padding:3px 6px
+    padding:3px 6px;
+    min-height:44px
   }
   .audio-btn{
     min-width:44px;
-    height:28px;
+    height:44px;
     font-size:.65rem
   }
 }
