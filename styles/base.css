@@ -78,7 +78,7 @@ body{
   }
   .stats-btn{
     padding:6px 10px;
-    min-height:40px;
+    min-height:44px;
     font-size:.72rem
   }
   .audio-btn{
@@ -109,7 +109,7 @@ body{
     padding:3px 6px;
     min-height:44px
   }
-  .audio-btn{
+  .topbar .audio-btn{
     min-width:44px;
     height:44px;
     font-size:.65rem
@@ -336,9 +336,9 @@ body{
 
 @media(max-width:768px){
   .topbar .audio-btn{
-    min-width:36px;
-    width:36px;
-    height:36px;
+    min-width:44px;
+    width:44px;
+    height:44px;
     padding:0
   }
   .topbar .audio-label{display:none}
