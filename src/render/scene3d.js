@@ -13,6 +13,7 @@ import { getTerrainAtPoint, clampToAllowedTerrain, snapToSeaWater } from '../dat
 import { ENTITY_TYPES } from '../data/entity-types.js?v=20260622-hp-polish-r1';
 import { resolveCampaignMovement } from '../data/campaign-movement.js?v=20260622-hp-polish-r1';
 import { getUnitVitals, formatStrength } from '../data/casualty-model.js?v=20260622-hp-polish-r1';
+import { prefersReducedMotion } from '../engine/responsive.js?v=20260622-hp-polish-r1';
 
 // Veriler app.js'ten enjekte edilir (modül-versiyon ikizlenmesini önlemek için).
 let UNITS = [], LOCATIONS = [];
@@ -51,6 +52,7 @@ let currentPhase = null, currentAnim = null;
 let autoFrame = { active: false, target: new THREE.Vector3(), dist: 30, height: 11, yaw: 0.4, orbit: 0, tight: false, t: 1 };
 let lastUserInput = 0;
 let cameraShake = 0;
+let reduceMotion = false;
 let autoplayActive = false;
 let motionCaptionEl = null;
 
@@ -824,7 +826,7 @@ function animateVitalsPlate(tk, dt, t) {
     if (loss) {
         const pulse = tk._lossPulse || 0;
         loss.material.opacity = pulse * 0.55 * op;
-        const s = 1 + pulse * (0.38 + 0.12 * Math.sin(t * 18));
+        const s = reduceMotion ? 1 : 1 + pulse * (0.38 + 0.12 * Math.sin(t * 18));
         loss.scale.set((width + 0.26) * s, 0.28 * s, 1);
     }
 }
@@ -1064,6 +1066,7 @@ function buildMinefield() {
 }
 
 function spawnBurst(pos, delay = 0, power = 1) {
+    if (reduceMotion) return;
     if (!smokeTex) smokeTex = makeRadialTexture([[0, 'rgba(80,80,82,0.9)'], [0.5, 'rgba(50,50,52,0.55)'], [1, 'rgba(40,40,42,0)']]);
     // flash
     const flashMat = new THREE.SpriteMaterial({ color: 0xffb24d, blending: THREE.AdditiveBlending, transparent: true, opacity: 0, depthWrite: false, map: smokeTex });
@@ -1182,6 +1185,7 @@ function spawnGunSmoke(pos, nx, nz, naval, delay = 0) {
 
 // Ateş eden birime geri tepme dürtüsü (model lokalinde; animate'te yumuşak sönümlenir)
 function applyRecoil(tk, dx, dz, amt) {
+    if (reduceMotion) return;
     tk._rec = tk._rec || { x: 0, y: 0, z: 0 };
     tk._rec.x += dx * amt;
     tk._rec.z += dz * amt;
@@ -1500,7 +1504,7 @@ export function setPhase3D(phase, positions, animData, opts = {}) {
             autoFrame.orbit = tight ? 0.06 : 0.025;
             autoFrame.tight = tight;
             autoFrame.t = 0; autoFrame.active = true;
-            cameraShake = Math.max(cameraShake, opts.autoplay ? 0.012 : 0.006);
+            if (!reduceMotion) cameraShake = Math.max(cameraShake, opts.autoplay ? 0.012 : 0.006);
         }
     }
     applyAtmosphere(animData);
@@ -1663,7 +1667,7 @@ function stepFrame(dt) {
             const pulse = tk._combatPulse || 0;
             // çatışmadaki kara birimi nefes alır gibi sallanır (donuk kalmaz)
             let sx = 0, sz = 0, lean = 0;
-            if (tk.combat && land) {
+            if (tk.combat && land && !reduceMotion) {
                 const ph = tk.group.position.x * 1.7 + tk.group.position.z * 0.9;
                 const lunge = Math.max(0, Math.sin(t * 2.35 + ph)) * (0.014 + pulse * 0.04);
                 sx = Math.sin(t * 1.9 + ph) * (0.01 + pulse * 0.008);
@@ -1695,7 +1699,7 @@ function stepFrame(dt) {
     updateProjectiles(dt);
     updateCombat(dt);
     // water shimmer
-    if (water) water.position.y = WATER_Y + Math.sin(t * 0.45) * 0.0035;
+    if (water) water.position.y = WATER_Y + (reduceMotion ? 0 : Math.sin(t * 0.45) * 0.0035);
     // auto-frame
     if (autoFrame.active && autoFrame.t < 1) {
         autoFrame.t = Math.min(1, autoFrame.t + dt * (autoFrame.tight ? 0.42 : 0.32));
@@ -1765,6 +1769,7 @@ export function resize3D() {
 
 export async function initScene3D(container, opts = {}) {
     if (ready) return;
+    reduceMotion = prefersReducedMotion();
     UNITS = opts.units || [];
     LOCATIONS = opts.locations || [];
     onUnitClick = opts.onUnitClick || null;

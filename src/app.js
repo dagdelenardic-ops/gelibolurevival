@@ -54,6 +54,9 @@ let scene3dPref = (() => {
             try { localStorage.setItem('gelibolu-view', forced); } catch {}
             return forced;
         }
+        // Mobil: 3B kapalı (three.js indirilmez). Sadece açık ?view=3d zorlar.
+        // localStorage'daki masaüstü '3d' tercihi mobilde yok sayılır.
+        if (isMobile()) return '2d';
         return localStorage.getItem('gelibolu-view') || '3d';
     } catch { return '3d'; }
 })();
@@ -106,6 +109,8 @@ function buildView3DToggle() {
 async function initThreeLayer() {
     const host = document.getElementById('scene3d');
     if (!host) return;
+    // Mobil: 3B katmanını (three.js dahil) hiç yükleme — yalnızca açık ?view=3d zorlarsa yükle.
+    if (isMobile() && scene3dPref !== '3d') return;
     try {
         const mod = await import('./render/scene3d.js?v=20260622-hp-polish-r1');
         await mod.initScene3D(host, {
