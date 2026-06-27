@@ -10,6 +10,13 @@
 
 **Spec:** [docs/superpowers/specs/2026-06-27-responsive-completion-design.md](../superpowers/specs/2026-06-27-responsive-completion-design.md)
 
+> [!IMPORTANT]
+> **Yürütme düzeltmeleri (27 Haz 2026) — gerçekleşen ≠ aşağıdaki taslak:**
+> 1. **Tek-sürüm kontratı:** `check-runtime-contracts.mjs` tüm runtime `?v=`'lerin tek değer olmasını şart koşar. §B2–B4'teki "yeni `responsive-r1` tag" YANLIŞ — kanonik = mevcut **`20260622-hp-polish-r1`**. Tag birleştirme, narration-panel'in sürüm kayması (+ `phase-context.js` `?v=` eksiği, kullanılmayan `onBreakpointChange`) düzeltilerek **baseline'da** yapıldı; Commit B yalnızca responsive.js slim + dokunma hedeflerini kapsadı.
+> 2. **Baseline kırmızı kaldı:** `check-historical-contracts` 'W Beach' içerik boşluğuyla başarısız (kapsam-dışı narration ipliği). Doğrulama gate'leri tam `npm run qa` yerine ilgili kontrollerle (runtime-contract + `node --check` + headless 3B tick + preview computed-style) yapıldı.
+> 3. **Ek commit `3c8d3b6`:** §5 dokunma hedefi edit'leri CSS cascade ile eziliyordu; preview yakaladı, kazanan kurallara taşındı.
+> 4. **Gerçekleşen commit zinciri:** `3814b5d` baseline → `67c9c86` Commit B → `e3bc9c5` Commit C → `3c8d3b6` cascade fix.
+
 ---
 
 ## Test/Doğrulama gerçekliği (oku)

@@ -4,6 +4,12 @@
 > **Durum:** Onaylandı (brainstorming) → implementasyon planı bekliyor
 > **Kapsam tipi:** Yarım kalmış responsive ipliğini production-ready yapma + 3B mobil davranışı
 
+> [!IMPORTANT]
+> **Yürütme düzeltmesi (27 Haz 2026):** İmplementasyonda `scripts/check-runtime-contracts.mjs`'in **tek-sürüm kontratı** keşfedildi — tüm runtime `?v=` import'ları tek değer olmak zorunda (`npm run version:runtime` ile topluca bump'lanır). Bunun sonucu:
+> - §3/§4'teki **yeni `?v=20260627-responsive-r1` tag fikri TERK EDİLDİ** — kanonik sürüm mevcut tek değerdir: **`20260622-hp-polish-r1`**.
+> - "Çift-instance bug'ı" aslında bu kontrat ihlaliydi; gerçek suçlu narration-panel'in `narration-r1` sürüm kayması + `phase-context.js`'in `?v=`'siz import'uydu (baseline commit'inde tek sürüme çekilerek + kullanılmayan `onBreakpointChange` kaldırılarak düzeltildi).
+> - §5 dokunma hedefi edit'leri ilk turda CSS cascade (specificity / kaynak-sırası) ile eziliyordu; preview computed-style doğrulaması yakaladı, kazanan kurallar (`.topbar .audio-btn` vb.) düzeltildi (commit `3c8d3b6`).
+
 ---
 
 ## 1. Bağlam & Problem
